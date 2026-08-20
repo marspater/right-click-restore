@@ -27,9 +27,25 @@ html.rcr-enabled blockquote,
 html.rcr-enabled table,
 html.rcr-enabled td,
 html.rcr-enabled th,
-html.rcr-enabled li {
+html.rcr-enabled li,
+html.rcr-enabled a {
   -webkit-user-select: text !important;
   user-select: text !important;
+}
+
+/* Ensure images, videos, audio, and media elements allow pointer interaction and dragging */
+html.rcr-enabled img,
+html.rcr-enabled video,
+html.rcr-enabled canvas,
+html.rcr-enabled picture,
+html.rcr-enabled source,
+html.rcr-enabled figure,
+html.rcr-enabled svg {
+  pointer-events: auto !important;
+  -webkit-user-drag: auto !important;
+  -webkit-user-select: auto !important;
+  user-select: auto !important;
+  -webkit-touch-callout: default !important;
 }
 
 /* Neutralize transparent click-shields and fake overlays */

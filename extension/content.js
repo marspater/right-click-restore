@@ -1,6 +1,6 @@
 /**
  * Right Click & Selection Restorer - Content Script
- * Coordinates settings, injects page-script, handles DOM cleanup, and neutralizes overlays.
+ * Synchronously injects main world overrides, sanitizes DOM, and neutralizes overlays.
  */
 (function () {
   'use strict';
@@ -18,9 +18,6 @@
   let currentConfig = { ...DEFAULT_CONFIG };
   const hostname = window.location.hostname;
 
-  /**
-   * Determine effective configuration for the current site
-   */
   function isSiteEnabled(cfg) {
     if (!cfg.enabled) return false;
     const disabledList = cfg.disabledDomains || [];
@@ -28,8 +25,177 @@
   }
 
   /**
-   * Apply CSS classes and update DOM dataset
+   * Main world script payload embedded directly for 0ms synchronous injection
    */
+  const MAIN_WORLD_SCRIPT = `
+(function() {
+  if (window.__RCR_PAGE_SCRIPT_INITIALIZED__) return;
+  window.__RCR_PAGE_SCRIPT_INITIALIZED__ = true;
+
+  let config = ${JSON.stringify(DEFAULT_CONFIG)};
+  try {
+    const raw = document.documentElement?.dataset?.rcrConfig;
+    if (raw) config = Object.assign(config, JSON.parse(raw));
+  } catch(e) {}
+
+  window.addEventListener('__rcr_update_config__', (event) => {
+    if (event.detail && typeof event.detail === 'object') {
+      config = Object.assign(config, event.detail);
+    }
+  });
+
+  const realPreventDefault = Event.prototype.preventDefault;
+  const realAddEventListener = EventTarget.prototype.addEventListener;
+  const eventsToUnblock = new Set(['contextmenu', 'selectstart', 'copy', 'cut', 'dragstart', 'mousedown', 'mouseup']);
+
+  Event.prototype.preventDefault = function() {
+    if (config.enabled) {
+      if (config.restoreRightClick && this.type === 'contextmenu') return;
+      if (config.restoreSelection && (this.type === 'selectstart' || this.type === 'copy' || this.type === 'cut' || this.type === 'dragstart')) return;
+      if (config.restoreRightClick && (this.type === 'mousedown' || this.type === 'mouseup') && this.button === 2) return;
+    }
+    return realPreventDefault.apply(this, arguments);
+  };
+
+  try {
+    Object.defineProperty(Event.prototype, 'returnValue', {
+      get() { return true; },
+      set(val) {
+        if (config.enabled && (this.type === 'contextmenu' || this.type === 'selectstart' || this.type === 'copy')) return;
+      },
+      configurable: true,
+      enumerable: true
+    });
+  } catch(e) {}
+
+  const blockedProps = ['oncontextmenu', 'onselectstart', 'oncopy', 'oncut', 'ondragstart'];
+  const targets = [
+    typeof Window !== 'undefined' ? Window.prototype : null,
+    typeof Document !== 'undefined' ? Document.prototype : null,
+    typeof HTMLElement !== 'undefined' ? HTMLElement.prototype : null,
+    typeof HTMLBodyElement !== 'undefined' ? HTMLBodyElement.prototype : null,
+    typeof SVGElement !== 'undefined' ? SVGElement.prototype : null,
+    typeof Element !== 'undefined' ? Element.prototype : null
+  ].filter(Boolean);
+
+  blockedProps.forEach(propName => {
+    targets.forEach(proto => {
+      try {
+        Object.defineProperty(proto, propName, {
+          get() { return null; },
+          set(val) {
+            if (config.enabled) {
+              if (propName === 'oncontextmenu' && config.restoreRightClick) return;
+              if (propName !== 'oncontextmenu' && config.restoreSelection) return;
+            }
+          },
+          configurable: true,
+          enumerable: true
+        });
+      } catch(err) {}
+    });
+  });
+
+  EventTarget.prototype.addEventListener = function(type, listener, options) {
+    if (!listener) return realAddEventListener.call(this, type, listener, options);
+    if (eventsToUnblock.has(type)) {
+      const wrappedListener = function(event) {
+        if (config.enabled) {
+          if (config.restoreRightClick && event.type === 'contextmenu') {
+            if (config.absoluteForce || (config.bypassModifierKey && (event.shiftKey || event.altKey))) return;
+          }
+          if (config.restoreSelection && (event.type === 'selectstart' || event.type === 'copy' || event.type === 'cut' || event.type === 'dragstart')) {
+            if (config.absoluteForce) return;
+          }
+          if (config.restoreRightClick && (event.type === 'mousedown' || event.type === 'mouseup') && event.button === 2) {
+            return;
+          }
+        }
+        if (typeof listener === 'function') return listener.apply(this, arguments);
+        else if (listener && typeof listener.handleEvent === 'function') return listener.handleEvent(event);
+      };
+      try {
+        return realAddEventListener.call(this, type, wrappedListener, options);
+      } catch(e) {
+        return realAddEventListener.call(this, type, listener, options);
+      }
+    }
+    return realAddEventListener.call(this, type, listener, options);
+  };
+
+  function handleContextMenuCapture(e) {
+    if (!config.enabled || !config.restoreRightClick) return;
+    if (config.antiShield && e.clientX && e.clientY) {
+      try {
+        const stack = document.elementsFromPoint(e.clientX, e.clientY);
+        const media = stack.find(el => el.tagName === 'IMG' || el.tagName === 'VIDEO' || el.tagName === 'CANVAS');
+        if (media && stack[0] !== media) {
+          for (const el of stack) {
+            if (el === media) break;
+            const cs = window.getComputedStyle(el);
+            if (cs.position === 'absolute' || cs.position === 'fixed') {
+              el.style.setProperty('pointer-events', 'none', 'important');
+              setTimeout(() => el.style.removeProperty('pointer-events'), 600);
+            }
+          }
+        }
+      } catch(err) {}
+    }
+    if (config.absoluteForce || (config.bypassModifierKey && (e.shiftKey || e.altKey))) {
+      e.stopImmediatePropagation();
+    }
+  }
+
+  window.addEventListener('contextmenu', handleContextMenuCapture, true);
+  document.addEventListener('contextmenu', handleContextMenuCapture, true);
+
+  ['selectstart', 'copy', 'cut', 'dragstart'].forEach(type => {
+    const handler = (e) => {
+      if (!config.enabled || !config.restoreSelection) return;
+      if (config.absoluteForce) e.stopImmediatePropagation();
+    };
+    window.addEventListener(type, handler, true);
+    document.addEventListener(type, handler, true);
+  });
+
+  ['mousedown', 'mouseup', 'pointerdown', 'pointerup'].forEach(type => {
+    const handler = (e) => {
+      if (!config.enabled || !config.restoreRightClick) return;
+      if (e.button === 2 && (config.absoluteForce || (config.bypassModifierKey && (e.shiftKey || e.altKey)))) {
+        e.stopImmediatePropagation();
+      }
+    };
+    window.addEventListener(type, handler, true);
+    document.addEventListener(type, handler, true);
+  });
+})();
+`;
+
+  /**
+   * Synchronously inject script into DOM
+   */
+  function injectSynchronousScript() {
+    try {
+      const script = document.createElement('script');
+      script.textContent = MAIN_WORLD_SCRIPT;
+      (document.head || document.documentElement).appendChild(script);
+      script.remove();
+    } catch (e) {}
+  }
+
+  /**
+   * Inject fallback external script tag as backup
+   */
+  function injectExternalScript() {
+    try {
+      const script = document.createElement('script');
+      script.src = chrome.runtime.getURL('page-script.js');
+      script.async = false;
+      (document.head || document.documentElement).appendChild(script);
+      script.onload = () => script.remove();
+    } catch (e) {}
+  }
+
   function applyDOMState() {
     const active = isSiteEnabled(currentConfig);
     if (active) {
@@ -47,28 +213,9 @@
       document.documentElement.dataset.rcrConfig = JSON.stringify(payload);
     } catch (e) {}
 
-    // Dispatch event to page-script in main world
     window.dispatchEvent(new CustomEvent('__rcr_update_config__', { detail: payload }));
   }
 
-  /**
-   * Inject page-script.js into the main world context
-   */
-  function injectMainWorldScript() {
-    try {
-      const script = document.createElement('script');
-      script.src = chrome.runtime.getURL('page-script.js');
-      script.async = false;
-      (document.head || document.documentElement).appendChild(script);
-      script.onload = () => script.remove();
-    } catch (e) {
-      console.warn('[RCR] Main-world script injection deferred:', e);
-    }
-  }
-
-  /**
-   * Remove inline event handler attributes from an element
-   */
   const INLINE_ATTRIBUTES = [
     'oncontextmenu',
     'onselectstart',
@@ -82,7 +229,7 @@
 
   function cleanElement(el) {
     if (!el || el.nodeType !== Node.ELEMENT_NODE) return;
-    
+
     INLINE_ATTRIBUTES.forEach((attr) => {
       if (el.hasAttribute(attr)) {
         try {
@@ -91,18 +238,15 @@
       }
     });
 
-    // Remove inline user-select: none styles
-    if (el.style && el.style.userSelect === 'none') {
-      el.style.userSelect = 'auto';
-    }
-    if (el.style && el.style.webkitUserSelect === 'none') {
-      el.style.webkitUserSelect = 'auto';
+    if (el.style) {
+      if (el.style.userSelect === 'none') el.style.userSelect = 'auto';
+      if (el.style.webkitUserSelect === 'none') el.style.webkitUserSelect = 'auto';
+      if (el.style.pointerEvents === 'none' && (el.tagName === 'IMG' || el.tagName === 'VIDEO')) {
+        el.style.pointerEvents = 'auto';
+      }
     }
   }
 
-  /**
-   * Clean all elements in the DOM tree
-   */
   function cleanDOMTree(root = document.documentElement) {
     if (!root) return;
     cleanElement(root);
@@ -112,9 +256,6 @@
     }
   }
 
-  /**
-   * Anti-Shield detector: Finds and neutralizes transparent full-viewport overlays
-   */
   function neutralizeClickShields() {
     if (!isSiteEnabled(currentConfig) || !currentConfig.antiShield) return;
 
@@ -132,7 +273,6 @@
 
       if (isFixed && zIndex > 100) {
         const rect = el.getBoundingClientRect();
-        // Check if it spans almost the whole viewport and has transparent background
         const coversViewport = rect.width >= vw * 0.85 && rect.height >= vh * 0.85;
         const isTransparent = style.opacity === '0' || style.backgroundColor === 'rgba(0, 0, 0, 0)' || style.backgroundColor === 'transparent';
         const hasNoText = el.innerText.trim().length === 0;
@@ -145,9 +285,6 @@
     }
   }
 
-  /**
-   * Show Apple-styled toast notification on page
-   */
   function showToast(message, icon = '🔓') {
     let toast = document.getElementById('rcr-notification-toast');
     if (!toast) {
@@ -165,14 +302,9 @@
     }, 2400);
   }
 
-  /**
-   * Perform an immediate deep unlock sweep across the page
-   */
   function performDeepUnlock() {
     cleanDOMTree(document.documentElement);
     neutralizeClickShields();
-
-    // Reset document and body inline handlers directly
     try {
       document.oncontextmenu = null;
       document.onselectstart = null;
@@ -187,27 +319,23 @@
         document.body.oncut = null;
       }
     } catch (e) {}
-
     showToast('Right-click & selection unlocked!', '✨');
   }
 
-  /**
-   * Initialize extension
-   */
   async function init() {
+    // 1. Synchronously inject before anything else
+    injectSynchronousScript();
+    injectExternalScript();
+
     try {
       const stored = await chrome.storage.local.get('rcr_settings');
       if (stored && stored.rcr_settings) {
         currentConfig = { ...DEFAULT_CONFIG, ...stored.rcr_settings };
       }
-    } catch (err) {
-      console.warn('[RCR] Failed to load settings from storage:', err);
-    }
+    } catch (err) {}
 
     applyDOMState();
-    injectMainWorldScript();
 
-    // Clean DOM on ready and observe mutations
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => {
         if (isSiteEnabled(currentConfig)) {
@@ -222,7 +350,6 @@
       }
     }
 
-    // Observe dynamically added elements
     const observer = new MutationObserver((mutations) => {
       if (!isSiteEnabled(currentConfig)) return;
       for (let i = 0; i < mutations.length; i++) {
@@ -244,7 +371,6 @@
       attributeFilter: INLINE_ATTRIBUTES
     });
 
-    // Run periodic overlay check for dynamic lazy-loaded shields
     setInterval(() => {
       if (isSiteEnabled(currentConfig) && currentConfig.antiShield) {
         neutralizeClickShields();
@@ -252,7 +378,7 @@
     }, 2500);
   }
 
-  // Listen for messages from popup
+  // Listen for popup messages
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === 'RCR_CONFIG_CHANGED') {
       currentConfig = { ...DEFAULT_CONFIG, ...message.config };
@@ -275,6 +401,5 @@
     return true;
   });
 
-  // Start initialization immediately
   init();
 })();

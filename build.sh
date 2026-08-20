@@ -14,13 +14,16 @@ xcodebuild -project ./SafariExtension/RightClickRestore/RightClickRestore.xcodep
   CONFIGURATION_BUILD_DIR="$(pwd)/build" \
   build
 
+echo "🔏 Clearing extended attributes and applying App Sandbox signatures..."
+xattr -cr build/RightClickRestore.app
+codesign -s - --force --entitlements entitlements.plist "build/RightClickRestore.app/Contents/PlugIns/RightClickRestore Extension.appex"
+xattr -cr build/RightClickRestore.app
+codesign -s - --force --entitlements entitlements.plist "build/RightClickRestore.app"
+
+echo "🔌 Registering extension with PlugInKit & LaunchServices..."
+pluginkit -a "build/RightClickRestore.app/Contents/PlugIns/RightClickRestore Extension.appex"
+/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f -R -trusted build/RightClickRestore.app
+
 echo ""
-echo "✅ Build Succeeded!"
+echo "✅ Build & Registration Succeeded!"
 echo "📦 App built at: $(pwd)/build/RightClickRestore.app"
-echo ""
-echo "🚀 To enable in Safari:"
-echo "1. Open Safari -> Settings (⌘,) -> Advanced -> Check 'Show features for web developers'"
-echo "2. In Safari menu bar -> Develop -> Check 'Allow Unsigned Extensions'"
-echo "3. Open the app: open build/RightClickRestore.app"
-echo "4. In Safari -> Settings -> Extensions -> Turn on 'Right Click & Selection Restorer'"
-echo "5. Click 'Always Allow on Every Website'"

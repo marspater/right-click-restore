@@ -474,3 +474,27 @@ kbd {
   vertical-align: baseline;
   margin: 0 1.5px;
 }
+
+/* Spinner animation referenced by Force Unlock button state */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Disabled button state */
+.btn-force-unlock:disabled {
+  opacity: 0.65;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+/* Accessibility — focus-visible outlines */
+.switch input:focus-visible + .slider {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+.btn-force-unlock:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}

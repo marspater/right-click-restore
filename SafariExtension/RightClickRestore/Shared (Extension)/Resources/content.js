@@ -374,11 +374,14 @@
       attributeFilter: INLINE_ATTRIBUTES
     });
 
-    setInterval(() => {
-      if (isSiteEnabled(currentConfig) && currentConfig.antiShield) {
-        neutralizeClickShields();
-      }
-    }, 2500);
+    // Only run periodic shield scan in top-level window to avoid accumulation across iframes
+    if (window === window.top) {
+      setInterval(() => {
+        if (isSiteEnabled(currentConfig) && currentConfig.antiShield) {
+          neutralizeClickShields();
+        }
+      }, 4000);
+    }
   }
 
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {

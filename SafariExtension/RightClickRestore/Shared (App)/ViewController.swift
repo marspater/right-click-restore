@@ -16,12 +16,10 @@ class ViewController: NSViewController {
     private var statusTitleLabel: NSTextField!
     private var statusDescLabel: NSTextField!
     private var openPrefsButton: NSButton!
-    private var openTestButton: NSButton!
     private var refreshButton: NSButton!
 
     override func loadView() {
-        // Native Apple Visual Effect Glass View
-        let visualEffectView = NSVisualEffectView(frame: NSRect(x: 0, y: 0, width: 460, height: 520))
+        let visualEffectView = NSVisualEffectView(frame: NSRect(x: 0, y: 0, width: 460, height: 480))
         visualEffectView.material = .hudWindow
         visualEffectView.blendingMode = .behindWindow
         visualEffectView.state = .active
@@ -41,10 +39,10 @@ class ViewController: NSViewController {
             window.titlebarAppearsTransparent = true
             window.titleVisibility = .hidden
             window.styleMask.insert(.fullSizeContentView)
-            window.isMovableByWindowBackground = false
-            window.setContentSize(NSSize(width: 460, height: 520))
-            window.minSize = NSSize(width: 440, height: 500)
-            window.maxSize = NSSize(width: 500, height: 560)
+            window.isMovableByWindowBackground = true
+            window.setContentSize(NSSize(width: 460, height: 480))
+            window.minSize = NSSize(width: 420, height: 460)
+            window.maxSize = NSSize(width: 500, height: 540)
             window.center()
         }
         checkExtensionStatus()
@@ -66,28 +64,33 @@ class ViewController: NSViewController {
             container.trailingAnchor.constraint(equalTo: self.view.trailingAnchor)
         ])
 
-        // 1. App Icon
+        // 1. App Icon — use a shadow wrapper so shadow renders outside clipped icon
+        let iconShadowWrapper = NSView()
+        iconShadowWrapper.wantsLayer = true
+        iconShadowWrapper.layer?.shadowColor = NSColor.black.cgColor
+        iconShadowWrapper.layer?.shadowOpacity = 0.35
+        iconShadowWrapper.layer?.shadowOffset = CGSize(width: 0, height: -4)
+        iconShadowWrapper.layer?.shadowRadius = 12
+        iconShadowWrapper.translatesAutoresizingMaskIntoConstraints = false
+
         let iconImageView = NSImageView()
         iconImageView.imageScaling = .scaleProportionallyUpOrDown
-        if let iconPath = Bundle.main.path(forResource: "universal-icon-1024@1x", ofType: "png", inDirectory: "AppIcon.appiconset") ??
-                          Bundle.main.path(forResource: "Icon", ofType: "png") {
-            iconImageView.image = NSImage(contentsOfFile: iconPath)
-        } else {
-            iconImageView.image = NSApp.applicationIconImage
-        }
+        iconImageView.image = NSApp.applicationIconImage
         iconImageView.translatesAutoresizingMaskIntoConstraints = false
         iconImageView.wantsLayer = true
         iconImageView.layer?.cornerRadius = 16
         iconImageView.layer?.masksToBounds = true
-        iconImageView.layer?.shadowColor = NSColor.black.cgColor
-        iconImageView.layer?.shadowOpacity = 0.35
-        iconImageView.layer?.shadowOffset = CGSize(width: 0, height: -4)
-        iconImageView.layer?.shadowRadius = 12
+
+        iconShadowWrapper.addSubview(iconImageView)
         NSLayoutConstraint.activate([
-            iconImageView.widthAnchor.constraint(equalToConstant: 72),
-            iconImageView.heightAnchor.constraint(equalToConstant: 72)
+            iconShadowWrapper.widthAnchor.constraint(equalToConstant: 72),
+            iconShadowWrapper.heightAnchor.constraint(equalToConstant: 72),
+            iconImageView.topAnchor.constraint(equalTo: iconShadowWrapper.topAnchor),
+            iconImageView.bottomAnchor.constraint(equalTo: iconShadowWrapper.bottomAnchor),
+            iconImageView.leadingAnchor.constraint(equalTo: iconShadowWrapper.leadingAnchor),
+            iconImageView.trailingAnchor.constraint(equalTo: iconShadowWrapper.trailingAnchor)
         ])
-        container.addArrangedSubview(iconImageView)
+        container.addArrangedSubview(iconShadowWrapper)
 
         // 2. Title & Version
         let titleRow = NSStackView()
@@ -183,30 +186,17 @@ class ViewController: NSViewController {
 
         container.addArrangedSubview(statusCard)
 
-        // 4. Primary Action Buttons
-        let buttonRow = NSStackView()
-        buttonRow.orientation = .horizontal
-        buttonRow.spacing = 10
-        buttonRow.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            buttonRow.widthAnchor.constraint(equalTo: container.widthAnchor, constant: -16)
-        ])
-
+        // 4. Primary Action Button
         openPrefsButton = NSButton(title: "Open Safari Settings…", target: self, action: #selector(handleOpenPreferences))
         openPrefsButton.bezelStyle = .rounded
-        openPrefsButton.isHighlighted = true
         openPrefsButton.keyEquivalent = "\r"
         openPrefsButton.font = NSFont.systemFont(ofSize: 13, weight: .semibold)
-        openPrefsButton.heightAnchor.constraint(equalToConstant: 32).isActive = true
-        buttonRow.addArrangedSubview(openPrefsButton)
-
-        openTestButton = NSButton(title: "Open Test Suite", target: self, action: #selector(handleOpenTestSuite))
-        openTestButton.bezelStyle = .rounded
-        openTestButton.font = NSFont.systemFont(ofSize: 13, weight: .regular)
-        openTestButton.heightAnchor.constraint(equalToConstant: 32).isActive = true
-        buttonRow.addArrangedSubview(openTestButton)
-
-        container.addArrangedSubview(buttonRow)
+        openPrefsButton.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            openPrefsButton.widthAnchor.constraint(equalTo: container.widthAnchor, constant: -16),
+            openPrefsButton.heightAnchor.constraint(equalToConstant: 32)
+        ])
+        container.addArrangedSubview(openPrefsButton)
 
         // 5. Checklist Guide Card
         let guideCard = NSView()
@@ -300,12 +290,6 @@ class ViewController: NSViewController {
                 }
             }
         }
-    }
-
-    @objc private func handleOpenTestSuite() {
-        let testPath = "/Users/marspater/Documents/antigravity/wise-carson/test_page.html"
-        let testURL = URL(fileURLWithPath: testPath)
-        NSWorkspace.shared.open(testURL)
     }
 
     @objc private func handleRefresh() {

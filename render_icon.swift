@@ -31,7 +31,6 @@ func createSquirclePath(in rect: CGRect, radius: CGFloat) -> CGPath {
 }
 
 func drawIconArtwork(in ctx: CGContext, bounds: CGRect, isFullBleed: Bool) {
-    let s = bounds.width
     let colorSpace = CGColorSpaceCreateDeviceRGB()
     
     // 1. Mesh Background Gradient
@@ -185,8 +184,8 @@ func renderAppSquircleIcon(size: Int) -> NSImage {
     return image
 }
 
-// 2. Full-Bleed Extension Icon (Edge-to-Edge so Safari clips it seamlessly with NO grey borders!)
-func renderFullBleedIcon(size: Int) -> NSImage {
+// 2. Toolbar Squircle Icon (Smooth squircle filling full icon canvas with transparent corners)
+func renderToolbarSquircleIcon(size: Int) -> NSImage {
     let s = CGFloat(size)
     let image = NSImage(size: NSSize(width: s, height: s))
     image.lockFocus()
@@ -195,7 +194,16 @@ func renderFullBleedIcon(size: Int) -> NSImage {
         return image
     }
     ctx.clear(CGRect(x: 0, y: 0, width: s, height: s))
-    drawIconArtwork(in: ctx, bounds: CGRect(x: 0, y: 0, width: s, height: s), isFullBleed: true)
+    
+    let squircleRect = CGRect(x: 0, y: 0, width: s, height: s)
+    let squirclePath = createSquirclePath(in: squircleRect, radius: s * 0.225)
+    
+    ctx.saveGState()
+    ctx.addPath(squirclePath)
+    ctx.clip()
+    drawIconArtwork(in: ctx, bounds: squircleRect, isFullBleed: true)
+    ctx.restoreGState()
+    
     image.unlockFocus()
     return image
 }
@@ -243,14 +251,14 @@ for (name, size) in macSizes {
     savePNG(image: img, path: "\(appIconSet)/\(name)")
 }
 
-// 2. Full-Bleed Extension Icons (Fixes Safari double-border / grey frame bug!)
+// 2. Toolbar & Extension Icons (Continuous curvature squircle edge-to-edge)
 let extSizes = [16, 32, 48, 64, 128, 256, 512]
 for size in extSizes {
-    let img = renderFullBleedIcon(size: size)
+    let img = renderToolbarSquircleIcon(size: size)
     savePNG(image: img, path: "\(extIcons)/icon-\(size).png")
     savePNG(image: img, path: "\(sharedExtIcons)/icon-\(size).png")
 }
-let largeIcon = renderFullBleedIcon(size: 256)
+let largeIcon = renderToolbarSquircleIcon(size: 256)
 savePNG(image: largeIcon, path: "\(largeIconSet)/icon-256.png")
 
-print("✅ All icons (macOS App Squircle & Full-Bleed Extension Icons) rendered flawlessly!")
+print("✅ All icons (macOS App Squircle & Toolbar Squircle Icons) rendered flawlessly!")

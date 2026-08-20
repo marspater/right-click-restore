@@ -124,8 +124,10 @@
   };
 
   function unmaskMedia(e) {
-    if (!config.enabled || !config.antiShield || !e.clientX || !e.clientY) return;
+    if (!config.enabled || !config.antiShield || !e || typeof e.clientX !== 'number' || typeof e.clientY !== 'number') return;
+    if (e.clientX < 0 || e.clientY < 0 || e.clientX > window.innerWidth || e.clientY > window.innerHeight) return;
     try {
+      if (typeof document.elementsFromPoint !== 'function') return;
       const elements = document.elementsFromPoint(e.clientX, e.clientY);
       if (!elements || elements.length <= 1) return;
       const media = elements.find(el => el.tagName === 'IMG' || el.tagName === 'VIDEO' || el.tagName === 'CANVAS');
@@ -135,8 +137,10 @@
           el.classList.add('rcr-unmasked-overlay');
           el.style.setProperty('pointer-events', 'none', 'important');
           setTimeout(() => {
-            el.classList.remove('rcr-unmasked-overlay');
-            el.style.removeProperty('pointer-events');
+            try {
+              el.classList.remove('rcr-unmasked-overlay');
+              el.style.removeProperty('pointer-events');
+            } catch(err) {}
           }, 800);
         }
       }

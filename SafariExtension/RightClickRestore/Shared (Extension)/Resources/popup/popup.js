@@ -38,12 +38,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentHostname = new URL(tab.url).hostname;
         siteDomain.textContent = currentHostname;
       } else {
-        siteDomain.textContent = 'Special Page';
+        siteDomain.textContent = 'Special Safari Page';
         siteToggle.disabled = true;
       }
     }
   } catch (err) {
-    siteDomain.textContent = 'Unknown Page';
+    siteDomain.textContent = 'Active Page';
   }
 
   // 2. Load stored settings
@@ -82,26 +82,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function persistAndBroadcast() {
     await chrome.storage.local.set({ rcr_settings: currentSettings });
 
-    // Notify background worker
     try {
       chrome.runtime.sendMessage({ type: 'RCR_SETTINGS_UPDATED' });
     } catch (e) {}
 
-    // Notify active tab content script
     if (activeTabId) {
       try {
         await chrome.tabs.sendMessage(activeTabId, {
           type: 'RCR_CONFIG_CHANGED',
           config: currentSettings
         });
-      } catch (e) {
-        // Tab might not have content script (e.g., settings page)
-      }
+      } catch (e) {}
     }
     updateUI();
   }
 
-  // 5. Setup event listeners
+  // 5. Event Listeners
   globalToggle.addEventListener('change', async () => {
     currentSettings.enabled = globalToggle.checked;
     await persistAndBroadcast();
@@ -144,30 +140,57 @@ document.addEventListener('DOMContentLoaded', async () => {
     await persistAndBroadcast();
   });
 
-  // Force Unlock button
+  // Force Unlock button with smooth SVG state updates
   btnForceUnlock.addEventListener('click', async () => {
     if (!activeTabId) return;
 
     try {
       btnForceUnlock.disabled = true;
-      btnForceUnlock.innerHTML = '<span>⏳</span> Unlocking...';
+      btnForceUnlock.innerHTML = `
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 1s linear infinite;">
+          <line x1="12" y1="2" x2="12" y2="6"></line>
+          <line x1="12" y1="18" x2="12" y2="22"></line>
+          <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+          <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+          <line x1="2" y1="12" x2="6" y2="12"></line>
+          <line x1="18" y1="12" x2="22" y2="12"></line>
+          <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+          <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+        </svg>
+        <span>Unlocking Page…</span>
+      `;
 
       await chrome.tabs.sendMessage(activeTabId, { type: 'RCR_FORCE_UNLOCK' });
 
       btnForceUnlock.classList.add('success');
-      btnForceUnlock.innerHTML = '<span>✅</span> Unlocked!';
+      btnForceUnlock.innerHTML = `
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <span>Unlocked Successfully!</span>
+      `;
 
       setTimeout(() => {
         btnForceUnlock.classList.remove('success');
         btnForceUnlock.disabled = false;
-        btnForceUnlock.innerHTML = '<span class="btn-icon">⚡</span> Force Unlock Page';
-      }, 1400);
+        btnForceUnlock.innerHTML = `
+          <svg class="btn-icon-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+          <span class="btn-text">Force Unlock Page Now</span>
+        `;
+      }, 1500);
     } catch (e) {
-      btnForceUnlock.innerHTML = '<span>⚠️</span> Unable to Unlock';
+      btnForceUnlock.innerHTML = `<span>⚠️ Unable to Unlock</span>`;
       setTimeout(() => {
         btnForceUnlock.disabled = false;
-        btnForceUnlock.innerHTML = '<span class="btn-icon">⚡</span> Force Unlock Page';
-      }, 1400);
+        btnForceUnlock.innerHTML = `
+          <svg class="btn-icon-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+          <span class="btn-text">Force Unlock Page Now</span>
+        `;
+      }, 1500);
     }
   });
 });

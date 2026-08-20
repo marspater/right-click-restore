@@ -1,20 +1,110 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'">
-
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-
-    <link rel="stylesheet" href="../Style.css">
-    <script src="../Script.js" defer></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+  <title>Right Click & Selection Restorer</title>
+  <link rel="stylesheet" href="../Style.css">
+  <script src="../Script.js" defer></script>
 </head>
 <body>
-    <img src="../Icon.png" width="128" height="128" alt="RightClickRestore Icon">
-    <p class="platform-ios">You can turn on RightClickRestore’s Safari extension in Settings.</p>
-    <p class="platform-mac state-unknown">You can turn on RightClickRestore’s extension in Safari Extensions preferences.</p>
-    <p class="platform-mac state-on">RightClickRestore’s extension is currently on. You can turn it off in Safari Extensions preferences.</p>
-    <p class="platform-mac state-off">RightClickRestore’s extension is currently off. You can turn it on in Safari Extensions preferences.</p>
-    <button class="platform-mac open-preferences">Quit and Open Safari Extensions Preferences…</button>
+  <div class="glass-app-wrapper">
+    <!-- Header Section -->
+    <header class="app-header">
+      <div class="icon-glow-wrapper">
+        <img src="../Icon.png" class="app-icon" alt="RightClickRestore">
+      </div>
+      <div class="header-titles">
+        <h1 class="app-title">Right Click Restorer</h1>
+        <p class="app-tagline">Advanced Context Menu & Media Unlock Engine for Safari</p>
+      </div>
+    </header>
+
+    <!-- Status Banner Card -->
+    <section class="glass-card status-card">
+      <div class="status-left">
+        <div class="status-indicator-ring">
+          <span class="status-dot" id="status-dot"></span>
+        </div>
+        <div class="status-text-group">
+          <span class="status-label">Safari Extension Status</span>
+          <h3 class="status-title" id="status-title">Checking Safari Extension...</h3>
+          <p class="status-desc" id="status-desc">Communicating with macOS Safari Extension Manager.</p>
+        </div>
+      </div>
+      <button class="btn-refresh" id="btn-refresh" title="Refresh Status">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <polyline points="1 20 1 14 7 14"></polyline>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+        </svg>
+      </button>
+    </section>
+
+    <!-- Action Buttons -->
+    <div class="action-grid">
+      <button class="btn-primary glass-button" id="btn-open-preferences">
+        <span class="btn-icon">⚙️</span>
+        <span>Open Safari Extension Settings…</span>
+      </button>
+      <button class="btn-secondary glass-button" id="btn-open-test">
+        <span class="btn-icon">🧪</span>
+        <span>Launch Test Suite</span>
+      </button>
+    </div>
+
+    <!-- Quick Setup Guide -->
+    <section class="glass-card guide-card">
+      <h4 class="card-heading">
+        <span>⚡</span> Quick Setup Checklist
+      </h4>
+      <div class="checklist">
+        <div class="check-item">
+          <div class="step-badge">1</div>
+          <div class="step-content">
+            <strong>Enable Developer Features</strong>
+            <p>Safari → Settings (<kbd>⌘,</kbd>) → <em>Advanced</em> → Check <strong>"Show features for web developers"</strong>.</p>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="step-badge">2</div>
+          <div class="step-content">
+            <strong>Allow Unsigned Extensions</strong>
+            <p>Safari menu bar → <em>Develop</em> → Check <strong>"Allow Unsigned Extensions"</strong>.</p>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="step-badge">3</div>
+          <div class="step-content">
+            <strong>Grant Permissions</strong>
+            <p>Safari → <em>Settings</em> → <em>Extensions</em> → Enable extension & set <strong>"Always Allow on Every Website"</strong>.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive In-App Test Sandbox -->
+    <section class="glass-card sandbox-card">
+      <h4 class="card-heading">
+        <span>🖱️</span> Live In-App Sandbox
+      </h4>
+      <p class="sandbox-intro">Try right-clicking inside these test zones directly in this window:</p>
+      <div class="sandbox-grid">
+        <div class="sandbox-box" oncontextmenu="return false;">
+          <span>🔒 Blocked via inline <code>oncontextmenu</code></span>
+        </div>
+        <div class="sandbox-box" id="sandbox-listener">
+          <span>🔒 Blocked via <code>preventDefault()</code></span>
+        </div>
+      </div>
+      <p class="sandbox-note">💡 Tip: Hold <kbd>Shift</kbd> or <kbd>Option</kbd> while right-clicking anywhere to force native menu.</p>
+    </section>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <span>Native macOS 27 Ready • Universal Apple Silicon & Intel</span>
+    </footer>
+  </div>
 </body>
 </html>

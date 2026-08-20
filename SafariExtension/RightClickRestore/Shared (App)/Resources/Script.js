@@ -1,24 +1,65 @@
-function show(platform, enabled, useSettingsInsteadOfPreferences) {
-    document.body.classList.add(`platform-${platform}`);
+/**
+ * Right Click & Selection Restorer - Host App Controller Script
+ */
 
-    if (useSettingsInsteadOfPreferences) {
-        document.getElementsByClassName('platform-mac state-on')[0].innerText = "RightClickRestore’s extension is currently on. You can turn it off in the Extensions section of Safari Settings.";
-        document.getElementsByClassName('platform-mac state-off')[0].innerText = "RightClickRestore’s extension is currently off. You can turn it on in the Extensions section of Safari Settings.";
-        document.getElementsByClassName('platform-mac state-unknown')[0].innerText = "You can turn on RightClickRestore’s extension in the Extensions section of Safari Settings.";
-        document.getElementsByClassName('platform-mac open-preferences')[0].innerText = "Quit and Open Safari Settings…";
-    }
-
-    if (typeof enabled === "boolean") {
-        document.body.classList.toggle(`state-on`, enabled);
-        document.body.classList.toggle(`state-off`, !enabled);
-    } else {
-        document.body.classList.remove(`state-on`);
-        document.body.classList.remove(`state-off`);
-    }
+function initPlatform(platform) {
+  document.body.classList.add('platform-' + platform);
 }
 
-function openPreferences() {
-    webkit.messageHandlers.controller.postMessage("open-preferences");
+function updateStatus(isEnabled, state) {
+  const dot = document.getElementById('status-dot');
+  const title = document.getElementById('status-title');
+  const desc = document.getElementById('status-desc');
+
+  if (isEnabled) {
+    dot.className = 'status-dot active';
+    title.textContent = 'Extension is Active in Safari';
+    desc.textContent = 'Right-click and text selection protections are restored.';
+  } else if (state === 'ready') {
+    dot.className = 'status-dot disabled';
+    title.textContent = 'Extension is Turned Off in Safari';
+    desc.textContent = 'Open Safari Settings to enable the extension.';
+  } else {
+    dot.className = 'status-dot';
+    title.textContent = 'Extension Awaiting Setup';
+    desc.textContent = 'Enable "Allow Unsigned Extensions" in Safari Develop menu.';
+  }
 }
 
-document.querySelector("button.open-preferences").addEventListener("click", openPreferences);
+document.addEventListener('DOMContentLoaded', () => {
+  const btnOpenPreferences = document.getElementById('btn-open-preferences');
+  const btnOpenTest = document.getElementById('btn-open-test');
+  const btnRefresh = document.getElementById('btn-refresh');
+
+  if (btnOpenPreferences) {
+    btnOpenPreferences.addEventListener('click', () => {
+      if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.controller) {
+        window.webkit.messageHandlers.controller.postMessage('open-preferences');
+      }
+    });
+  }
+
+  if (btnOpenTest) {
+    btnOpenTest.addEventListener('click', () => {
+      if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.controller) {
+        window.webkit.messageHandlers.controller.postMessage('open-test-suite');
+      }
+    });
+  }
+
+  if (btnRefresh) {
+    btnRefresh.addEventListener('click', () => {
+      if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.controller) {
+        window.webkit.messageHandlers.controller.postMessage('check-status');
+      }
+    });
+  }
+
+  // Attach sandbox blocker listener
+  const sandboxListener = document.getElementById('sandbox-listener');
+  if (sandboxListener) {
+    sandboxListener.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+    });
+  }
+});

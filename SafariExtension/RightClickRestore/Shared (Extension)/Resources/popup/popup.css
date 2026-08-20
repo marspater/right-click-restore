@@ -25,13 +25,10 @@
   --radius-panel: 16px;
   --radius-pill: 9999px;
 
-  /* Keycap Styling */
-  --key-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.10) 100%);
-  --key-border: rgba(255, 255, 255, 0.35);
-  --key-shadow: 0 2px 4px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4);
-  --key-bottom: rgba(0, 0, 0, 0.55);
-  --key-text: #ffffff;
-  --key-symbol-color: var(--accent-cyan);
+  /* Subtle Refined Keycaps */
+  --kbd-bg: rgba(255, 255, 255, 0.12);
+  --kbd-border: rgba(255, 255, 255, 0.22);
+  --kbd-text: #ffffff;
 }
 
 @media (prefers-color-scheme: light) {
@@ -47,13 +44,10 @@
     --text-tertiary: #64748b;
     --divider: rgba(0, 0, 0, 0.06);
 
-    /* Keycap Styling Light */
-    --key-bg: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%);
-    --key-border: rgba(15, 23, 42, 0.22);
-    --key-shadow: 0 2px 5px rgba(0, 0, 0, 0.12), inset 0 1px 0 #ffffff;
-    --key-bottom: rgba(15, 23, 42, 0.38);
-    --key-text: #0f172a;
-    --key-symbol-color: #007aff;
+    /* Subtle Refined Keycaps Light */
+    --kbd-bg: rgba(0, 0, 0, 0.06);
+    --kbd-border: rgba(0, 0, 0, 0.12);
+    --kbd-text: #0f172a;
   }
 }
 
@@ -425,7 +419,7 @@ input:checked + .slider:before {
   box-shadow: 0 6px 18px rgba(16, 185, 129, 0.4);
 }
 
-/* Redesigned Aligned Tip Banner */
+/* Tip Banner */
 .footer {
   margin-top: 2px;
   padding: 0;
@@ -465,42 +459,18 @@ input:checked + .slider:before {
   flex: 1;
 }
 
-/* Authentic Tactile Apple Keycaps */
-.keycap-highlight {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 2px 7px;
-  font-size: 11px;
-  font-weight: 700;
-  font-family: var(--font-sans);
-  color: var(--key-text);
-  background: var(--key-bg);
-  border: 1px solid var(--key-border);
-  border-bottom: 2.5px solid var(--key-bottom);
-  border-radius: 6px;
-  box-shadow: var(--key-shadow);
-  vertical-align: baseline;
-  margin: 0 2px;
-  transition: all 0.15s ease;
-}
-
-.keycap-highlight .key-symbol {
-  font-size: 11.5px;
-  font-weight: 800;
-  color: var(--key-symbol-color);
-}
-
-.kbd-mini {
+/* Clean, Elegant, Toned-Down Keycaps */
+kbd {
   display: inline-block;
   padding: 1px 5px;
-  font-size: 9.5px;
-  font-weight: 700;
+  font-size: 10px;
+  font-weight: 600;
   font-family: var(--font-sans);
-  color: var(--key-text);
-  background: var(--key-bg);
-  border: 1px solid var(--key-border);
-  border-bottom: 2px solid var(--key-bottom);
+  color: var(--kbd-text);
+  background: var(--kbd-bg);
+  border: 1px solid var(--kbd-border);
   border-radius: 4px;
-  box-shadow: var(--key-shadow);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+  vertical-align: baseline;
+  margin: 0 1.5px;
 }

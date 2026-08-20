@@ -3,13 +3,585 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:;">
   <title>Right Click & Selection Restorer</title>
-  <link rel="stylesheet" href="../Style.css">
-  <script src="../Script.js" defer></script>
+  <style>
+/* Apple macOS 27 Liquid Glass & Tailwind-Engineered Design System */
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", -system-ui, sans-serif;
+  --font-mono: "SF Mono", ui-monospace, Menlo, Monaco, Consolas, monospace;
+
+  /* Liquid Glass Palette */
+  --liquid-bg: #090b10;
+  --glass-surface: rgba(255, 255, 255, 0.08);
+  --glass-surface-hover: rgba(255, 255, 255, 0.13);
+  --glass-surface-active: rgba(255, 255, 255, 0.18);
+  --glass-border: rgba(255, 255, 255, 0.16);
+  --glass-border-specular: rgba(255, 255, 255, 0.38);
+  --glass-specular: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 65%);
+  --glass-iridescent: linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, rgba(56, 189, 248, 0.12) 28%, rgba(168, 85, 247, 0.08) 64%, rgba(255, 255, 255, 0.18) 100%);
+  
+  /* Text & Accents */
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.72);
+  --text-tertiary: rgba(255, 255, 255, 0.44);
+  --accent-cyan: #00d2ff;
+  --accent-blue: #007aff;
+  --accent-purple: #a855f7;
+  --accent-emerald: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-rose: #f43f5e;
+  
+  /* Shadows & Depth */
+  --shadow-glass: 0 20px 50px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(255, 255, 255, 0.1) inset;
+  --shadow-glow: 0 0 24px rgba(0, 122, 255, 0.45);
+  --radius-xl: 20px;
+  --radius-lg: 14px;
+  --radius-md: 11px;
+  --radius-pill: 9999px;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --liquid-bg: #eef2f6;
+    --glass-surface: rgba(255, 255, 255, 0.65);
+    --glass-surface-hover: rgba(255, 255, 255, 0.85);
+    --glass-surface-active: rgba(255, 255, 255, 0.95);
+    --glass-border: rgba(255, 255, 255, 0.8);
+    --glass-border-specular: rgba(255, 255, 255, 0.95);
+    --glass-specular: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 65%);
+    --glass-iridescent: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(56, 189, 248, 0.25) 30%, rgba(168, 85, 247, 0.15) 70%, rgba(255, 255, 255, 0.7) 100%);
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-tertiary: #94a3b8;
+    --shadow-glass: 0 20px 50px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(255, 255, 255, 0.8) inset;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: transparent;
+  color: var(--text-primary);
+  user-select: none;
+  -webkit-user-select: none;
+  min-height: 100vh;
+  overflow-x: hidden;
+  padding: 24px;
+  position: relative;
+}
+
+/* Ambient Liquid Gradient Canvas */
+.liquid-ambient-canvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.liquid-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(75px);
+  opacity: 0.55;
+  animation: float-orb 12s infinite alternate ease-in-out;
+}
+
+.orb-1 {
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(circle, #007aff 0%, #00d2ff 70%, transparent 100%);
+  top: -80px;
+  left: -80px;
+  animation-duration: 14s;
+}
+
+.orb-2 {
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, #8b5cf6 0%, #ec4899 70%, transparent 100%);
+  bottom: -60px;
+  right: -60px;
+  animation-duration: 18s;
+  animation-delay: -5s;
+}
+
+.orb-3 {
+  width: 240px;
+  height: 240px;
+  background: radial-gradient(circle, #10b981 0%, #06b6d4 70%, transparent 100%);
+  top: 40%;
+  left: 55%;
+  animation-duration: 16s;
+  animation-delay: -9s;
+}
+
+@keyframes float-orb {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(40px, 30px) scale(1.12); }
+  100% { transform: translate(-30px, 50px) scale(0.92); }
+}
+
+/* App Container */
+.app-container {
+  position: relative;
+  z-index: 1;
+  max-width: 520px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Header */
+.header-glass {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 4px 4px 8px;
+}
+
+.app-icon-wrapper {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 122, 255, 0.4), 0 0 0 1px var(--glass-border);
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #007aff 0%, #00d2ff 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.app-icon-wrapper:hover {
+  transform: scale(1.06) rotate(-2deg);
+}
+
+.app-icon-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.app-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--text-primary);
+}
+
+.version-pill {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 210, 255, 0.15);
+  border: 1px solid rgba(0, 210, 255, 0.35);
+  color: var(--accent-cyan);
+  letter-spacing: 0.3px;
+}
+
+.app-subtitle {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+/* Liquid Glass Card */
+.liquid-card {
+  position: relative;
+  background: var(--glass-surface);
+  -webkit-backdrop-filter: blur(36px) saturate(220%);
+  backdrop-filter: blur(36px) saturate(220%);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-glass);
+  padding: 16px 20px;
+  overflow: hidden;
+  transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+}
+
+.liquid-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--glass-specular);
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+/* Segmented Glass Tab Bar */
+.segmented-nav {
+  display: flex;
+  background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-pill);
+  padding: 4px;
+  gap: 4px;
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.tab-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.tab-btn:hover {
+  color: var(--text-primary);
+}
+
+.tab-btn.active {
+  background: var(--glass-iridescent);
+  color: var(--text-primary);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+/* Status Banner */
+.status-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.status-info-side {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.status-orb-beacon {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.status-glow-dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--accent-amber);
+  box-shadow: 0 0 14px var(--accent-amber);
+  transition: all 0.3s ease;
+}
+
+.status-glow-dot.active {
+  background: var(--accent-emerald);
+  box-shadow: 0 0 18px var(--accent-emerald), 0 0 32px rgba(16, 185, 129, 0.5);
+  animation: pulse-beacon 2s infinite ease-in-out;
+}
+
+.status-glow-dot.disabled {
+  background: var(--text-tertiary);
+  box-shadow: none;
+}
+
+@keyframes pulse-beacon {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.18); opacity: 0.85; }
+}
+
+.status-labels {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.status-tag {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-tertiary);
+}
+
+.status-title-text {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+}
+
+.status-sub-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.btn-icon-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-icon-circle:hover {
+  color: var(--text-primary);
+  border-color: var(--glass-border-specular);
+  transform: rotate(45deg);
+}
+
+/* Primary Liquid Action Buttons */
+.action-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 12px;
+}
+
+.btn-liquid-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: linear-gradient(180deg, #0088ff 0%, #0062cc 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: var(--radius-lg);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.5);
+  transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.btn-liquid-primary:hover {
+  transform: translateY(-1.5px);
+  box-shadow: 0 10px 26px rgba(0, 122, 255, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.6);
+}
+
+.btn-liquid-primary:active {
+  transform: translateY(1px);
+}
+
+.btn-liquid-glass {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--glass-surface);
+  -webkit-backdrop-filter: blur(28px);
+  backdrop-filter: blur(28px);
+  color: var(--text-primary);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-glass);
+  transition: all 0.2s ease;
+}
+
+.btn-liquid-glass:hover {
+  background: var(--glass-surface-hover);
+  border-color: var(--glass-border-specular);
+  transform: translateY(-1.5px);
+}
+
+.btn-liquid-glass:active {
+  transform: translateY(1px);
+}
+
+/* Checklist / Guide Tab Content */
+.card-header-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.card-header-row svg {
+  color: var(--accent-cyan);
+}
+
+.checklist-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.checklist-node {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-cyan) 100%);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.4);
+}
+
+.step-desc strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: block;
+}
+
+.step-desc p {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+kbd {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  padding: 1px 5px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--glass-border);
+  border-radius: 4px;
+}
+
+/* Sandbox Live Playground */
+.sandbox-zone-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.sandbox-capsule {
+  background: var(--glass-surface);
+  border: 1px dashed var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 14px 10px;
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  cursor: context-menu;
+  transition: all 0.2s ease;
+}
+
+.sandbox-capsule:hover {
+  border-color: var(--accent-cyan);
+  background: var(--glass-surface-hover);
+  color: var(--text-primary);
+  box-shadow: 0 4px 16px rgba(0, 210, 255, 0.15);
+}
+
+.live-log-console {
+  margin-top: 10px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent-cyan);
+  max-height: 80px;
+  overflow-y: auto;
+}
+
+/* Diagnostics Tab */
+.diag-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.diag-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+}
+
+.diag-badge {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+}
+
+.diag-badge.ok {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--accent-emerald);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+/* Footer */
+.footer-text {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  padding-top: 4px;
+}
+  </style>
 </head>
 <body>
-  <!-- Ambient Liquid Orbs Canvas (visionOS / macOS 27 Depth) -->
+  <!-- Ambient Liquid Orbs Canvas -->
   <div class="liquid-ambient-canvas">
     <div class="liquid-orb orb-1"></div>
     <div class="liquid-orb orb-2"></div>
@@ -20,14 +592,14 @@
     <!-- Header -->
     <header class="header-glass">
       <div class="app-icon-wrapper">
-        <img src="../Icon.png" class="app-icon-img" alt="RightClickRestore Icon">
+        <img src="Icon.png" class="app-icon-img" alt="RightClickRestore" onerror="this.src='../Icon.png'">
       </div>
       <div class="header-info">
         <div class="app-title-row">
           <h1 class="app-title">Right Click Restorer</h1>
           <span class="version-pill">macOS 27</span>
         </div>
-        <p class="app-subtitle">Apple Liquid Glass • Advanced Context Menu Engine</p>
+        <p class="app-subtitle">Apple Liquid Glass • Context Menu & Media Engine</p>
       </div>
     </header>
 
@@ -69,7 +641,6 @@
     <!-- Tab 1: Dashboard -->
     <div class="tab-pane active" id="tab-dashboard">
       <div style="display:flex; flex-direction:column; gap:14px;">
-        <!-- Status Banner -->
         <section class="liquid-card status-banner">
           <div class="status-info-side">
             <div class="status-orb-beacon">
@@ -82,7 +653,7 @@
             </div>
           </div>
           <button class="btn-icon-circle" id="btn-refresh" title="Refresh Status">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="23 4 23 10 17 10"></polyline>
               <polyline points="1 20 1 14 7 14"></polyline>
               <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
@@ -90,17 +661,16 @@
           </button>
         </section>
 
-        <!-- Primary Actions -->
         <div class="action-row">
           <button class="btn-liquid-primary" id="btn-open-preferences">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="3"></circle>
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
             </svg>
             <span>Open Safari Settings…</span>
           </button>
           <button class="btn-liquid-glass" id="btn-open-test">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
               <polyline points="15 3 21 3 21 9"></polyline>
               <line x1="10" y1="14" x2="21" y2="3"></line>
@@ -115,25 +685,25 @@
     <div class="tab-pane" id="tab-sandbox" style="display:none;">
       <section class="liquid-card">
         <div class="card-header-row">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"></circle>
             <polygon points="10 8 16 12 10 16 10 8"></polygon>
           </svg>
           <span>Live In-App Context Menu Sandbox</span>
         </div>
-        <p style="font-size:12.5px; color:var(--text-secondary);">Test blocking and unblocking right inside this window:</p>
+        <p style="font-size:12px; color:var(--text-secondary);">Test blocking & restoration directly in this container:</p>
         <div class="sandbox-zone-grid">
-          <div class="sandbox-capsule" oncontextmenu="logSandbox('Blocked by inline oncontextmenu'); return false;">
+          <div class="sandbox-capsule" oncontextmenu="logSandbox('Inline blocker triggered'); return false;">
             🖱️ <strong>Inline Blocker</strong><br>
-            <span style="font-size:11px; opacity:0.8;"><code>oncontextmenu="return false;"</code></span>
+            <span style="font-size:10.5px; opacity:0.8;"><code>oncontextmenu="return false;"</code></span>
           </div>
           <div class="sandbox-capsule" id="sandbox-listener-box">
             🛡️ <strong>Listener Blocker</strong><br>
-            <span style="font-size:11px; opacity:0.8;"><code>e.preventDefault()</code></span>
+            <span style="font-size:10.5px; opacity:0.8;"><code>e.preventDefault()</code></span>
           </div>
         </div>
         <div class="live-log-console" id="sandbox-log">
-          <div>[Ready] Right click the capsules above to test event logs...</div>
+          <div>[Ready] Right click the test capsules above...</div>
         </div>
       </section>
     </div>
@@ -142,7 +712,7 @@
     <div class="tab-pane" id="tab-guide" style="display:none;">
       <section class="liquid-card">
         <div class="card-header-row">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
             <polyline points="14 2 14 8 20 8"></polyline>
             <line x1="16" y1="13" x2="8" y2="13"></line>
@@ -181,7 +751,7 @@
     <div class="tab-pane" id="tab-diag" style="display:none;">
       <section class="liquid-card">
         <div class="card-header-row">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
           </svg>
           <span>System Diagnostics</span>
@@ -189,7 +759,7 @@
         <div class="diag-grid">
           <div class="diag-row">
             <span>macOS PlugInKit Registration</span>
-            <span class="diag-badge ok" id="diag-pluginkit">Active</span>
+            <span class="diag-badge ok">Active</span>
           </div>
           <div class="diag-row">
             <span>App Sandbox Security</span>
@@ -197,7 +767,7 @@
           </div>
           <div class="diag-row">
             <span>Safari Extension Bundle ID</span>
-            <span style="font-family:var(--font-mono); font-size:11px; opacity:0.8;">com.antigravity.RightClickRestore.Extension</span>
+            <span style="font-family:var(--font-mono); font-size:10.5px; opacity:0.8;">com.antigravity.RightClickRestore.Extension</span>
           </div>
         </div>
       </section>
@@ -207,5 +777,108 @@
       Apple Liquid Glass UI • macOS 27 Architecture
     </footer>
   </div>
+
+  <script>
+function initPlatform(platform) {
+  document.body.classList.add('platform-' + platform);
+}
+
+function updateStatus(isEnabled, state) {
+  const dot = document.getElementById('status-dot');
+  const title = document.getElementById('status-title');
+  const desc = document.getElementById('status-desc');
+
+  if (!dot || !title || !desc) return;
+
+  if (isEnabled) {
+    dot.className = 'status-glow-dot active';
+    title.textContent = 'Extension is Active in Safari';
+    desc.textContent = 'Right-click and text selection protections are active across the web.';
+  } else if (state === 'ready') {
+    dot.className = 'status-glow-dot disabled';
+    title.textContent = 'Extension is Turned Off in Safari';
+    desc.textContent = 'Click "Open Safari Settings…" below to toggle the extension on.';
+  } else {
+    dot.className = 'status-glow-dot';
+    title.textContent = 'Awaiting Safari Setup';
+    desc.textContent = 'Check "Allow Unsigned Extensions" in Safari\'s Develop menu.';
+  }
+}
+
+function logSandbox(msg) {
+  const box = document.getElementById('sandbox-log');
+  if (!box) return;
+  const line = document.createElement('div');
+  line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  box.appendChild(line);
+  box.scrollTop = box.scrollHeight;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const cards = document.querySelectorAll('.liquid-card');
+  document.addEventListener('mousemove', (e) => {
+    cards.forEach((card) => {
+      const rect = card.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      card.style.setProperty('--mouse-x', `${x}%`);
+      card.style.setProperty('--mouse-y', `${y}%`);
+    });
+  });
+
+  const tabButtons = document.querySelectorAll('.tab-btn');
+  const tabPanes = document.querySelectorAll('.tab-pane');
+
+  tabButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      tabButtons.forEach((b) => b.classList.remove('active'));
+      tabPanes.forEach((p) => (p.style.display = 'none'));
+
+      btn.classList.add('active');
+      const targetId = btn.getAttribute('data-tab');
+      const targetPane = document.getElementById(targetId);
+      if (targetPane) {
+        targetPane.style.display = 'block';
+      }
+    });
+  });
+
+  const btnOpenPreferences = document.getElementById('btn-open-preferences');
+  const btnOpenTest = document.getElementById('btn-open-test');
+  const btnRefresh = document.getElementById('btn-refresh');
+
+  if (btnOpenPreferences) {
+    btnOpenPreferences.addEventListener('click', () => {
+      if (window.webkit?.messageHandlers?.controller) {
+        window.webkit.messageHandlers.controller.postMessage('open-preferences');
+      }
+    });
+  }
+
+  if (btnOpenTest) {
+    btnOpenTest.addEventListener('click', () => {
+      if (window.webkit?.messageHandlers?.controller) {
+        window.webkit.messageHandlers.controller.postMessage('open-test-suite');
+      }
+    });
+  }
+
+  if (btnRefresh) {
+    btnRefresh.addEventListener('click', () => {
+      if (window.webkit?.messageHandlers?.controller) {
+        window.webkit.messageHandlers.controller.postMessage('check-status');
+      }
+    });
+  }
+
+  const sandboxListenerBox = document.getElementById('sandbox-listener-box');
+  if (sandboxListenerBox) {
+    sandboxListenerBox.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      logSandbox('Website called e.preventDefault() on contextmenu');
+    });
+  }
+});
+  </script>
 </body>
 </html>

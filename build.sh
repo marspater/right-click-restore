@@ -16,12 +16,14 @@ xcodebuild -project ./SafariExtension/RightClickRestore/RightClickRestore.xcodep
 
 echo "🔏 Clearing extended attributes and applying App Sandbox signatures..."
 find build -name ".DS_Store" -delete 2>/dev/null || true
+find build -type f -exec xattr -c {} + 2>/dev/null || true
 dot_clean build
 xattr -rc build
 
 codesign -s - --force --entitlements entitlements.plist "build/RightClickRestore.app/Contents/PlugIns/RightClickRestore Extension.appex"
 
 find build -name ".DS_Store" -delete 2>/dev/null || true
+find build -type f -exec xattr -c {} + 2>/dev/null || true
 dot_clean build
 xattr -rc build
 

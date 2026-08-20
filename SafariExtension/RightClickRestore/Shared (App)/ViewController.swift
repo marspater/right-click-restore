@@ -20,46 +20,54 @@ let extensionBundleIdentifier = "com.antigravity.RightClickRestore.Extension"
 
 class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMessageHandler {
 
-    @IBOutlet var webView: WKWebView!
+    var webView: WKWebView!
+
+    override func loadView() {
+        let config = WKWebViewConfiguration()
+        let userContentController = WKUserContentController()
+        userContentController.add(self, name: "controller")
+        config.userContentController = userContentController
+
+#if os(macOS)
+        let frame = NSRect(x: 0, y: 0, width: 540, height: 640)
+        let wv = WKWebView(frame: frame, configuration: config)
+        wv.navigationDelegate = self
+        wv.setValue(false, forKey: "drawsBackground")
+        if #available(macOS 12.0, *) {
+            wv.underPageBackgroundColor = .clear
+        }
+        self.view = wv
+        self.webView = wv
+#elseif os(iOS)
+        let wv = WKWebView(frame: .zero, configuration: config)
+        wv.navigationDelegate = self
+        self.view = wv
+        self.webView = wv
+#endif
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        self.webView.navigationDelegate = self
-
-#if os(iOS)
-        self.webView.scrollView.isScrollEnabled = true
-        self.webView.isOpaque = false
-        self.webView.backgroundColor = .clear
-#elseif os(macOS)
-        self.webView.setValue(false, forKey: "drawsBackground")
-        if #available(macOS 12.0, *) {
-            self.webView.underPageBackgroundColor = .clear
-        }
-#endif
-
-        // AutoLayout pinning to ensure the webView fills the entire window
-        self.webView.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            self.webView.topAnchor.constraint(equalTo: self.view.topAnchor),
-            self.webView.bottomAnchor.constraint(equalTo: self.view.bottomAnchor),
-            self.webView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor),
-            self.webView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor)
-        ])
-
-        self.webView.configuration.userContentController.add(self, name: "controller")
-
         loadMainContent()
     }
 
     func loadMainContent() {
-        if let htmlURL = Bundle.main.url(forResource: "Main", withExtension: "html") ??
-                         Bundle.main.url(forResource: "Main", withExtension: "html", subdirectory: "Base.lproj") {
-            if let htmlString = try? String(contentsOf: htmlURL, encoding: .utf8) {
-                self.webView.loadHTMLString(htmlString, baseURL: Bundle.main.resourceURL ?? htmlURL.deletingLastPathComponent())
-                return
+        let bundle = Bundle.main
+        var htmlContent: String?
+        var baseURL: URL? = bundle.resourceURL
+
+        if let url = bundle.url(forResource: "Main", withExtension: "html") ??
+                     bundle.url(forResource: "Main", withExtension: "html", subdirectory: "Base.lproj") {
+            htmlContent = try? String(contentsOf: url, encoding: .utf8)
+            baseURL = url.deletingLastPathComponent()
+        }
+
+        if let html = htmlContent {
+            self.webView.loadHTMLString(html, baseURL: baseURL)
+        } else if let resourcePath = bundle.path(forResource: "Main", ofType: "html") {
+            if let html = try? String(contentsOfFile: resourcePath, encoding: .utf8) {
+                self.webView.loadHTMLString(html, baseURL: bundle.resourceURL)
             }
-            self.webView.loadFileURL(htmlURL, allowingReadAccessTo: Bundle.main.bundleURL)
         }
     }
 
@@ -71,10 +79,12 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
             window.titleVisibility = .hidden
             window.styleMask.insert(.fullSizeContentView)
             window.isMovableByWindowBackground = true
+            window.backgroundColor = NSColor(red: 11/255.0, green: 14/255.0, blue: 20/255.0, alpha: 1.0)
             window.setContentSize(NSSize(width: 540, height: 640))
             window.minSize = NSSize(width: 480, height: 500)
             window.center()
         }
+        loadMainContent()
         checkExtensionStatus()
     }
 #endif
@@ -108,7 +118,6 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
         print("[WebView] Provisional navigation failed:", error.localizedDescription)
-        loadMainContent()
     }
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {

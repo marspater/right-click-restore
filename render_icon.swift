@@ -9,7 +9,6 @@ func createSquirclePath(in rect: CGRect, radius: CGFloat) -> CGPath {
     let h = rect.height
     let r = radius
     
-    // Apple continuous curvature corner approximation
     path.move(to: CGPoint(x: x + r, y: y))
     path.addLine(to: CGPoint(x: x + w - r, y: y))
     path.addCurve(to: CGPoint(x: x + w, y: y + r),
@@ -31,29 +30,143 @@ func createSquirclePath(in rect: CGRect, radius: CGFloat) -> CGPath {
     return path
 }
 
-func renderMacOS27Icon(size: Int) -> NSImage {
+func drawIconArtwork(in ctx: CGContext, bounds: CGRect, isFullBleed: Bool) {
+    let s = bounds.width
+    let colorSpace = CGColorSpaceCreateDeviceRGB()
+    
+    // 1. Mesh Background Gradient
+    let bgColors = [
+        NSColor(red: 0.01, green: 0.05, blue: 0.18, alpha: 1.0).cgColor,
+        NSColor(red: 0.00, green: 0.45, blue: 0.95, alpha: 1.0).cgColor,
+        NSColor(red: 0.00, green: 0.80, blue: 1.00, alpha: 1.0).cgColor,
+        NSColor(red: 0.55, green: 0.18, blue: 0.95, alpha: 1.0).cgColor
+    ] as CFArray
+    let bgLocations: [CGFloat] = [0.0, 0.35, 0.70, 1.0]
+    if let bgGradient = CGGradient(colorsSpace: colorSpace, colors: bgColors, locations: bgLocations) {
+        ctx.drawLinearGradient(bgGradient,
+                               start: CGPoint(x: bounds.minX, y: bounds.maxY),
+                               end: CGPoint(x: bounds.maxX, y: bounds.minY),
+                               options: [])
+    }
+    
+    // 2. Ambient Fluid Orbs
+    ctx.saveGState()
+    let radColors1 = [
+        NSColor(red: 0.0, green: 0.9, blue: 1.0, alpha: 0.65).cgColor,
+        NSColor(red: 0.0, green: 0.9, blue: 1.0, alpha: 0.0).cgColor
+    ] as CFArray
+    if let radGrad1 = CGGradient(colorsSpace: colorSpace, colors: radColors1, locations: [0.0, 1.0]) {
+        let center1 = CGPoint(x: bounds.minX + bounds.width * 0.3, y: bounds.maxY - bounds.height * 0.25)
+        ctx.drawRadialGradient(radGrad1,
+                               startCenter: center1, startRadius: 0,
+                               endCenter: center1, endRadius: bounds.width * 0.55,
+                               options: [])
+    }
+    ctx.restoreGState()
+
+    ctx.saveGState()
+    let radColors2 = [
+        NSColor(red: 0.90, green: 0.20, blue: 0.80, alpha: 0.5).cgColor,
+        NSColor(red: 0.90, green: 0.20, blue: 0.80, alpha: 0.0).cgColor
+    ] as CFArray
+    if let radGrad2 = CGGradient(colorsSpace: colorSpace, colors: radColors2, locations: [0.0, 1.0]) {
+        let center2 = CGPoint(x: bounds.maxX - bounds.width * 0.25, y: bounds.minY + bounds.height * 0.25)
+        ctx.drawRadialGradient(radGrad2,
+                               startCenter: center2, startRadius: 0,
+                               endCenter: center2, endRadius: bounds.width * 0.6,
+                               options: [])
+    }
+    ctx.restoreGState()
+
+    // 3. Centerpiece: Glowing Protective Shield & Cursor Arrow
+    let cx = bounds.midX
+    let cy = bounds.midY
+    let glyphScale = bounds.width / 824.0
+    
+    // Shield Backdrop Pill
+    let shieldW = 360.0 * glyphScale
+    let shieldH = 400.0 * glyphScale
+    let shieldRect = CGRect(x: cx - shieldW / 2, y: cy - shieldH / 2, width: shieldW, height: shieldH)
+    let shieldPath = CGMutablePath()
+    shieldPath.move(to: CGPoint(x: shieldRect.midX, y: shieldRect.maxY))
+    shieldPath.addLine(to: CGPoint(x: shieldRect.maxX, y: shieldRect.maxY - shieldH * 0.28))
+    shieldPath.addQuadCurve(to: CGPoint(x: shieldRect.midX, y: shieldRect.minY),
+                            control: CGPoint(x: shieldRect.maxX * 0.96, y: shieldRect.minY + shieldH * 0.22))
+    shieldPath.addQuadCurve(to: CGPoint(x: shieldRect.minX, y: shieldRect.maxY - shieldH * 0.28),
+                            control: CGPoint(x: shieldRect.minX * 1.04, y: shieldRect.minY + shieldH * 0.22))
+    shieldPath.closeSubpath()
+    
+    ctx.saveGState()
+    ctx.setShadow(offset: CGSize(width: 0, height: -8 * glyphScale), blur: 24 * glyphScale, color: NSColor(red: 0, green: 0, blue: 0, alpha: 0.45).cgColor)
+    ctx.addPath(shieldPath)
+    ctx.setFillColor(NSColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 0.16).cgColor)
+    ctx.fillPath()
+    
+    ctx.addPath(shieldPath)
+    ctx.setLineWidth(3.5 * glyphScale)
+    ctx.setStrokeColor(NSColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 0.55).cgColor)
+    ctx.strokePath()
+    ctx.restoreGState()
+
+    // Glowing Cursor Arrow
+    let arrowPath = CGMutablePath()
+    let ox = cx - 44 * glyphScale
+    let oy = cy - 35 * glyphScale
+    arrowPath.move(to: CGPoint(x: ox, y: oy + 130 * glyphScale))
+    arrowPath.addLine(to: CGPoint(x: ox + 95 * glyphScale, y: oy + 38 * glyphScale))
+    arrowPath.addLine(to: CGPoint(x: ox + 40 * glyphScale, y: oy + 38 * glyphScale))
+    arrowPath.addLine(to: CGPoint(x: ox + 78 * glyphScale, y: oy - 60 * glyphScale))
+    arrowPath.addLine(to: CGPoint(x: ox + 50 * glyphScale, y: oy - 72 * glyphScale))
+    arrowPath.addLine(to: CGPoint(x: ox + 12 * glyphScale, y: oy + 28 * glyphScale))
+    arrowPath.addLine(to: CGPoint(x: ox - 44 * glyphScale, y: oy - 28 * glyphScale))
+    arrowPath.closeSubpath()
+    
+    ctx.saveGState()
+    ctx.setShadow(offset: CGSize(width: 0, height: -4 * glyphScale), blur: 18 * glyphScale, color: NSColor(red: 0.0, green: 0.85, blue: 1.0, alpha: 0.85).cgColor)
+    ctx.addPath(arrowPath)
+    ctx.setFillColor(NSColor.white.cgColor)
+    ctx.fillPath()
+    ctx.restoreGState()
+
+    // 4. Specular Top Glass Highlight (macOS 27 Sheen)
+    let sheenRect = CGRect(x: bounds.minX, y: bounds.midY, width: bounds.width, height: bounds.height / 2)
+    let sheenColors = [
+        NSColor(white: 1.0, alpha: 0.40).cgColor,
+        NSColor(white: 1.0, alpha: 0.0).cgColor
+    ] as CFArray
+    if let sheenGrad = CGGradient(colorsSpace: colorSpace, colors: sheenColors, locations: [0.0, 1.0]) {
+        ctx.drawLinearGradient(sheenGrad,
+                               start: CGPoint(x: sheenRect.midX, y: bounds.maxY),
+                               end: CGPoint(x: sheenRect.midX, y: bounds.midY),
+                               options: [])
+    }
+    
+    // Inset Rim Border
+    if !isFullBleed {
+        let squirclePath = createSquirclePath(in: bounds, radius: bounds.width * 0.225)
+        ctx.addPath(squirclePath)
+        ctx.setLineWidth(3.0 * glyphScale)
+        ctx.setStrokeColor(NSColor(white: 1.0, alpha: 0.45).cgColor)
+        ctx.strokePath()
+    }
+}
+
+// 1. macOS App Icon (with native squircle & transparent outside)
+func renderAppSquircleIcon(size: Int) -> NSImage {
     let s = CGFloat(size)
     let image = NSImage(size: NSSize(width: s, height: s))
-    
     image.lockFocus()
     guard let ctx = NSGraphicsContext.current?.cgContext else {
         image.unlockFocus()
         return image
     }
-    
-    ctx.setAllowsAntialiasing(true)
-    ctx.setShouldAntialias(true)
-    
-    // Clear transparent canvas outside squircle (NO white borders!)
     ctx.clear(CGRect(x: 0, y: 0, width: s, height: s))
     
-    // Apple macOS Icon Grid: 824x824 on 1024x1024 canvas (scaled)
     let margin = s * (100.0 / 1024.0)
     let squircleRect = CGRect(x: margin, y: margin, width: s - 2 * margin, height: s - 2 * margin)
-    let cornerRadius = squircleRect.width * 0.225
-    let squirclePath = createSquirclePath(in: squircleRect, radius: cornerRadius)
+    let squirclePath = createSquirclePath(in: squircleRect, radius: squircleRect.width * 0.225)
     
-    // 1. Drop shadow beneath squircle
+    // Drop shadow
     ctx.saveGState()
     ctx.setShadow(offset: CGSize(width: 0, height: -s * 0.035), blur: s * 0.06, color: NSColor(red: 0, green: 0, blue: 0, alpha: 0.45).cgColor)
     ctx.addPath(squirclePath)
@@ -61,129 +174,28 @@ func renderMacOS27Icon(size: Int) -> NSImage {
     ctx.fillPath()
     ctx.restoreGState()
     
-    // 2. Clip to Squircle
+    // Clip and draw
     ctx.saveGState()
     ctx.addPath(squirclePath)
     ctx.clip()
-    
-    // 3. Liquid Glass Deep Mesh Gradient
-    let colorSpace = CGColorSpaceCreateDeviceRGB()
-    let bgColors = [
-        NSColor(red: 0.02, green: 0.04, blue: 0.12, alpha: 1.0).cgColor, // deep midnight
-        NSColor(red: 0.00, green: 0.35, blue: 0.85, alpha: 1.0).cgColor, // electric sapphire
-        NSColor(red: 0.00, green: 0.70, blue: 1.00, alpha: 1.0).cgColor, // neon cyan
-        NSColor(red: 0.45, green: 0.15, blue: 0.85, alpha: 1.0).cgColor  // royal violet
-    ] as CFArray
-    let bgLocations: [CGFloat] = [0.0, 0.4, 0.75, 1.0]
-    if let bgGradient = CGGradient(colorsSpace: colorSpace, colors: bgColors, locations: bgLocations) {
-        ctx.drawLinearGradient(bgGradient,
-                               start: CGPoint(x: squircleRect.minX, y: squircleRect.maxY),
-                               end: CGPoint(x: squircleRect.maxX, y: squircleRect.minY),
-                               options: [])
-    }
-    
-    // 4. Ambient Liquid Blob 1 (Top Left Cyan Glow)
-    ctx.saveGState()
-    let radialColors1 = [
-        NSColor(red: 0.0, green: 0.85, blue: 1.0, alpha: 0.6).cgColor,
-        NSColor(red: 0.0, green: 0.85, blue: 1.0, alpha: 0.0).cgColor
-    ] as CFArray
-    if let radGrad1 = CGGradient(colorsSpace: colorSpace, colors: radialColors1, locations: [0.0, 1.0]) {
-        let center1 = CGPoint(x: squircleRect.minX + squircleRect.width * 0.3, y: squircleRect.maxY - squircleRect.height * 0.25)
-        ctx.drawRadialGradient(radGrad1,
-                               startCenter: center1, startRadius: 0,
-                               endCenter: center1, endRadius: squircleRect.width * 0.5,
-                               options: [])
-    }
+    drawIconArtwork(in: ctx, bounds: squircleRect, isFullBleed: false)
     ctx.restoreGState()
+    
+    image.unlockFocus()
+    return image
+}
 
-    // 5. Ambient Liquid Blob 2 (Bottom Right Magenta Glow)
-    ctx.saveGState()
-    let radialColors2 = [
-        NSColor(red: 0.85, green: 0.15, blue: 0.75, alpha: 0.45).cgColor,
-        NSColor(red: 0.85, green: 0.15, blue: 0.75, alpha: 0.0).cgColor
-    ] as CFArray
-    if let radGrad2 = CGGradient(colorsSpace: colorSpace, colors: radialColors2, locations: [0.0, 1.0]) {
-        let center2 = CGPoint(x: squircleRect.maxX - squircleRect.width * 0.25, y: squircleRect.minY + squircleRect.height * 0.25)
-        ctx.drawRadialGradient(radGrad2,
-                               startCenter: center2, startRadius: 0,
-                               endCenter: center2, endRadius: squircleRect.width * 0.55,
-                               options: [])
+// 2. Full-Bleed Extension Icon (Edge-to-Edge so Safari clips it seamlessly with NO grey borders!)
+func renderFullBleedIcon(size: Int) -> NSImage {
+    let s = CGFloat(size)
+    let image = NSImage(size: NSSize(width: s, height: s))
+    image.lockFocus()
+    guard let ctx = NSGraphicsContext.current?.cgContext else {
+        image.unlockFocus()
+        return image
     }
-    ctx.restoreGState()
-
-    // 6. Draw Centerpiece Glyph: Modern 3D Cursor + Shield Restorer
-    let cx = squircleRect.midX
-    let cy = squircleRect.midY
-    let glyphScale = squircleRect.width / 824.0
-    
-    // Shield Backdrop Pill
-    let shieldW = 340.0 * glyphScale
-    let shieldH = 380.0 * glyphScale
-    let shieldRect = CGRect(x: cx - shieldW / 2, y: cy - shieldH / 2, width: shieldW, height: shieldH)
-    let shieldPath = CGMutablePath()
-    shieldPath.move(to: CGPoint(x: shieldRect.midX, y: shieldRect.maxY))
-    shieldPath.addLine(to: CGPoint(x: shieldRect.maxX, y: shieldRect.maxY - shieldH * 0.3))
-    shieldPath.addQuadCurve(to: CGPoint(x: shieldRect.midX, y: shieldRect.minY),
-                            control: CGPoint(x: shieldRect.maxX * 0.95, y: shieldRect.minY + shieldH * 0.2))
-    shieldPath.addQuadCurve(to: CGPoint(x: shieldRect.minX, y: shieldRect.maxY - shieldH * 0.3),
-                            control: CGPoint(x: shieldRect.minX * 1.05, y: shieldRect.minY + shieldH * 0.2))
-    shieldPath.closeSubpath()
-    
-    ctx.saveGState()
-    ctx.setShadow(offset: CGSize(width: 0, height: -8 * glyphScale), blur: 20 * glyphScale, color: NSColor(red: 0, green: 0, blue: 0, alpha: 0.5).cgColor)
-    ctx.addPath(shieldPath)
-    ctx.setFillColor(NSColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 0.12).cgColor)
-    ctx.fillPath()
-    
-    // Shield Inset Glass Stroke
-    ctx.addPath(shieldPath)
-    ctx.setLineWidth(3.0 * glyphScale)
-    ctx.setStrokeColor(NSColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 0.45).cgColor)
-    ctx.strokePath()
-    ctx.restoreGState()
-
-    // Glowing Cursor Arrow
-    let arrowPath = CGMutablePath()
-    let ox = cx - 40 * glyphScale
-    let oy = cy - 30 * glyphScale
-    arrowPath.move(to: CGPoint(x: ox, y: oy + 120 * glyphScale))
-    arrowPath.addLine(to: CGPoint(x: ox + 85 * glyphScale, y: oy + 35 * glyphScale))
-    arrowPath.addLine(to: CGPoint(x: ox + 35 * glyphScale, y: oy + 35 * glyphScale))
-    arrowPath.addLine(to: CGPoint(x: ox + 70 * glyphScale, y: oy - 55 * glyphScale))
-    arrowPath.addLine(to: CGPoint(x: ox + 45 * glyphScale, y: oy - 65 * glyphScale))
-    arrowPath.addLine(to: CGPoint(x: ox + 10 * glyphScale, y: oy + 25 * glyphScale))
-    arrowPath.addLine(to: CGPoint(x: ox - 40 * glyphScale, y: oy - 25 * glyphScale))
-    arrowPath.closeSubpath()
-    
-    ctx.saveGState()
-    ctx.setShadow(offset: CGSize(width: 0, height: -4 * glyphScale), blur: 16 * glyphScale, color: NSColor(red: 0.0, green: 0.8, blue: 1.0, alpha: 0.75).cgColor)
-    ctx.addPath(arrowPath)
-    ctx.setFillColor(NSColor.white.cgColor)
-    ctx.fillPath()
-    ctx.restoreGState()
-
-    // 7. Specular Top Glass Highlight (visionOS / macOS 27 Sheen)
-    let sheenRect = CGRect(x: squircleRect.minX, y: squircleRect.midY, width: squircleRect.width, height: squircleRect.height / 2)
-    let sheenColors = [
-        NSColor(white: 1.0, alpha: 0.35).cgColor,
-        NSColor(white: 1.0, alpha: 0.0).cgColor
-    ] as CFArray
-    if let sheenGrad = CGGradient(colorsSpace: colorSpace, colors: sheenColors, locations: [0.0, 1.0]) {
-        ctx.drawLinearGradient(sheenGrad,
-                               start: CGPoint(x: sheenRect.midX, y: squircleRect.maxY),
-                               end: CGPoint(x: sheenRect.midX, y: squircleRect.midY),
-                               options: [])
-    }
-    
-    // 8. Iridescent Glass Inset Border
-    ctx.addPath(squirclePath)
-    ctx.setLineWidth(3.0 * glyphScale)
-    ctx.setStrokeColor(NSColor(white: 1.0, alpha: 0.45).cgColor)
-    ctx.strokePath()
-    
-    ctx.restoreGState() // unclip squircle
-    
+    ctx.clear(CGRect(x: 0, y: 0, width: s, height: s))
+    drawIconArtwork(in: ctx, bounds: CGRect(x: 0, y: 0, width: s, height: s), isFullBleed: true)
     image.unlockFocus()
     return image
 }
@@ -191,10 +203,7 @@ func renderMacOS27Icon(size: Int) -> NSImage {
 func savePNG(image: NSImage, path: String) {
     guard let tiff = image.tiffRepresentation,
           let rep = NSBitmapImageRep(data: tiff),
-          let pngData = rep.representation(using: .png, properties: [:]) else {
-        print("Failed to encode PNG for:", path)
-        return
-    }
+          let pngData = rep.representation(using: .png, properties: [:]) else { return }
     try? pngData.write(to: URL(fileURLWithPath: path))
     print("Saved:", path)
 }
@@ -202,19 +211,21 @@ func savePNG(image: NSImage, path: String) {
 let fileManager = FileManager.default
 let basePath = "/Users/marspater/Documents/antigravity/wise-carson"
 let appIconSet = "\(basePath)/SafariExtension/RightClickRestore/Shared (App)/Assets.xcassets/AppIcon.appiconset"
+let largeIconSet = "\(basePath)/SafariExtension/RightClickRestore/Shared (App)/Assets.xcassets/LargeIcon.imageset"
 let extIcons = "\(basePath)/extension/icons"
 let sharedExtIcons = "\(basePath)/SafariExtension/RightClickRestore/Shared (Extension)/Resources/icons"
 
 try? fileManager.createDirectory(atPath: appIconSet, withIntermediateDirectories: true)
+try? fileManager.createDirectory(atPath: largeIconSet, withIntermediateDirectories: true)
 try? fileManager.createDirectory(atPath: extIcons, withIntermediateDirectories: true)
 try? fileManager.createDirectory(atPath: sharedExtIcons, withIntermediateDirectories: true)
 
-// 1. Generate full 1024x1024 Master Icon
-let icon1024 = renderMacOS27Icon(size: 1024)
-savePNG(image: icon1024, path: "\(appIconSet)/universal-icon-1024@1x.png")
-savePNG(image: icon1024, path: "\(basePath)/SafariExtension/RightClickRestore/Shared (App)/Resources/Icon.png")
+// 1. App Icons
+let masterAppIcon = renderAppSquircleIcon(size: 1024)
+savePNG(image: masterAppIcon, path: "\(appIconSet)/universal-icon-1024@1x.png")
+savePNG(image: masterAppIcon, path: "\(basePath)/SafariExtension/RightClickRestore/Shared (App)/Resources/Icon.png")
+savePNG(image: masterAppIcon, path: "\(basePath)/SafariExtension/RightClickRestore/Shared (App)/Resources/Base.lproj/Icon.png")
 
-// 2. Generate macOS AppIcon sizes
 let macSizes: [(String, Int)] = [
     ("mac-icon-16@1x.png", 16),
     ("mac-icon-16@2x.png", 32),
@@ -227,18 +238,19 @@ let macSizes: [(String, Int)] = [
     ("mac-icon-512@1x.png", 512),
     ("mac-icon-512@2x.png", 1024),
 ]
-
 for (name, size) in macSizes {
-    let img = renderMacOS27Icon(size: size)
+    let img = renderAppSquircleIcon(size: size)
     savePNG(image: img, path: "\(appIconSet)/\(name)")
 }
 
-// 3. Generate Extension Toolbar Icons
+// 2. Full-Bleed Extension Icons (Fixes Safari double-border / grey frame bug!)
 let extSizes = [16, 32, 48, 64, 128, 256, 512]
 for size in extSizes {
-    let img = renderMacOS27Icon(size: size)
+    let img = renderFullBleedIcon(size: size)
     savePNG(image: img, path: "\(extIcons)/icon-\(size).png")
     savePNG(image: img, path: "\(sharedExtIcons)/icon-\(size).png")
 }
+let largeIcon = renderFullBleedIcon(size: 256)
+savePNG(image: largeIcon, path: "\(largeIconSet)/icon-256.png")
 
-print("✅ All macOS 27 Squircle icons successfully generated with 100% transparent corners!")
+print("✅ All icons (macOS App Squircle & Full-Bleed Extension Icons) rendered flawlessly!")

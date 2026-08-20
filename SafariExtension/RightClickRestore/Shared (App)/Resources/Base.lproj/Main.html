@@ -9,101 +9,202 @@
   <script src="../Script.js" defer></script>
 </head>
 <body>
-  <div class="glass-app-wrapper">
-    <!-- Header Section -->
-    <header class="app-header">
-      <div class="icon-glow-wrapper">
-        <img src="../Icon.png" class="app-icon" alt="RightClickRestore">
+  <!-- Ambient Liquid Orbs Canvas (visionOS / macOS 27 Depth) -->
+  <div class="liquid-ambient-canvas">
+    <div class="liquid-orb orb-1"></div>
+    <div class="liquid-orb orb-2"></div>
+    <div class="liquid-orb orb-3"></div>
+  </div>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="header-glass">
+      <div class="app-icon-wrapper">
+        <img src="../Icon.png" class="app-icon-img" alt="RightClickRestore Icon">
       </div>
-      <div class="header-titles">
-        <h1 class="app-title">Right Click Restorer</h1>
-        <p class="app-tagline">Advanced Context Menu & Media Unlock Engine for Safari</p>
+      <div class="header-info">
+        <div class="app-title-row">
+          <h1 class="app-title">Right Click Restorer</h1>
+          <span class="version-pill">macOS 27</span>
+        </div>
+        <p class="app-subtitle">Apple Liquid Glass • Advanced Context Menu Engine</p>
       </div>
     </header>
 
-    <!-- Status Banner Card -->
-    <section class="glass-card status-card">
-      <div class="status-left">
-        <div class="status-indicator-ring">
-          <span class="status-dot" id="status-dot"></span>
-        </div>
-        <div class="status-text-group">
-          <span class="status-label">Safari Extension Status</span>
-          <h3 class="status-title" id="status-title">Checking Safari Extension...</h3>
-          <p class="status-desc" id="status-desc">Communicating with macOS Safari Extension Manager.</p>
+    <!-- Segmented Navigation -->
+    <nav class="segmented-nav">
+      <button class="tab-btn active" data-tab="tab-dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        <span>Dashboard</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-sandbox">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+          <polyline points="2 17 12 22 22 17"></polyline>
+          <polyline points="2 12 12 17 22 12"></polyline>
+        </svg>
+        <span>Sandbox</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-guide">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <span>Setup Guide</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-diag">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+        </svg>
+        <span>Diagnostics</span>
+      </button>
+    </nav>
+
+    <!-- Tab 1: Dashboard -->
+    <div class="tab-pane active" id="tab-dashboard">
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <!-- Status Banner -->
+        <section class="liquid-card status-banner">
+          <div class="status-info-side">
+            <div class="status-orb-beacon">
+              <span class="status-glow-dot" id="status-dot"></span>
+            </div>
+            <div class="status-labels">
+              <span class="status-tag">Safari Extension Bridge</span>
+              <h3 class="status-title-text" id="status-title">Checking Safari Extension...</h3>
+              <p class="status-sub-text" id="status-desc">Connecting to macOS Safari Extension Manager.</p>
+            </div>
+          </div>
+          <button class="btn-icon-circle" id="btn-refresh" title="Refresh Status">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+          </button>
+        </section>
+
+        <!-- Primary Actions -->
+        <div class="action-row">
+          <button class="btn-liquid-primary" id="btn-open-preferences">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            <span>Open Safari Settings…</span>
+          </button>
+          <button class="btn-liquid-glass" id="btn-open-test">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+            <span>Test Suite</span>
+          </button>
         </div>
       </div>
-      <button class="btn-refresh" id="btn-refresh" title="Refresh Status">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="23 4 23 10 17 10"></polyline>
-          <polyline points="1 20 1 14 7 14"></polyline>
-          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-        </svg>
-      </button>
-    </section>
-
-    <!-- Action Buttons -->
-    <div class="action-grid">
-      <button class="btn-primary glass-button" id="btn-open-preferences">
-        <span class="btn-icon">⚙️</span>
-        <span>Open Safari Extension Settings…</span>
-      </button>
-      <button class="btn-secondary glass-button" id="btn-open-test">
-        <span class="btn-icon">🧪</span>
-        <span>Launch Test Suite</span>
-      </button>
     </div>
 
-    <!-- Quick Setup Guide -->
-    <section class="glass-card guide-card">
-      <h4 class="card-heading">
-        <span>⚡</span> Quick Setup Checklist
-      </h4>
-      <div class="checklist">
-        <div class="check-item">
-          <div class="step-badge">1</div>
-          <div class="step-content">
-            <strong>Enable Developer Features</strong>
-            <p>Safari → Settings (<kbd>⌘,</kbd>) → <em>Advanced</em> → Check <strong>"Show features for web developers"</strong>.</p>
+    <!-- Tab 2: Live Sandbox -->
+    <div class="tab-pane" id="tab-sandbox" style="display:none;">
+      <section class="liquid-card">
+        <div class="card-header-row">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polygon points="10 8 16 12 10 16 10 8"></polygon>
+          </svg>
+          <span>Live In-App Context Menu Sandbox</span>
+        </div>
+        <p style="font-size:12.5px; color:var(--text-secondary);">Test blocking and unblocking right inside this window:</p>
+        <div class="sandbox-zone-grid">
+          <div class="sandbox-capsule" oncontextmenu="logSandbox('Blocked by inline oncontextmenu'); return false;">
+            🖱️ <strong>Inline Blocker</strong><br>
+            <span style="font-size:11px; opacity:0.8;"><code>oncontextmenu="return false;"</code></span>
+          </div>
+          <div class="sandbox-capsule" id="sandbox-listener-box">
+            🛡️ <strong>Listener Blocker</strong><br>
+            <span style="font-size:11px; opacity:0.8;"><code>e.preventDefault()</code></span>
           </div>
         </div>
-        <div class="check-item">
-          <div class="step-badge">2</div>
-          <div class="step-content">
-            <strong>Allow Unsigned Extensions</strong>
-            <p>Safari menu bar → <em>Develop</em> → Check <strong>"Allow Unsigned Extensions"</strong>.</p>
-          </div>
+        <div class="live-log-console" id="sandbox-log">
+          <div>[Ready] Right click the capsules above to test event logs...</div>
         </div>
-        <div class="check-item">
-          <div class="step-badge">3</div>
-          <div class="step-content">
-            <strong>Grant Permissions</strong>
-            <p>Safari → <em>Settings</em> → <em>Extensions</em> → Enable extension & set <strong>"Always Allow on Every Website"</strong>.</p>
-          </div>
-        </div>
-      </div>
-    </section>
+      </section>
+    </div>
 
-    <!-- Interactive In-App Test Sandbox -->
-    <section class="glass-card sandbox-card">
-      <h4 class="card-heading">
-        <span>🖱️</span> Live In-App Sandbox
-      </h4>
-      <p class="sandbox-intro">Try right-clicking inside these test zones directly in this window:</p>
-      <div class="sandbox-grid">
-        <div class="sandbox-box" oncontextmenu="return false;">
-          <span>🔒 Blocked via inline <code>oncontextmenu</code></span>
+    <!-- Tab 3: Setup Guide -->
+    <div class="tab-pane" id="tab-guide" style="display:none;">
+      <section class="liquid-card">
+        <div class="card-header-row">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <span>3-Step Safari Activation Guide</span>
         </div>
-        <div class="sandbox-box" id="sandbox-listener">
-          <span>🔒 Blocked via <code>preventDefault()</code></span>
+        <div class="checklist-stack">
+          <div class="checklist-node">
+            <div class="step-num">1</div>
+            <div class="step-desc">
+              <strong>Enable Web Developer Features</strong>
+              <p>Safari → Settings (<kbd>⌘,</kbd>) → <em>Advanced</em> → Check <strong>"Show features for web developers"</strong>.</p>
+            </div>
+          </div>
+          <div class="checklist-node">
+            <div class="step-num">2</div>
+            <div class="step-desc">
+              <strong>Allow Unsigned Extensions</strong>
+              <p>Safari top menu bar → <em>Develop</em> → Check <strong>"Allow Unsigned Extensions"</strong> (enter Touch ID/password).</p>
+            </div>
+          </div>
+          <div class="checklist-node">
+            <div class="step-num">3</div>
+            <div class="step-desc">
+              <strong>Set Permissions to Always Allow</strong>
+              <p>Safari → Settings → <em>Extensions</em> → Enable <strong>Right Click Restorer</strong> & choose <strong>"Always Allow on Every Website"</strong>.</p>
+            </div>
+          </div>
         </div>
-      </div>
-      <p class="sandbox-note">💡 Tip: Hold <kbd>Shift</kbd> or <kbd>Option</kbd> while right-clicking anywhere to force native menu.</p>
-    </section>
+      </section>
+    </div>
 
-    <!-- Footer -->
-    <footer class="app-footer">
-      <span>Native macOS 27 Ready • Universal Apple Silicon & Intel</span>
+    <!-- Tab 4: Diagnostics -->
+    <div class="tab-pane" id="tab-diag" style="display:none;">
+      <section class="liquid-card">
+        <div class="card-header-row">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+          <span>System Diagnostics</span>
+        </div>
+        <div class="diag-grid">
+          <div class="diag-row">
+            <span>macOS PlugInKit Registration</span>
+            <span class="diag-badge ok" id="diag-pluginkit">Active</span>
+          </div>
+          <div class="diag-row">
+            <span>App Sandbox Security</span>
+            <span class="diag-badge ok">Enabled</span>
+          </div>
+          <div class="diag-row">
+            <span>Safari Extension Bundle ID</span>
+            <span style="font-family:var(--font-mono); font-size:11px; opacity:0.8;">com.antigravity.RightClickRestore.Extension</span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <footer class="footer-text">
+      Apple Liquid Glass UI • macOS 27 Architecture
     </footer>
   </div>
 </body>

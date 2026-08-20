@@ -5,142 +5,310 @@
 //  Created by Mars Pater on 2026-08-20.
 //
 
-import WebKit
-
-#if os(iOS)
-import UIKit
-typealias PlatformViewController = UIViewController
-#elseif os(macOS)
 import Cocoa
 import SafariServices
-typealias PlatformViewController = NSViewController
-#endif
 
 let extensionBundleIdentifier = "com.antigravity.RightClickRestore.Extension"
 
-class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMessageHandler {
+class ViewController: NSViewController {
 
-    var webView: WKWebView!
+    private var statusDot: NSView!
+    private var statusTitleLabel: NSTextField!
+    private var statusDescLabel: NSTextField!
+    private var openPrefsButton: NSButton!
+    private var openTestButton: NSButton!
+    private var refreshButton: NSButton!
 
     override func loadView() {
-        let config = WKWebViewConfiguration()
-        let userContentController = WKUserContentController()
-        userContentController.add(self, name: "controller")
-        config.userContentController = userContentController
-
-#if os(macOS)
-        let frame = NSRect(x: 0, y: 0, width: 540, height: 640)
-        let wv = WKWebView(frame: frame, configuration: config)
-        wv.navigationDelegate = self
-        wv.setValue(false, forKey: "drawsBackground")
-        if #available(macOS 12.0, *) {
-            wv.underPageBackgroundColor = .clear
-        }
-        self.view = wv
-        self.webView = wv
-#elseif os(iOS)
-        let wv = WKWebView(frame: .zero, configuration: config)
-        wv.navigationDelegate = self
-        self.view = wv
-        self.webView = wv
-#endif
+        // Native Apple Visual Effect Glass View
+        let visualEffectView = NSVisualEffectView(frame: NSRect(x: 0, y: 0, width: 460, height: 520))
+        visualEffectView.material = .hudWindow
+        visualEffectView.blendingMode = .behindWindow
+        visualEffectView.state = .active
+        visualEffectView.wantsLayer = true
+        self.view = visualEffectView
     }
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        loadMainContent()
+        setupUI()
     }
 
-    func loadMainContent() {
-        let bundle = Bundle.main
-        var htmlContent: String?
-        var baseURL: URL? = bundle.resourceURL
-
-        if let url = bundle.url(forResource: "Main", withExtension: "html") ??
-                     bundle.url(forResource: "Main", withExtension: "html", subdirectory: "Base.lproj") {
-            htmlContent = try? String(contentsOf: url, encoding: .utf8)
-            baseURL = url.deletingLastPathComponent()
-        }
-
-        if let html = htmlContent {
-            self.webView.loadHTMLString(html, baseURL: baseURL)
-        } else if let resourcePath = bundle.path(forResource: "Main", ofType: "html") {
-            if let html = try? String(contentsOfFile: resourcePath, encoding: .utf8) {
-                self.webView.loadHTMLString(html, baseURL: bundle.resourceURL)
-            }
-        }
-    }
-
-#if os(macOS)
     override func viewWillAppear() {
         super.viewWillAppear()
         if let window = self.view.window {
+            window.title = "Right Click Restorer"
             window.titlebarAppearsTransparent = true
             window.titleVisibility = .hidden
             window.styleMask.insert(.fullSizeContentView)
-            window.isMovableByWindowBackground = true
-            window.backgroundColor = NSColor(red: 11/255.0, green: 14/255.0, blue: 20/255.0, alpha: 1.0)
-            window.setContentSize(NSSize(width: 540, height: 640))
-            window.minSize = NSSize(width: 480, height: 500)
+            window.isMovableByWindowBackground = false
+            window.setContentSize(NSSize(width: 460, height: 520))
+            window.minSize = NSSize(width: 440, height: 500)
+            window.maxSize = NSSize(width: 500, height: 560)
             window.center()
         }
-        loadMainContent()
         checkExtensionStatus()
     }
-#endif
+
+    private func setupUI() {
+        let container = NSStackView()
+        container.orientation = .vertical
+        container.alignment = .centerX
+        container.spacing = 14
+        container.edgeInsets = NSEdgeInsets(top: 28, left: 24, bottom: 24, right: 24)
+        container.translatesAutoresizingMaskIntoConstraints = false
+        self.view.addSubview(container)
+
+        NSLayoutConstraint.activate([
+            container.topAnchor.constraint(equalTo: self.view.topAnchor),
+            container.bottomAnchor.constraint(equalTo: self.view.bottomAnchor),
+            container.leadingAnchor.constraint(equalTo: self.view.leadingAnchor),
+            container.trailingAnchor.constraint(equalTo: self.view.trailingAnchor)
+        ])
+
+        // 1. App Icon
+        let iconImageView = NSImageView()
+        iconImageView.imageScaling = .scaleProportionallyUpOrDown
+        if let iconPath = Bundle.main.path(forResource: "universal-icon-1024@1x", ofType: "png", inDirectory: "AppIcon.appiconset") ??
+                          Bundle.main.path(forResource: "Icon", ofType: "png") {
+            iconImageView.image = NSImage(contentsOfFile: iconPath)
+        } else {
+            iconImageView.image = NSApp.applicationIconImage
+        }
+        iconImageView.translatesAutoresizingMaskIntoConstraints = false
+        iconImageView.wantsLayer = true
+        iconImageView.layer?.cornerRadius = 16
+        iconImageView.layer?.masksToBounds = true
+        iconImageView.layer?.shadowColor = NSColor.black.cgColor
+        iconImageView.layer?.shadowOpacity = 0.35
+        iconImageView.layer?.shadowOffset = CGSize(width: 0, height: -4)
+        iconImageView.layer?.shadowRadius = 12
+        NSLayoutConstraint.activate([
+            iconImageView.widthAnchor.constraint(equalToConstant: 72),
+            iconImageView.heightAnchor.constraint(equalToConstant: 72)
+        ])
+        container.addArrangedSubview(iconImageView)
+
+        // 2. Title & Version
+        let titleRow = NSStackView()
+        titleRow.orientation = .horizontal
+        titleRow.alignment = .centerY
+        titleRow.spacing = 8
+
+        let titleLabel = NSTextField(labelWithString: "Right Click Restorer")
+        titleLabel.font = NSFont.systemFont(ofSize: 20, weight: .bold)
+        titleLabel.textColor = .labelColor
+        titleRow.addArrangedSubview(titleLabel)
+
+        let versionPill = NSTextField(labelWithString: " macOS 27 ")
+        versionPill.font = NSFont.systemFont(ofSize: 10, weight: .semibold)
+        versionPill.textColor = NSColor.systemTeal
+        versionPill.wantsLayer = true
+        versionPill.layer?.backgroundColor = NSColor.systemTeal.withAlphaComponent(0.15).cgColor
+        versionPill.layer?.borderColor = NSColor.systemTeal.withAlphaComponent(0.35).cgColor
+        versionPill.layer?.borderWidth = 1
+        versionPill.layer?.cornerRadius = 6
+        versionPill.layer?.masksToBounds = true
+        titleRow.addArrangedSubview(versionPill)
+        container.addArrangedSubview(titleRow)
+
+        let subtitleLabel = NSTextField(labelWithString: "Apple Liquid Glass • Advanced Context Menu Engine")
+        subtitleLabel.font = NSFont.systemFont(ofSize: 12, weight: .regular)
+        subtitleLabel.textColor = .secondaryLabelColor
+        container.addArrangedSubview(subtitleLabel)
+
+        // 3. Status Glass Card
+        let statusCard = NSView()
+        statusCard.wantsLayer = true
+        statusCard.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.06).cgColor
+        statusCard.layer?.borderColor = NSColor.white.withAlphaComponent(0.18).cgColor
+        statusCard.layer?.borderWidth = 1
+        statusCard.layer?.cornerRadius = 14
+        statusCard.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            statusCard.widthAnchor.constraint(equalTo: container.widthAnchor, constant: -16),
+            statusCard.heightAnchor.constraint(equalToConstant: 72)
+        ])
+
+        let statusStack = NSStackView()
+        statusStack.orientation = .horizontal
+        statusStack.alignment = .centerY
+        statusStack.spacing = 14
+        statusStack.translatesAutoresizingMaskIntoConstraints = false
+        statusCard.addSubview(statusStack)
+
+        NSLayoutConstraint.activate([
+            statusStack.leadingAnchor.constraint(equalTo: statusCard.leadingAnchor, constant: 14),
+            statusStack.trailingAnchor.constraint(equalTo: statusCard.trailingAnchor, constant: -14),
+            statusStack.centerYAnchor.constraint(equalTo: statusCard.centerYAnchor)
+        ])
+
+        // Status Beacon Dot
+        statusDot = NSView()
+        statusDot.wantsLayer = true
+        statusDot.layer?.cornerRadius = 7
+        statusDot.layer?.backgroundColor = NSColor.systemOrange.cgColor
+        statusDot.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            statusDot.widthAnchor.constraint(equalToConstant: 14),
+            statusDot.heightAnchor.constraint(equalToConstant: 14)
+        ])
+        statusStack.addArrangedSubview(statusDot)
+
+        let statusTextStack = NSStackView()
+        statusTextStack.orientation = .vertical
+        statusTextStack.alignment = .leading
+        statusTextStack.spacing = 2
+
+        statusTitleLabel = NSTextField(labelWithString: "Checking Safari Extension…")
+        statusTitleLabel.font = NSFont.systemFont(ofSize: 13.5, weight: .semibold)
+        statusTitleLabel.textColor = .labelColor
+        statusTextStack.addArrangedSubview(statusTitleLabel)
+
+        statusDescLabel = NSTextField(labelWithString: "Connecting to macOS Safari Extension Manager.")
+        statusDescLabel.font = NSFont.systemFont(ofSize: 11, weight: .regular)
+        statusDescLabel.textColor = .secondaryLabelColor
+        statusTextStack.addArrangedSubview(statusDescLabel)
+
+        statusStack.addArrangedSubview(statusTextStack)
+
+        // Refresh status button
+        refreshButton = NSButton()
+        refreshButton.title = "↻"
+        refreshButton.font = NSFont.systemFont(ofSize: 15, weight: .bold)
+        refreshButton.bezelStyle = .circular
+        refreshButton.target = self
+        refreshButton.action = #selector(handleRefresh)
+        statusStack.addArrangedSubview(refreshButton)
+
+        container.addArrangedSubview(statusCard)
+
+        // 4. Primary Action Buttons
+        let buttonRow = NSStackView()
+        buttonRow.orientation = .horizontal
+        buttonRow.spacing = 10
+        buttonRow.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            buttonRow.widthAnchor.constraint(equalTo: container.widthAnchor, constant: -16)
+        ])
+
+        openPrefsButton = NSButton(title: "Open Safari Settings…", target: self, action: #selector(handleOpenPreferences))
+        openPrefsButton.bezelStyle = .rounded
+        openPrefsButton.isHighlighted = true
+        openPrefsButton.keyEquivalent = "\r"
+        openPrefsButton.font = NSFont.systemFont(ofSize: 13, weight: .semibold)
+        openPrefsButton.heightAnchor.constraint(equalToConstant: 32).isActive = true
+        buttonRow.addArrangedSubview(openPrefsButton)
+
+        openTestButton = NSButton(title: "Open Test Suite", target: self, action: #selector(handleOpenTestSuite))
+        openTestButton.bezelStyle = .rounded
+        openTestButton.font = NSFont.systemFont(ofSize: 13, weight: .regular)
+        openTestButton.heightAnchor.constraint(equalToConstant: 32).isActive = true
+        buttonRow.addArrangedSubview(openTestButton)
+
+        container.addArrangedSubview(buttonRow)
+
+        // 5. Checklist Guide Card
+        let guideCard = NSView()
+        guideCard.wantsLayer = true
+        guideCard.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.04).cgColor
+        guideCard.layer?.borderColor = NSColor.white.withAlphaComponent(0.12).cgColor
+        guideCard.layer?.borderWidth = 1
+        guideCard.layer?.cornerRadius = 12
+        guideCard.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            guideCard.widthAnchor.constraint(equalTo: container.widthAnchor, constant: -16)
+        ])
+
+        let guideStack = NSStackView()
+        guideStack.orientation = .vertical
+        guideStack.alignment = .leading
+        guideStack.spacing = 8
+        guideStack.edgeInsets = NSEdgeInsets(top: 10, left: 12, bottom: 10, right: 12)
+        guideStack.translatesAutoresizingMaskIntoConstraints = false
+        guideCard.addSubview(guideStack)
+
+        NSLayoutConstraint.activate([
+            guideStack.topAnchor.constraint(equalTo: guideCard.topAnchor),
+            guideStack.bottomAnchor.constraint(equalTo: guideCard.bottomAnchor),
+            guideStack.leadingAnchor.constraint(equalTo: guideCard.leadingAnchor),
+            guideStack.trailingAnchor.constraint(equalTo: guideCard.trailingAnchor)
+        ])
+
+        let guideHeader = NSTextField(labelWithString: "Quick Setup Guide:")
+        guideHeader.font = NSFont.systemFont(ofSize: 11.5, weight: .bold)
+        guideHeader.textColor = .secondaryLabelColor
+        guideStack.addArrangedSubview(guideHeader)
+
+        let step1 = NSTextField(labelWithString: "1. Safari → Settings → Advanced → \"Show features for web developers\".")
+        step1.font = NSFont.systemFont(ofSize: 11, weight: .regular)
+        step1.textColor = .labelColor
+        guideStack.addArrangedSubview(step1)
+
+        let step2 = NSTextField(labelWithString: "2. Safari Menu → Develop → \"Allow Unsigned Extensions\".")
+        step2.font = NSFont.systemFont(ofSize: 11, weight: .regular)
+        step2.textColor = .labelColor
+        guideStack.addArrangedSubview(step2)
+
+        let step3 = NSTextField(labelWithString: "3. Safari → Extensions → Enable Right Click Restorer & choose \"Always Allow\".")
+        step3.font = NSFont.systemFont(ofSize: 11, weight: .regular)
+        step3.textColor = .labelColor
+        guideStack.addArrangedSubview(step3)
+
+        container.addArrangedSubview(guideCard)
+
+        // 6. Tip Banner
+        let tipLabel = NSTextField(labelWithString: "💡 Hold Shift while right-clicking anywhere to force native context menu.")
+        tipLabel.font = NSFont.systemFont(ofSize: 11, weight: .medium)
+        tipLabel.textColor = .secondaryLabelColor
+        tipLabel.alignment = .center
+        container.addArrangedSubview(tipLabel)
+    }
 
     func checkExtensionStatus() {
-#if os(macOS)
-        SFSafariExtensionManager.getStateOfSafariExtension(withIdentifier: extensionBundleIdentifier) { (state, error) in
+        SFSafariExtensionManager.getStateOfSafariExtension(withIdentifier: extensionBundleIdentifier) { [weak self] (state, error) in
             DispatchQueue.main.async {
-                guard let state = state, error == nil else {
-                    self.webView.evaluateJavaScript("updateStatus(false, 'unknown')")
-                    return
-                }
-                self.webView.evaluateJavaScript("updateStatus(\(state.isEnabled), 'ready')")
-            }
-        }
-#endif
-    }
-
-    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-#if os(iOS)
-        webView.evaluateJavaScript("initPlatform('ios')")
-#elseif os(macOS)
-        webView.evaluateJavaScript("initPlatform('mac')")
-        checkExtensionStatus()
-#endif
-    }
-
-    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-        print("[WebView] Navigation failed:", error.localizedDescription)
-    }
-
-    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-        print("[WebView] Provisional navigation failed:", error.localizedDescription)
-    }
-
-    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        guard let command = message.body as? String else { return }
-
-#if os(macOS)
-        switch command {
-        case "open-preferences":
-            SFSafariApplication.showPreferencesForExtension(withIdentifier: extensionBundleIdentifier) { error in
-                if error != nil {
-                    if let url = URL(string: "x-apple.systempreferences:com.apple.Safari.Extensions") {
-                        NSWorkspace.shared.open(url)
+                guard let self = self else { return }
+                if let state = state, error == nil {
+                    if state.isEnabled {
+                        self.statusDot.layer?.backgroundColor = NSColor.systemGreen.cgColor
+                        self.statusDot.layer?.shadowColor = NSColor.systemGreen.cgColor
+                        self.statusDot.layer?.shadowOpacity = 0.7
+                        self.statusDot.layer?.shadowRadius = 8
+                        self.statusTitleLabel.stringValue = "Extension is Active in Safari"
+                        self.statusDescLabel.stringValue = "Right-click and selection protections are active."
+                    } else {
+                        self.statusDot.layer?.backgroundColor = NSColor.systemGray.cgColor
+                        self.statusDot.layer?.shadowOpacity = 0
+                        self.statusTitleLabel.stringValue = "Extension is Disabled in Safari"
+                        self.statusDescLabel.stringValue = "Click \"Open Safari Settings…\" to turn it on."
                     }
+                } else {
+                    self.statusDot.layer?.backgroundColor = NSColor.systemOrange.cgColor
+                    self.statusTitleLabel.stringValue = "Awaiting Safari Permission"
+                    self.statusDescLabel.stringValue = "Enable \"Allow Unsigned Extensions\" in Safari's Develop menu."
                 }
             }
-        case "open-test-suite":
-            let testURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath).appendingPathComponent("test_page.html")
-            NSWorkspace.shared.open(testURL)
-        case "check-status":
-            checkExtensionStatus()
-        default:
-            break
         }
-#endif
+    }
+
+    @objc private func handleOpenPreferences() {
+        SFSafariApplication.showPreferencesForExtension(withIdentifier: extensionBundleIdentifier) { error in
+            if error != nil {
+                if let url = URL(string: "x-apple.systempreferences:com.apple.Safari.Extensions") {
+                    NSWorkspace.shared.open(url)
+                }
+            }
+        }
+    }
+
+    @objc private func handleOpenTestSuite() {
+        let testPath = "/Users/marspater/Documents/antigravity/wise-carson/test_page.html"
+        let testURL = URL(fileURLWithPath: testPath)
+        NSWorkspace.shared.open(testURL)
+    }
+
+    @objc private func handleRefresh() {
+        checkExtensionStatus()
     }
 }

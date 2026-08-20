@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Right-Click & Selection Blocker Test Suite</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --border: #334155;
+      --danger: #f43f5e;
+      --success: #10b981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 40px 20px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+      position: relative;
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-desc {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 16px;
+    }
+
+    .test-box {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1.5px dashed var(--danger);
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+      font-size: 0.95rem;
+      color: #cbd5e1;
+      cursor: context-menu;
+      transition: all 0.2s;
+    }
+
+    .test-box:hover {
+      border-color: var(--accent);
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    .no-select {
+      -webkit-user-select: none !important;
+      user-select: none !important;
+      cursor: default;
+    }
+
+    .shield-container {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .click-shield {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 0, 0, 0.02);
+      z-index: 500;
+      cursor: not-allowed;
+    }
+
+    .log-panel {
+      background-color: #090d16;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-top: 20px;
+      max-height: 160px;
+      overflow-y: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.85rem;
+      color: #38bdf8;
+    }
+
+    .log-entry {
+      margin-bottom: 4px;
+    }
+
+    .instructions {
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+
+    .instructions h3 {
+      color: var(--accent);
+      margin-bottom: 8px;
+      font-size: 1.1rem;
+    }
+
+    .instructions ul {
+      padding-left: 20px;
+      color: #cbd5e1;
+      font-size: 0.95rem;
+    }
+
+    .instructions li {
+      margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🛡️ Anti-Right-Click Test Suite</h1>
+      <p class="subtitle">Use this page to test if Safari extension successfully restores right-click and selection.</p>
+    </header>
+
+    <div class="instructions">
+      <h3>Testing Checklist:</h3>
+      <ul>
+        <li><strong>Without Extension:</strong> Right-clicking or selecting text inside these boxes will be blocked by script/CSS.</li>
+        <li><strong>With Extension Enabled:</strong> Right-clicking opens Safari's native context menu, and text can be highlighted and copied normally.</li>
+        <li><strong>Shift/Option Bypass:</strong> Hold <kbd>Shift</kbd> or <kbd>Option</kbd> while right clicking to force the menu.</li>
+      </ul>
+    </div>
+
+    <div class="grid">
+      <!-- Test 1 -->
+      <div class="card">
+        <h2 class="card-title"><span>1️⃣</span> Inline oncontextmenu Block</h2>
+        <p class="card-desc">Uses <code>oncontextmenu="return false;"</code> in HTML attribute.</p>
+        <div class="test-box" oncontextmenu="logEvent('Blocked by inline oncontextmenu'); return false;">
+          🖱️ Right click this box to test inline handler bypass.
+        </div>
+      </div>
+
+      <!-- Test 2 -->
+      <div class="card">
+        <h2 class="card-title"><span>2️⃣</span> Event Listener preventDefault()</h2>
+        <p class="card-desc">Uses <code>addEventListener('contextmenu', e => e.preventDefault())</code>.</p>
+        <div class="test-box" id="test-listener">
+          🖱️ Right click this box to test addEventListener bypass.
+        </div>
+      </div>
+
+      <!-- Test 3 -->
+      <div class="card">
+        <h2 class="card-title"><span>3️⃣</span> Capture Phase stopPropagation</h2>
+        <p class="card-desc">Uses capturing phase event listener with <code>e.stopPropagation()</code>.</p>
+        <div class="test-box" id="test-capture">
+          🖱️ Right click this box to test capture phase interception.
+        </div>
+      </div>
+
+      <!-- Test 4 -->
+      <div class="card">
+        <h2 class="card-title"><span>4️⃣</span> CSS user-select: none</h2>
+        <p class="card-desc">Uses <code>user-select: none !important</code> to disable highlighting.</p>
+        <div class="test-box no-select">
+          📝 Try highlighting and copying this text (Cmd+C).
+        </div>
+      </div>
+
+      <!-- Test 5 -->
+      <div class="card">
+        <h2 class="card-title"><span>5️⃣</span> onselectstart & oncopy Blocker</h2>
+        <p class="card-desc">Cancels <code>selectstart</code>, <code>copy</code>, and <code>dragstart</code>.</p>
+        <div class="test-box" id="test-copy-block">
+          📋 Highlight this text and press ⌘C to test copy restoration.
+        </div>
+      </div>
+
+      <!-- Test 6 -->
+      <div class="card shield-container">
+        <h2 class="card-title"><span>6️⃣</span> Transparent Overlay Shield</h2>
+        <p class="card-desc">Has an invisible floating &lt;div&gt; on top to swallow clicks.</p>
+        <div class="click-shield" id="test-shield" oncontextmenu="logEvent('Shield intercepted click'); return false;"></div>
+        <div class="test-box">
+          🛡️ Invisible layer is floating above this text box.
+        </div>
+      </div>
+    </div>
+
+    <!-- Event Log -->
+    <div class="card">
+      <h2 class="card-title"><span>📜</span> Event Interception Console</h2>
+      <div class="log-panel" id="log-panel">
+        <div class="log-entry">Waiting for right-click interactions...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function logEvent(msg) {
+      const panel = document.getElementById('log-panel');
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      panel.appendChild(entry);
+      panel.scrollTop = panel.scrollHeight;
+    }
+
+    // Attach Test 2 Listener
+    document.getElementById('test-listener').addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      logEvent('Website listener called e.preventDefault()');
+    });
+
+    // Attach Test 3 Capture Listener
+    document.getElementById('test-capture').addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      logEvent('Website capture listener called e.preventDefault() & stopPropagation()');
+    }, true);
+
+    // Attach Test 5 Copy Blocker
+    const copyBox = document.getElementById('test-copy-block');
+    copyBox.addEventListener('selectstart', (e) => {
+      e.preventDefault();
+      logEvent('Website blocked selectstart event');
+    });
+    copyBox.addEventListener('copy', (e) => {
+      e.preventDefault();
+      logEvent('Website blocked copy event');
+    });
+    copyBox.addEventListener('dragstart', (e) => {
+      e.preventDefault();
+      logEvent('Website blocked dragstart event');
+    });
+  </script>
+</body>
+</html>

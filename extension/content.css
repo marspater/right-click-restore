@@ -1,0 +1,76 @@
+/* Right Click & Selection Restorer Content Styles */
+
+/* Force selectable text across all elements when enabled */
+html.rcr-enabled,
+html.rcr-enabled body,
+html.rcr-enabled * {
+  -webkit-user-select: auto !important;
+  user-select: auto !important;
+  -webkit-touch-callout: default !important;
+}
+
+/* Ensure code, paragraphs, preformatted text, inputs, textareas are fully selectable */
+html.rcr-enabled p,
+html.rcr-enabled span,
+html.rcr-enabled pre,
+html.rcr-enabled code,
+html.rcr-enabled article,
+html.rcr-enabled section,
+html.rcr-enabled div,
+html.rcr-enabled h1,
+html.rcr-enabled h2,
+html.rcr-enabled h3,
+html.rcr-enabled h4,
+html.rcr-enabled h5,
+html.rcr-enabled h6,
+html.rcr-enabled blockquote,
+html.rcr-enabled table,
+html.rcr-enabled td,
+html.rcr-enabled th,
+html.rcr-enabled li {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+}
+
+/* Neutralize transparent click-shields and fake overlays */
+.rcr-shield-disabled {
+  pointer-events: none !important;
+  display: none !important;
+}
+
+/* Visual confirmation toast for manual unlock actions */
+#rcr-notification-toast {
+  position: fixed !important;
+  bottom: 24px !important;
+  right: 24px !important;
+  z-index: 2147483647 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 12px 18px !important;
+  background: rgba(18, 18, 20, 0.94) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  color: #ffffff !important;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 1px rgba(255, 255, 255, 0.2) !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+  transform: translateY(12px) scale(0.96) !important;
+  transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+#rcr-notification-toast.rcr-toast-visible {
+  opacity: 1 !important;
+  transform: translateY(0) scale(1) !important;
+}
+
+#rcr-notification-toast .rcr-toast-icon {
+  font-size: 16px !important;
+  line-height: 1 !important;
+}

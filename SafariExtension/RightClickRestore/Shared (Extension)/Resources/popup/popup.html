@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Right Click Restorer</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <img src="../icons/icon-48.png" alt="Logo" class="logo">
+        <div class="header-text">
+          <h1 class="title">Right Click Restorer</h1>
+          <span class="version">v1.0.0</span>
+        </div>
+      </div>
+      <div class="master-toggle">
+        <label class="switch">
+          <input type="checkbox" id="global-toggle" checked>
+          <span class="slider round"></span>
+        </label>
+      </div>
+    </header>
+
+    <!-- Current Site Card -->
+    <div class="card site-card" id="site-card">
+      <div class="site-info">
+        <div class="site-status-dot" id="site-status-dot"></div>
+        <div class="site-details">
+          <span class="site-label">Current Site</span>
+          <span class="site-domain" id="site-domain">loading...</span>
+        </div>
+      </div>
+      <label class="switch small-switch">
+        <input type="checkbox" id="site-toggle" checked>
+        <span class="slider round"></span>
+      </label>
+    </div>
+
+    <!-- Feature Switches -->
+    <div class="card settings-card">
+      <div class="setting-item">
+        <div class="setting-icon">🔓</div>
+        <div class="setting-details">
+          <span class="setting-title">Restore Right Click</span>
+          <span class="setting-desc">Re-enables native context menu</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="toggle-right-click" checked>
+          <span class="slider round"></span>
+        </label>
+      </div>
+
+      <div class="setting-divider"></div>
+
+      <div class="setting-item">
+        <div class="setting-icon">📝</div>
+        <div class="setting-details">
+          <span class="setting-title">Allow Selection & Copy</span>
+          <span class="setting-desc">Unlocks highlighting and ⌘C</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="toggle-selection" checked>
+          <span class="slider round"></span>
+        </label>
+      </div>
+
+      <div class="setting-divider"></div>
+
+      <div class="setting-item">
+        <div class="setting-icon">🛡️</div>
+        <div class="setting-details">
+          <span class="setting-title">Anti-Shield Overlay</span>
+          <span class="setting-desc">Neutralizes invisible click barriers</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="toggle-anti-shield" checked>
+          <span class="slider round"></span>
+        </label>
+      </div>
+
+      <div class="setting-divider"></div>
+
+      <div class="setting-item">
+        <div class="setting-icon">⚡</div>
+        <div class="setting-details">
+          <span class="setting-title">Absolute Force Mode</span>
+          <span class="setting-desc">Bypasses aggressive JS blocking</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="toggle-absolute-force" checked>
+          <span class="slider round"></span>
+        </label>
+      </div>
+
+      <div class="setting-divider"></div>
+
+      <div class="setting-item">
+        <div class="setting-icon">⌨️</div>
+        <div class="setting-details">
+          <span class="setting-title">Modifier Key Bypass</span>
+          <span class="setting-desc">Hold ⇧ Shift or ⌥ Option + Click</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="toggle-modifier-bypass" checked>
+          <span class="slider round"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Quick Action Button -->
+    <div class="action-section">
+      <button class="btn-force-unlock" id="btn-force-unlock">
+        <span class="btn-icon">⚡</span> Force Unlock Page
+      </button>
+    </div>
+
+    <!-- Tip / Footer -->
+    <footer class="footer">
+      <p class="tip-text">💡 Tip: Hold <kbd>Shift</kbd> while right-clicking anywhere to bypass page scripts immediately.</p>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

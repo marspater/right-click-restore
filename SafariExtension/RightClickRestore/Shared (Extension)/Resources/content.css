@@ -1,6 +1,6 @@
 /* Right Click & Selection Restorer Content Styles */
 
-/* Force selectable text across all elements when enabled */
+/* 1. Universal Text Selection & Interaction */
 html.rcr-enabled,
 html.rcr-enabled body,
 html.rcr-enabled * {
@@ -9,7 +9,6 @@ html.rcr-enabled * {
   -webkit-touch-callout: default !important;
 }
 
-/* Ensure code, paragraphs, preformatted text, inputs, textareas are fully selectable */
 html.rcr-enabled p,
 html.rcr-enabled span,
 html.rcr-enabled pre,
@@ -33,7 +32,7 @@ html.rcr-enabled a {
   user-select: text !important;
 }
 
-/* Ensure images, videos, audio, and media elements allow pointer interaction and dragging */
+/* 2. Universal Media Interactivity (Images, Videos, Canvas) */
 html.rcr-enabled img,
 html.rcr-enabled video,
 html.rcr-enabled canvas,
@@ -48,13 +47,29 @@ html.rcr-enabled svg {
   -webkit-touch-callout: default !important;
 }
 
-/* Neutralize transparent click-shields and fake overlays */
+/* 3. Strip Pointer Events from Known Photo/Video Protection Overlays */
+html.rcr-enabled .b-photos__item__cover,
+html.rcr-enabled .b-photos__item__overlay,
+html.rcr-enabled .b-photos__item__zoom,
+html.rcr-enabled .b-photos__item::after,
+html.rcr-enabled .b-photos__item::before,
+html.rcr-enabled .b-post__media-wrap::after,
+html.rcr-enabled .b-post__media-wrap::before,
+html.rcr-enabled .pswp__zoom-wrap::after,
+html.rcr-enabled .media-overlay,
+html.rcr-enabled .photo-overlay,
+html.rcr-enabled .video-overlay,
+html.rcr-enabled .rcr-unmasked-overlay {
+  pointer-events: none !important;
+}
+
+/* 4. Neutralize transparent shields */
 .rcr-shield-disabled {
   pointer-events: none !important;
   display: none !important;
 }
 
-/* Visual confirmation toast for manual unlock actions */
+/* 5. Sleek Notification Toast */
 #rcr-notification-toast {
   position: fixed !important;
   bottom: 24px !important;

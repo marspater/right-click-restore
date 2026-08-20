@@ -7,130 +7,130 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		4496F29E3037702C0073AD82 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4496F29D3037702C0073AD82 /* AppDelegate.swift */; };
-		4496F2A03037702C0073AD82 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4496F29F3037702C0073AD82 /* SceneDelegate.swift */; };
-		4496F2A33037702C0073AD82 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4496F2A13037702C0073AD82 /* LaunchScreen.storyboard */; };
-		4496F2A63037702C0073AD82 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4496F2A43037702C0073AD82 /* Main.storyboard */; };
-		4496F2AF3037702C0073AD82 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4496F2AE3037702C0073AD82 /* AppDelegate.swift */; };
-		4496F2B23037702C0073AD82 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4496F2B03037702C0073AD82 /* Main.storyboard */; };
-		4496F2B93037702C0073AD82 /* RightClickRestore Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 4496F2B83037702C0073AD82 /* RightClickRestore Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		4496F2C33037702C0073AD82 /* RightClickRestore Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 4496F2C23037702C0073AD82 /* RightClickRestore Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		4496F2C83037702C0073AD82 /* Main.html in Resources */ = {isa = PBXBuildFile; fileRef = 4496F28D3037702B0073AD82 /* Main.html */; };
-		4496F2C93037702C0073AD82 /* Main.html in Resources */ = {isa = PBXBuildFile; fileRef = 4496F28D3037702B0073AD82 /* Main.html */; };
-		4496F2CA3037702C0073AD82 /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 4496F28F3037702B0073AD82 /* Icon.png */; };
-		4496F2CB3037702C0073AD82 /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 4496F28F3037702B0073AD82 /* Icon.png */; };
-		4496F2CC3037702C0073AD82 /* Style.css in Resources */ = {isa = PBXBuildFile; fileRef = 4496F2903037702B0073AD82 /* Style.css */; };
-		4496F2CD3037702C0073AD82 /* Style.css in Resources */ = {isa = PBXBuildFile; fileRef = 4496F2903037702B0073AD82 /* Style.css */; };
-		4496F2CE3037702C0073AD82 /* Script.js in Resources */ = {isa = PBXBuildFile; fileRef = 4496F2913037702B0073AD82 /* Script.js */; };
-		4496F2CF3037702C0073AD82 /* Script.js in Resources */ = {isa = PBXBuildFile; fileRef = 4496F2913037702B0073AD82 /* Script.js */; };
-		4496F2D03037702C0073AD82 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4496F2923037702B0073AD82 /* ViewController.swift */; };
-		4496F2D13037702C0073AD82 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4496F2923037702B0073AD82 /* ViewController.swift */; };
-		4496F2D23037702C0073AD82 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4496F2933037702C0073AD82 /* Assets.xcassets */; };
-		4496F2D33037702C0073AD82 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4496F2933037702C0073AD82 /* Assets.xcassets */; };
-		4496F2D43037702C0073AD82 /* SafariWebExtensionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4496F2953037702C0073AD82 /* SafariWebExtensionHandler.swift */; };
-		4496F2D53037702C0073AD82 /* SafariWebExtensionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4496F2953037702C0073AD82 /* SafariWebExtensionHandler.swift */; };
-		4496F2EE3037702C0073AD82 /* popup in Resources */ = {isa = PBXBuildFile; fileRef = 4496F2E73037702C0073AD82 /* popup */; };
-		4496F2EF3037702C0073AD82 /* content.css in Resources */ = {isa = PBXBuildFile; fileRef = 4496F2E83037702C0073AD82 /* content.css */; };
-		4496F2F03037702C0073AD82 /* background.js in Resources */ = {isa = PBXBuildFile; fileRef = 4496F2E93037702C0073AD82 /* background.js */; };
-		4496F2F13037702C0073AD82 /* page-script.js in Resources */ = {isa = PBXBuildFile; fileRef = 4496F2EA3037702C0073AD82 /* page-script.js */; };
-		4496F2F23037702C0073AD82 /* icons in Resources */ = {isa = PBXBuildFile; fileRef = 4496F2EB3037702C0073AD82 /* icons */; };
-		4496F2F33037702C0073AD82 /* manifest.json in Resources */ = {isa = PBXBuildFile; fileRef = 4496F2EC3037702C0073AD82 /* manifest.json */; };
-		4496F2F43037702C0073AD82 /* content.js in Resources */ = {isa = PBXBuildFile; fileRef = 4496F2ED3037702C0073AD82 /* content.js */; };
-		4496F2F53037702C0073AD82 /* popup in Resources */ = {isa = PBXBuildFile; fileRef = 4496F2E73037702C0073AD82 /* popup */; };
-		4496F2F63037702C0073AD82 /* content.css in Resources */ = {isa = PBXBuildFile; fileRef = 4496F2E83037702C0073AD82 /* content.css */; };
-		4496F2F73037702C0073AD82 /* background.js in Resources */ = {isa = PBXBuildFile; fileRef = 4496F2E93037702C0073AD82 /* background.js */; };
-		4496F2F83037702C0073AD82 /* page-script.js in Resources */ = {isa = PBXBuildFile; fileRef = 4496F2EA3037702C0073AD82 /* page-script.js */; };
-		4496F2F93037702C0073AD82 /* icons in Resources */ = {isa = PBXBuildFile; fileRef = 4496F2EB3037702C0073AD82 /* icons */; };
-		4496F2FA3037702C0073AD82 /* manifest.json in Resources */ = {isa = PBXBuildFile; fileRef = 4496F2EC3037702C0073AD82 /* manifest.json */; };
-		4496F2FB3037702C0073AD82 /* content.js in Resources */ = {isa = PBXBuildFile; fileRef = 4496F2ED3037702C0073AD82 /* content.js */; };
+		44B02394303771BB001C20BE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44B02393303771BB001C20BE /* AppDelegate.swift */; };
+		44B02396303771BB001C20BE /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44B02395303771BB001C20BE /* SceneDelegate.swift */; };
+		44B02399303771BB001C20BE /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 44B02397303771BB001C20BE /* LaunchScreen.storyboard */; };
+		44B0239C303771BB001C20BE /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 44B0239A303771BB001C20BE /* Main.storyboard */; };
+		44B023A5303771BB001C20BE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44B023A4303771BB001C20BE /* AppDelegate.swift */; };
+		44B023A8303771BB001C20BE /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 44B023A6303771BB001C20BE /* Main.storyboard */; };
+		44B023AF303771BB001C20BE /* RightClickRestore Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 44B023AE303771BB001C20BE /* RightClickRestore Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		44B023B9303771BB001C20BE /* RightClickRestore Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 44B023B8303771BB001C20BE /* RightClickRestore Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		44B023BE303771BB001C20BE /* Main.html in Resources */ = {isa = PBXBuildFile; fileRef = 44B02383303771BB001C20BE /* Main.html */; };
+		44B023BF303771BB001C20BE /* Main.html in Resources */ = {isa = PBXBuildFile; fileRef = 44B02383303771BB001C20BE /* Main.html */; };
+		44B023C0303771BB001C20BE /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 44B02385303771BB001C20BE /* Icon.png */; };
+		44B023C1303771BB001C20BE /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 44B02385303771BB001C20BE /* Icon.png */; };
+		44B023C2303771BB001C20BE /* Style.css in Resources */ = {isa = PBXBuildFile; fileRef = 44B02386303771BB001C20BE /* Style.css */; };
+		44B023C3303771BB001C20BE /* Style.css in Resources */ = {isa = PBXBuildFile; fileRef = 44B02386303771BB001C20BE /* Style.css */; };
+		44B023C4303771BB001C20BE /* Script.js in Resources */ = {isa = PBXBuildFile; fileRef = 44B02387303771BB001C20BE /* Script.js */; };
+		44B023C5303771BB001C20BE /* Script.js in Resources */ = {isa = PBXBuildFile; fileRef = 44B02387303771BB001C20BE /* Script.js */; };
+		44B023C6303771BB001C20BE /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44B02388303771BB001C20BE /* ViewController.swift */; };
+		44B023C7303771BB001C20BE /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44B02388303771BB001C20BE /* ViewController.swift */; };
+		44B023C8303771BB001C20BE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 44B02389303771BB001C20BE /* Assets.xcassets */; };
+		44B023C9303771BB001C20BE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 44B02389303771BB001C20BE /* Assets.xcassets */; };
+		44B023CA303771BB001C20BE /* SafariWebExtensionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44B0238B303771BB001C20BE /* SafariWebExtensionHandler.swift */; };
+		44B023CB303771BB001C20BE /* SafariWebExtensionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44B0238B303771BB001C20BE /* SafariWebExtensionHandler.swift */; };
+		44B023E4303771BC001C20BE /* popup in Resources */ = {isa = PBXBuildFile; fileRef = 44B023DD303771BC001C20BE /* popup */; };
+		44B023E5303771BC001C20BE /* content.css in Resources */ = {isa = PBXBuildFile; fileRef = 44B023DE303771BC001C20BE /* content.css */; };
+		44B023E6303771BC001C20BE /* background.js in Resources */ = {isa = PBXBuildFile; fileRef = 44B023DF303771BC001C20BE /* background.js */; };
+		44B023E7303771BC001C20BE /* page-script.js in Resources */ = {isa = PBXBuildFile; fileRef = 44B023E0303771BC001C20BE /* page-script.js */; };
+		44B023E8303771BC001C20BE /* icons in Resources */ = {isa = PBXBuildFile; fileRef = 44B023E1303771BC001C20BE /* icons */; };
+		44B023E9303771BC001C20BE /* manifest.json in Resources */ = {isa = PBXBuildFile; fileRef = 44B023E2303771BC001C20BE /* manifest.json */; };
+		44B023EA303771BC001C20BE /* content.js in Resources */ = {isa = PBXBuildFile; fileRef = 44B023E3303771BC001C20BE /* content.js */; };
+		44B023EB303771BC001C20BE /* popup in Resources */ = {isa = PBXBuildFile; fileRef = 44B023DD303771BC001C20BE /* popup */; };
+		44B023EC303771BC001C20BE /* content.css in Resources */ = {isa = PBXBuildFile; fileRef = 44B023DE303771BC001C20BE /* content.css */; };
+		44B023ED303771BC001C20BE /* background.js in Resources */ = {isa = PBXBuildFile; fileRef = 44B023DF303771BC001C20BE /* background.js */; };
+		44B023EE303771BC001C20BE /* page-script.js in Resources */ = {isa = PBXBuildFile; fileRef = 44B023E0303771BC001C20BE /* page-script.js */; };
+		44B023EF303771BC001C20BE /* icons in Resources */ = {isa = PBXBuildFile; fileRef = 44B023E1303771BC001C20BE /* icons */; };
+		44B023F0303771BC001C20BE /* manifest.json in Resources */ = {isa = PBXBuildFile; fileRef = 44B023E2303771BC001C20BE /* manifest.json */; };
+		44B023F1303771BC001C20BE /* content.js in Resources */ = {isa = PBXBuildFile; fileRef = 44B023E3303771BC001C20BE /* content.js */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		4496F2BA3037702C0073AD82 /* PBXContainerItemProxy */ = {
+		44B023B0303771BB001C20BE /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 4496F2873037702B0073AD82 /* Project object */;
+			containerPortal = 44B0237D303771BB001C20BE /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 4496F2B73037702C0073AD82;
+			remoteGlobalIDString = 44B023AD303771BB001C20BE;
 			remoteInfo = "RightClickRestore Extension (iOS)";
 		};
-		4496F2C43037702C0073AD82 /* PBXContainerItemProxy */ = {
+		44B023BA303771BB001C20BE /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 4496F2873037702B0073AD82 /* Project object */;
+			containerPortal = 44B0237D303771BB001C20BE /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 4496F2C13037702C0073AD82;
+			remoteGlobalIDString = 44B023B7303771BB001C20BE;
 			remoteInfo = "RightClickRestore Extension (macOS)";
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		4496F2DB3037702C0073AD82 /* Embed Foundation Extensions */ = {
+		44B023D1303771BB001C20BE /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			dstPath = "";
 			dstSubfolder = PlugIns;
 			files = (
-				4496F2B93037702C0073AD82 /* RightClickRestore Extension.appex in Embed Foundation Extensions */,
+				44B023AF303771BB001C20BE /* RightClickRestore Extension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 		};
-		4496F2E23037702C0073AD82 /* Embed Foundation Extensions */ = {
+		44B023D8303771BB001C20BE /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			dstPath = "";
 			dstSubfolder = PlugIns;
 			files = (
-				4496F2C33037702C0073AD82 /* RightClickRestore Extension.appex in Embed Foundation Extensions */,
+				44B023B9303771BB001C20BE /* RightClickRestore Extension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		4496F28E3037702B0073AD82 /* Base */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = Base; path = Base.lproj/Main.html; sourceTree = "<group>"; };
-		4496F28F3037702B0073AD82 /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = "<group>"; };
-		4496F2903037702B0073AD82 /* Style.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = Style.css; sourceTree = "<group>"; };
-		4496F2913037702B0073AD82 /* Script.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = Script.js; sourceTree = "<group>"; };
-		4496F2923037702B0073AD82 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
-		4496F2933037702C0073AD82 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		4496F2953037702C0073AD82 /* SafariWebExtensionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafariWebExtensionHandler.swift; sourceTree = "<group>"; };
-		4496F29A3037702C0073AD82 /* RightClickRestore.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RightClickRestore.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		4496F29D3037702C0073AD82 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		4496F29F3037702C0073AD82 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
-		4496F2A23037702C0073AD82 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		4496F2A53037702C0073AD82 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
-		4496F2A73037702C0073AD82 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		4496F2AC3037702C0073AD82 /* RightClickRestore.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RightClickRestore.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		4496F2AE3037702C0073AD82 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		4496F2B13037702C0073AD82 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
-		4496F2B33037702C0073AD82 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		4496F2B83037702C0073AD82 /* RightClickRestore Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "RightClickRestore Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
-		4496F2BD3037702C0073AD82 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		4496F2C23037702C0073AD82 /* RightClickRestore Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "RightClickRestore Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
-		4496F2C73037702C0073AD82 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		4496F2E73037702C0073AD82 /* popup */ = {isa = PBXFileReference; lastKnownFileType = folder; name = popup; path = Resources/popup; sourceTree = "<group>"; };
-		4496F2E83037702C0073AD82 /* content.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; name = content.css; path = Resources/content.css; sourceTree = "<group>"; };
-		4496F2E93037702C0073AD82 /* background.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = background.js; path = Resources/background.js; sourceTree = "<group>"; };
-		4496F2EA3037702C0073AD82 /* page-script.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = "page-script.js"; path = "Resources/page-script.js"; sourceTree = "<group>"; };
-		4496F2EB3037702C0073AD82 /* icons */ = {isa = PBXFileReference; lastKnownFileType = folder; name = icons; path = Resources/icons; sourceTree = "<group>"; };
-		4496F2EC3037702C0073AD82 /* manifest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = manifest.json; path = Resources/manifest.json; sourceTree = "<group>"; };
-		4496F2ED3037702C0073AD82 /* content.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = content.js; path = Resources/content.js; sourceTree = "<group>"; };
+		44B02384303771BB001C20BE /* Base */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = Base; path = Base.lproj/Main.html; sourceTree = "<group>"; };
+		44B02385303771BB001C20BE /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = "<group>"; };
+		44B02386303771BB001C20BE /* Style.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = Style.css; sourceTree = "<group>"; };
+		44B02387303771BB001C20BE /* Script.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = Script.js; sourceTree = "<group>"; };
+		44B02388303771BB001C20BE /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		44B02389303771BB001C20BE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		44B0238B303771BB001C20BE /* SafariWebExtensionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafariWebExtensionHandler.swift; sourceTree = "<group>"; };
+		44B02390303771BB001C20BE /* RightClickRestore.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RightClickRestore.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		44B02393303771BB001C20BE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		44B02395303771BB001C20BE /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		44B02398303771BB001C20BE /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		44B0239B303771BB001C20BE /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		44B0239D303771BB001C20BE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		44B023A2303771BB001C20BE /* RightClickRestore.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RightClickRestore.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		44B023A4303771BB001C20BE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		44B023A7303771BB001C20BE /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		44B023A9303771BB001C20BE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		44B023AE303771BB001C20BE /* RightClickRestore Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "RightClickRestore Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		44B023B3303771BB001C20BE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		44B023B8303771BB001C20BE /* RightClickRestore Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "RightClickRestore Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		44B023BD303771BB001C20BE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		44B023DD303771BC001C20BE /* popup */ = {isa = PBXFileReference; lastKnownFileType = folder; name = popup; path = Resources/popup; sourceTree = "<group>"; };
+		44B023DE303771BC001C20BE /* content.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; name = content.css; path = Resources/content.css; sourceTree = "<group>"; };
+		44B023DF303771BC001C20BE /* background.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = background.js; path = Resources/background.js; sourceTree = "<group>"; };
+		44B023E0303771BC001C20BE /* page-script.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = "page-script.js"; path = "Resources/page-script.js"; sourceTree = "<group>"; };
+		44B023E1303771BC001C20BE /* icons */ = {isa = PBXFileReference; lastKnownFileType = folder; name = icons; path = Resources/icons; sourceTree = "<group>"; };
+		44B023E2303771BC001C20BE /* manifest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = manifest.json; path = Resources/manifest.json; sourceTree = "<group>"; };
+		44B023E3303771BC001C20BE /* content.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = content.js; path = Resources/content.js; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		4496F2973037702C0073AD82 /* Frameworks */ = {
+		44B0238D303771BB001C20BE /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
 			);
 		};
-		4496F2A93037702C0073AD82 /* Frameworks */ = {
+		44B0239F303771BB001C20BE /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
 			);
 		};
-		4496F2B53037702C0073AD82 /* Frameworks */ = {
+		44B023AB303771BB001C20BE /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
 			);
 		};
-		4496F2BF3037702C0073AD82 /* Frameworks */ = {
+		44B023B5303771BB001C20BE /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
 			);
@@ -138,108 +138,108 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		4496F2863037702B0073AD82 = {
+		44B0237C303771BB001C20BE = {
 			isa = PBXGroup;
 			children = (
-				4496F28B3037702B0073AD82 /* Shared (App) */,
-				4496F2943037702C0073AD82 /* Shared (Extension) */,
-				4496F29C3037702C0073AD82 /* iOS (App) */,
-				4496F2AD3037702C0073AD82 /* macOS (App) */,
-				4496F2BC3037702C0073AD82 /* iOS (Extension) */,
-				4496F2C63037702C0073AD82 /* macOS (Extension) */,
-				4496F29B3037702C0073AD82 /* Products */,
+				44B02381303771BB001C20BE /* Shared (App) */,
+				44B0238A303771BB001C20BE /* Shared (Extension) */,
+				44B02392303771BB001C20BE /* iOS (App) */,
+				44B023A3303771BB001C20BE /* macOS (App) */,
+				44B023B2303771BB001C20BE /* iOS (Extension) */,
+				44B023BC303771BB001C20BE /* macOS (Extension) */,
+				44B02391303771BB001C20BE /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		4496F28B3037702B0073AD82 /* Shared (App) */ = {
+		44B02381303771BB001C20BE /* Shared (App) */ = {
 			isa = PBXGroup;
 			children = (
-				4496F2923037702B0073AD82 /* ViewController.swift */,
-				4496F2933037702C0073AD82 /* Assets.xcassets */,
-				4496F28C3037702B0073AD82 /* Resources */,
+				44B02388303771BB001C20BE /* ViewController.swift */,
+				44B02389303771BB001C20BE /* Assets.xcassets */,
+				44B02382303771BB001C20BE /* Resources */,
 			);
 			path = "Shared (App)";
 			sourceTree = "<group>";
 		};
-		4496F28C3037702B0073AD82 /* Resources */ = {
+		44B02382303771BB001C20BE /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				4496F28D3037702B0073AD82 /* Main.html */,
-				4496F28F3037702B0073AD82 /* Icon.png */,
-				4496F2903037702B0073AD82 /* Style.css */,
-				4496F2913037702B0073AD82 /* Script.js */,
+				44B02383303771BB001C20BE /* Main.html */,
+				44B02385303771BB001C20BE /* Icon.png */,
+				44B02386303771BB001C20BE /* Style.css */,
+				44B02387303771BB001C20BE /* Script.js */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
 		};
-		4496F2943037702C0073AD82 /* Shared (Extension) */ = {
+		44B0238A303771BB001C20BE /* Shared (Extension) */ = {
 			isa = PBXGroup;
 			children = (
-				4496F2E63037702C0073AD82 /* Resources */,
-				4496F2953037702C0073AD82 /* SafariWebExtensionHandler.swift */,
+				44B023DC303771BC001C20BE /* Resources */,
+				44B0238B303771BB001C20BE /* SafariWebExtensionHandler.swift */,
 			);
 			path = "Shared (Extension)";
 			sourceTree = "<group>";
 		};
-		4496F29B3037702C0073AD82 /* Products */ = {
+		44B02391303771BB001C20BE /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				4496F29A3037702C0073AD82 /* RightClickRestore.app */,
-				4496F2AC3037702C0073AD82 /* RightClickRestore.app */,
-				4496F2B83037702C0073AD82 /* RightClickRestore Extension.appex */,
-				4496F2C23037702C0073AD82 /* RightClickRestore Extension.appex */,
+				44B02390303771BB001C20BE /* RightClickRestore.app */,
+				44B023A2303771BB001C20BE /* RightClickRestore.app */,
+				44B023AE303771BB001C20BE /* RightClickRestore Extension.appex */,
+				44B023B8303771BB001C20BE /* RightClickRestore Extension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		4496F29C3037702C0073AD82 /* iOS (App) */ = {
+		44B02392303771BB001C20BE /* iOS (App) */ = {
 			isa = PBXGroup;
 			children = (
-				4496F29D3037702C0073AD82 /* AppDelegate.swift */,
-				4496F29F3037702C0073AD82 /* SceneDelegate.swift */,
-				4496F2A13037702C0073AD82 /* LaunchScreen.storyboard */,
-				4496F2A43037702C0073AD82 /* Main.storyboard */,
-				4496F2A73037702C0073AD82 /* Info.plist */,
+				44B02393303771BB001C20BE /* AppDelegate.swift */,
+				44B02395303771BB001C20BE /* SceneDelegate.swift */,
+				44B02397303771BB001C20BE /* LaunchScreen.storyboard */,
+				44B0239A303771BB001C20BE /* Main.storyboard */,
+				44B0239D303771BB001C20BE /* Info.plist */,
 			);
 			path = "iOS (App)";
 			sourceTree = "<group>";
 		};
-		4496F2AD3037702C0073AD82 /* macOS (App) */ = {
+		44B023A3303771BB001C20BE /* macOS (App) */ = {
 			isa = PBXGroup;
 			children = (
-				4496F2AE3037702C0073AD82 /* AppDelegate.swift */,
-				4496F2B03037702C0073AD82 /* Main.storyboard */,
-				4496F2B33037702C0073AD82 /* Info.plist */,
+				44B023A4303771BB001C20BE /* AppDelegate.swift */,
+				44B023A6303771BB001C20BE /* Main.storyboard */,
+				44B023A9303771BB001C20BE /* Info.plist */,
 			);
 			path = "macOS (App)";
 			sourceTree = "<group>";
 		};
-		4496F2BC3037702C0073AD82 /* iOS (Extension) */ = {
+		44B023B2303771BB001C20BE /* iOS (Extension) */ = {
 			isa = PBXGroup;
 			children = (
-				4496F2BD3037702C0073AD82 /* Info.plist */,
+				44B023B3303771BB001C20BE /* Info.plist */,
 			);
 			path = "iOS (Extension)";
 			sourceTree = "<group>";
 		};
-		4496F2C63037702C0073AD82 /* macOS (Extension) */ = {
+		44B023BC303771BB001C20BE /* macOS (Extension) */ = {
 			isa = PBXGroup;
 			children = (
-				4496F2C73037702C0073AD82 /* Info.plist */,
+				44B023BD303771BB001C20BE /* Info.plist */,
 			);
 			path = "macOS (Extension)";
 			sourceTree = "<group>";
 		};
-		4496F2E63037702C0073AD82 /* Resources */ = {
+		44B023DC303771BC001C20BE /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				4496F2E73037702C0073AD82 /* popup */,
-				4496F2E83037702C0073AD82 /* content.css */,
-				4496F2E93037702C0073AD82 /* background.js */,
-				4496F2EA3037702C0073AD82 /* page-script.js */,
-				4496F2EB3037702C0073AD82 /* icons */,
-				4496F2EC3037702C0073AD82 /* manifest.json */,
-				4496F2ED3037702C0073AD82 /* content.js */,
+				44B023DD303771BC001C20BE /* popup */,
+				44B023DE303771BC001C20BE /* content.css */,
+				44B023DF303771BC001C20BE /* background.js */,
+				44B023E0303771BC001C20BE /* page-script.js */,
+				44B023E1303771BC001C20BE /* icons */,
+				44B023E2303771BC001C20BE /* manifest.json */,
+				44B023E3303771BC001C20BE /* content.js */,
 			);
 			name = Resources;
 			path = "Shared (Extension)";
@@ -248,242 +248,242 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		4496F2993037702C0073AD82 /* RightClickRestore (iOS) */ = {
+		44B0238F303771BB001C20BE /* RightClickRestore (iOS) */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 4496F2DC3037702C0073AD82 /* Build configuration list for PBXNativeTarget "RightClickRestore (iOS)" */;
+			buildConfigurationList = 44B023D2303771BB001C20BE /* Build configuration list for PBXNativeTarget "RightClickRestore (iOS)" */;
 			buildPhases = (
-				4496F2963037702C0073AD82 /* Sources */,
-				4496F2973037702C0073AD82 /* Frameworks */,
-				4496F2983037702C0073AD82 /* Resources */,
-				4496F2DB3037702C0073AD82 /* Embed Foundation Extensions */,
+				44B0238C303771BB001C20BE /* Sources */,
+				44B0238D303771BB001C20BE /* Frameworks */,
+				44B0238E303771BB001C20BE /* Resources */,
+				44B023D1303771BB001C20BE /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				4496F2BB3037702C0073AD82 /* PBXTargetDependency */,
+				44B023B1303771BB001C20BE /* PBXTargetDependency */,
 			);
 			name = "RightClickRestore (iOS)";
 			productName = "RightClickRestore (iOS)";
-			productReference = 4496F29A3037702C0073AD82 /* RightClickRestore.app */;
+			productReference = 44B02390303771BB001C20BE /* RightClickRestore.app */;
 			productType = "com.apple.product-type.application";
 		};
-		4496F2AB3037702C0073AD82 /* RightClickRestore (macOS) */ = {
+		44B023A1303771BB001C20BE /* RightClickRestore (macOS) */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 4496F2E33037702C0073AD82 /* Build configuration list for PBXNativeTarget "RightClickRestore (macOS)" */;
+			buildConfigurationList = 44B023D9303771BB001C20BE /* Build configuration list for PBXNativeTarget "RightClickRestore (macOS)" */;
 			buildPhases = (
-				4496F2A83037702C0073AD82 /* Sources */,
-				4496F2A93037702C0073AD82 /* Frameworks */,
-				4496F2AA3037702C0073AD82 /* Resources */,
-				4496F2E23037702C0073AD82 /* Embed Foundation Extensions */,
+				44B0239E303771BB001C20BE /* Sources */,
+				44B0239F303771BB001C20BE /* Frameworks */,
+				44B023A0303771BB001C20BE /* Resources */,
+				44B023D8303771BB001C20BE /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				4496F2C53037702C0073AD82 /* PBXTargetDependency */,
+				44B023BB303771BB001C20BE /* PBXTargetDependency */,
 			);
 			name = "RightClickRestore (macOS)";
 			productName = "RightClickRestore (macOS)";
-			productReference = 4496F2AC3037702C0073AD82 /* RightClickRestore.app */;
+			productReference = 44B023A2303771BB001C20BE /* RightClickRestore.app */;
 			productType = "com.apple.product-type.application";
 		};
-		4496F2B73037702C0073AD82 /* RightClickRestore Extension (iOS) */ = {
+		44B023AD303771BB001C20BE /* RightClickRestore Extension (iOS) */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 4496F2D83037702C0073AD82 /* Build configuration list for PBXNativeTarget "RightClickRestore Extension (iOS)" */;
+			buildConfigurationList = 44B023CE303771BB001C20BE /* Build configuration list for PBXNativeTarget "RightClickRestore Extension (iOS)" */;
 			buildPhases = (
-				4496F2B43037702C0073AD82 /* Sources */,
-				4496F2B53037702C0073AD82 /* Frameworks */,
-				4496F2B63037702C0073AD82 /* Resources */,
+				44B023AA303771BB001C20BE /* Sources */,
+				44B023AB303771BB001C20BE /* Frameworks */,
+				44B023AC303771BB001C20BE /* Resources */,
 			);
 			buildRules = (
 			);
 			name = "RightClickRestore Extension (iOS)";
 			productName = "RightClickRestore Extension (iOS)";
-			productReference = 4496F2B83037702C0073AD82 /* RightClickRestore Extension.appex */;
+			productReference = 44B023AE303771BB001C20BE /* RightClickRestore Extension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
-		4496F2C13037702C0073AD82 /* RightClickRestore Extension (macOS) */ = {
+		44B023B7303771BB001C20BE /* RightClickRestore Extension (macOS) */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 4496F2DF3037702C0073AD82 /* Build configuration list for PBXNativeTarget "RightClickRestore Extension (macOS)" */;
+			buildConfigurationList = 44B023D5303771BB001C20BE /* Build configuration list for PBXNativeTarget "RightClickRestore Extension (macOS)" */;
 			buildPhases = (
-				4496F2BE3037702C0073AD82 /* Sources */,
-				4496F2BF3037702C0073AD82 /* Frameworks */,
-				4496F2C03037702C0073AD82 /* Resources */,
+				44B023B4303771BB001C20BE /* Sources */,
+				44B023B5303771BB001C20BE /* Frameworks */,
+				44B023B6303771BB001C20BE /* Resources */,
 			);
 			buildRules = (
 			);
 			name = "RightClickRestore Extension (macOS)";
 			productName = "RightClickRestore Extension (macOS)";
-			productReference = 4496F2C23037702C0073AD82 /* RightClickRestore Extension.appex */;
+			productReference = 44B023B8303771BB001C20BE /* RightClickRestore Extension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		4496F2873037702B0073AD82 /* Project object */ = {
+		44B0237D303771BB001C20BE /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2700;
 				LastUpgradeCheck = 2700;
 				TargetAttributes = {
-					4496F2993037702C0073AD82 = {
+					44B0238F303771BB001C20BE = {
 						CreatedOnToolsVersion = 27.0;
 					};
-					4496F2AB3037702C0073AD82 = {
+					44B023A1303771BB001C20BE = {
 						CreatedOnToolsVersion = 27.0;
 					};
-					4496F2B73037702C0073AD82 = {
+					44B023AD303771BB001C20BE = {
 						CreatedOnToolsVersion = 27.0;
 					};
-					4496F2C13037702C0073AD82 = {
+					44B023B7303771BB001C20BE = {
 						CreatedOnToolsVersion = 27.0;
 					};
 				};
 			};
-			buildConfigurationList = 4496F28A3037702B0073AD82 /* Build configuration list for PBXProject "RightClickRestore" */;
+			buildConfigurationList = 44B02380303771BB001C20BE /* Build configuration list for PBXProject "RightClickRestore" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
 			);
-			mainGroup = 4496F2863037702B0073AD82;
+			mainGroup = 44B0237C303771BB001C20BE;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
-			productRefGroup = 4496F29B3037702C0073AD82 /* Products */;
+			productRefGroup = 44B02391303771BB001C20BE /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				4496F2993037702C0073AD82 /* RightClickRestore (iOS) */,
-				4496F2AB3037702C0073AD82 /* RightClickRestore (macOS) */,
-				4496F2B73037702C0073AD82 /* RightClickRestore Extension (iOS) */,
-				4496F2C13037702C0073AD82 /* RightClickRestore Extension (macOS) */,
+				44B0238F303771BB001C20BE /* RightClickRestore (iOS) */,
+				44B023A1303771BB001C20BE /* RightClickRestore (macOS) */,
+				44B023AD303771BB001C20BE /* RightClickRestore Extension (iOS) */,
+				44B023B7303771BB001C20BE /* RightClickRestore Extension (macOS) */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		4496F2983037702C0073AD82 /* Resources */ = {
+		44B0238E303771BB001C20BE /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
-				4496F2CA3037702C0073AD82 /* Icon.png in Resources */,
-				4496F2A33037702C0073AD82 /* LaunchScreen.storyboard in Resources */,
-				4496F2C83037702C0073AD82 /* Main.html in Resources */,
-				4496F2CE3037702C0073AD82 /* Script.js in Resources */,
-				4496F2D23037702C0073AD82 /* Assets.xcassets in Resources */,
-				4496F2A63037702C0073AD82 /* Main.storyboard in Resources */,
-				4496F2CC3037702C0073AD82 /* Style.css in Resources */,
+				44B023C0303771BB001C20BE /* Icon.png in Resources */,
+				44B02399303771BB001C20BE /* LaunchScreen.storyboard in Resources */,
+				44B023BE303771BB001C20BE /* Main.html in Resources */,
+				44B023C4303771BB001C20BE /* Script.js in Resources */,
+				44B023C8303771BB001C20BE /* Assets.xcassets in Resources */,
+				44B0239C303771BB001C20BE /* Main.storyboard in Resources */,
+				44B023C2303771BB001C20BE /* Style.css in Resources */,
 			);
 		};
-		4496F2AA3037702C0073AD82 /* Resources */ = {
+		44B023A0303771BB001C20BE /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
-				4496F2CB3037702C0073AD82 /* Icon.png in Resources */,
-				4496F2CD3037702C0073AD82 /* Style.css in Resources */,
-				4496F2B23037702C0073AD82 /* Main.storyboard in Resources */,
-				4496F2CF3037702C0073AD82 /* Script.js in Resources */,
-				4496F2D33037702C0073AD82 /* Assets.xcassets in Resources */,
-				4496F2C93037702C0073AD82 /* Main.html in Resources */,
+				44B023C1303771BB001C20BE /* Icon.png in Resources */,
+				44B023C3303771BB001C20BE /* Style.css in Resources */,
+				44B023A8303771BB001C20BE /* Main.storyboard in Resources */,
+				44B023C5303771BB001C20BE /* Script.js in Resources */,
+				44B023C9303771BB001C20BE /* Assets.xcassets in Resources */,
+				44B023BF303771BB001C20BE /* Main.html in Resources */,
 			);
 		};
-		4496F2B63037702C0073AD82 /* Resources */ = {
+		44B023AC303771BB001C20BE /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
-				4496F2F83037702C0073AD82 /* page-script.js in Resources */,
-				4496F2F53037702C0073AD82 /* popup in Resources */,
-				4496F2F73037702C0073AD82 /* background.js in Resources */,
-				4496F2F93037702C0073AD82 /* icons in Resources */,
-				4496F2FA3037702C0073AD82 /* manifest.json in Resources */,
-				4496F2FB3037702C0073AD82 /* content.js in Resources */,
-				4496F2F63037702C0073AD82 /* content.css in Resources */,
+				44B023EE303771BC001C20BE /* page-script.js in Resources */,
+				44B023EB303771BC001C20BE /* popup in Resources */,
+				44B023ED303771BC001C20BE /* background.js in Resources */,
+				44B023EF303771BC001C20BE /* icons in Resources */,
+				44B023F0303771BC001C20BE /* manifest.json in Resources */,
+				44B023F1303771BC001C20BE /* content.js in Resources */,
+				44B023EC303771BC001C20BE /* content.css in Resources */,
 			);
 		};
-		4496F2C03037702C0073AD82 /* Resources */ = {
+		44B023B6303771BB001C20BE /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
-				4496F2F13037702C0073AD82 /* page-script.js in Resources */,
-				4496F2EE3037702C0073AD82 /* popup in Resources */,
-				4496F2F03037702C0073AD82 /* background.js in Resources */,
-				4496F2F23037702C0073AD82 /* icons in Resources */,
-				4496F2F33037702C0073AD82 /* manifest.json in Resources */,
-				4496F2F43037702C0073AD82 /* content.js in Resources */,
-				4496F2EF3037702C0073AD82 /* content.css in Resources */,
+				44B023E7303771BC001C20BE /* page-script.js in Resources */,
+				44B023E4303771BC001C20BE /* popup in Resources */,
+				44B023E6303771BC001C20BE /* background.js in Resources */,
+				44B023E8303771BC001C20BE /* icons in Resources */,
+				44B023E9303771BC001C20BE /* manifest.json in Resources */,
+				44B023EA303771BC001C20BE /* content.js in Resources */,
+				44B023E5303771BC001C20BE /* content.css in Resources */,
 			);
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		4496F2963037702C0073AD82 /* Sources */ = {
+		44B0238C303771BB001C20BE /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
-				4496F2D03037702C0073AD82 /* ViewController.swift in Sources */,
-				4496F29E3037702C0073AD82 /* AppDelegate.swift in Sources */,
-				4496F2A03037702C0073AD82 /* SceneDelegate.swift in Sources */,
+				44B023C6303771BB001C20BE /* ViewController.swift in Sources */,
+				44B02394303771BB001C20BE /* AppDelegate.swift in Sources */,
+				44B02396303771BB001C20BE /* SceneDelegate.swift in Sources */,
 			);
 		};
-		4496F2A83037702C0073AD82 /* Sources */ = {
+		44B0239E303771BB001C20BE /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
-				4496F2D13037702C0073AD82 /* ViewController.swift in Sources */,
-				4496F2AF3037702C0073AD82 /* AppDelegate.swift in Sources */,
+				44B023C7303771BB001C20BE /* ViewController.swift in Sources */,
+				44B023A5303771BB001C20BE /* AppDelegate.swift in Sources */,
 			);
 		};
-		4496F2B43037702C0073AD82 /* Sources */ = {
+		44B023AA303771BB001C20BE /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
-				4496F2D43037702C0073AD82 /* SafariWebExtensionHandler.swift in Sources */,
+				44B023CA303771BB001C20BE /* SafariWebExtensionHandler.swift in Sources */,
 			);
 		};
-		4496F2BE3037702C0073AD82 /* Sources */ = {
+		44B023B4303771BB001C20BE /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
-				4496F2D53037702C0073AD82 /* SafariWebExtensionHandler.swift in Sources */,
+				44B023CB303771BB001C20BE /* SafariWebExtensionHandler.swift in Sources */,
 			);
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		4496F2BB3037702C0073AD82 /* PBXTargetDependency */ = {
+		44B023B1303771BB001C20BE /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 4496F2B73037702C0073AD82 /* RightClickRestore Extension (iOS) */;
-			targetProxy = 4496F2BA3037702C0073AD82 /* PBXContainerItemProxy */;
+			target = 44B023AD303771BB001C20BE /* RightClickRestore Extension (iOS) */;
+			targetProxy = 44B023B0303771BB001C20BE /* PBXContainerItemProxy */;
 		};
-		4496F2C53037702C0073AD82 /* PBXTargetDependency */ = {
+		44B023BB303771BB001C20BE /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 4496F2C13037702C0073AD82 /* RightClickRestore Extension (macOS) */;
-			targetProxy = 4496F2C43037702C0073AD82 /* PBXContainerItemProxy */;
+			target = 44B023B7303771BB001C20BE /* RightClickRestore Extension (macOS) */;
+			targetProxy = 44B023BA303771BB001C20BE /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
-		4496F28D3037702B0073AD82 /* Main.html */ = {
+		44B02383303771BB001C20BE /* Main.html */ = {
 			isa = PBXVariantGroup;
 			children = (
-				4496F28E3037702B0073AD82 /* Base */,
+				44B02384303771BB001C20BE /* Base */,
 			);
 			name = Main.html;
 			sourceTree = "<group>";
 		};
-		4496F2A13037702C0073AD82 /* LaunchScreen.storyboard */ = {
+		44B02397303771BB001C20BE /* LaunchScreen.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
-				4496F2A23037702C0073AD82 /* Base */,
+				44B02398303771BB001C20BE /* Base */,
 			);
 			name = LaunchScreen.storyboard;
 			sourceTree = "<group>";
 		};
-		4496F2A43037702C0073AD82 /* Main.storyboard */ = {
+		44B0239A303771BB001C20BE /* Main.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
-				4496F2A53037702C0073AD82 /* Base */,
+				44B0239B303771BB001C20BE /* Base */,
 			);
 			name = Main.storyboard;
 			sourceTree = "<group>";
 		};
-		4496F2B03037702C0073AD82 /* Main.storyboard */ = {
+		44B023A6303771BB001C20BE /* Main.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
-				4496F2B13037702C0073AD82 /* Base */,
+				44B023A7303771BB001C20BE /* Base */,
 			);
 			name = Main.storyboard;
 			sourceTree = "<group>";
@@ -491,7 +491,7 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
-		4496F2D63037702C0073AD82 /* Debug configuration for PBXProject "RightClickRestore" */ = {
+		44B023CC303771BB001C20BE /* Debug configuration for PBXProject "RightClickRestore" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -552,7 +552,7 @@
 			};
 			name = Debug;
 		};
-		4496F2D73037702C0073AD82 /* Release configuration for PBXProject "RightClickRestore" */ = {
+		44B023CD303771BB001C20BE /* Release configuration for PBXProject "RightClickRestore" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -605,7 +605,7 @@
 			};
 			name = Release;
 		};
-		4496F2D93037702C0073AD82 /* Debug configuration for PBXNativeTarget "RightClickRestore Extension (iOS)" */ = {
+		44B023CF303771BB001C20BE /* Debug configuration for PBXNativeTarget "RightClickRestore Extension (iOS)" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -638,7 +638,7 @@
 			};
 			name = Debug;
 		};
-		4496F2DA3037702C0073AD82 /* Release configuration for PBXNativeTarget "RightClickRestore Extension (iOS)" */ = {
+		44B023D0303771BB001C20BE /* Release configuration for PBXNativeTarget "RightClickRestore Extension (iOS)" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -672,7 +672,7 @@
 			};
 			name = Release;
 		};
-		4496F2DD3037702C0073AD82 /* Debug configuration for PBXNativeTarget "RightClickRestore (iOS)" */ = {
+		44B023D3303771BB001C20BE /* Debug configuration for PBXNativeTarget "RightClickRestore (iOS)" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -712,7 +712,7 @@
 			};
 			name = Debug;
 		};
-		4496F2DE3037702C0073AD82 /* Release configuration for PBXNativeTarget "RightClickRestore (iOS)" */ = {
+		44B023D4303771BB001C20BE /* Release configuration for PBXNativeTarget "RightClickRestore (iOS)" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -753,7 +753,7 @@
 			};
 			name = Release;
 		};
-		4496F2E03037702C0073AD82 /* Debug configuration for PBXNativeTarget "RightClickRestore Extension (macOS)" */ = {
+		44B023D6303771BB001C20BE /* Debug configuration for PBXNativeTarget "RightClickRestore Extension (macOS)" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -788,7 +788,7 @@
 			};
 			name = Debug;
 		};
-		4496F2E13037702C0073AD82 /* Release configuration for PBXNativeTarget "RightClickRestore Extension (macOS)" */ = {
+		44B023D7303771BB001C20BE /* Release configuration for PBXNativeTarget "RightClickRestore Extension (macOS)" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -823,7 +823,7 @@
 			};
 			name = Release;
 		};
-		4496F2E43037702C0073AD82 /* Debug configuration for PBXNativeTarget "RightClickRestore (macOS)" */ = {
+		44B023DA303771BB001C20BE /* Debug configuration for PBXNativeTarget "RightClickRestore (macOS)" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -864,7 +864,7 @@
 			};
 			name = Debug;
 		};
-		4496F2E53037702C0073AD82 /* Release configuration for PBXNativeTarget "RightClickRestore (macOS)" */ = {
+		44B023DB303771BB001C20BE /* Release configuration for PBXNativeTarget "RightClickRestore (macOS)" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -908,48 +908,48 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		4496F28A3037702B0073AD82 /* Build configuration list for PBXProject "RightClickRestore" */ = {
+		44B02380303771BB001C20BE /* Build configuration list for PBXProject "RightClickRestore" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				4496F2D63037702C0073AD82 /* Debug configuration for PBXProject "RightClickRestore" */,
-				4496F2D73037702C0073AD82 /* Release configuration for PBXProject "RightClickRestore" */,
+				44B023CC303771BB001C20BE /* Debug configuration for PBXProject "RightClickRestore" */,
+				44B023CD303771BB001C20BE /* Release configuration for PBXProject "RightClickRestore" */,
 			);
 			defaultConfigurationName = Release;
 		};
-		4496F2D83037702C0073AD82 /* Build configuration list for PBXNativeTarget "RightClickRestore Extension (iOS)" */ = {
+		44B023CE303771BB001C20BE /* Build configuration list for PBXNativeTarget "RightClickRestore Extension (iOS)" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				4496F2D93037702C0073AD82 /* Debug configuration for PBXNativeTarget "RightClickRestore Extension (iOS)" */,
-				4496F2DA3037702C0073AD82 /* Release configuration for PBXNativeTarget "RightClickRestore Extension (iOS)" */,
+				44B023CF303771BB001C20BE /* Debug configuration for PBXNativeTarget "RightClickRestore Extension (iOS)" */,
+				44B023D0303771BB001C20BE /* Release configuration for PBXNativeTarget "RightClickRestore Extension (iOS)" */,
 			);
 			defaultConfigurationName = Release;
 		};
-		4496F2DC3037702C0073AD82 /* Build configuration list for PBXNativeTarget "RightClickRestore (iOS)" */ = {
+		44B023D2303771BB001C20BE /* Build configuration list for PBXNativeTarget "RightClickRestore (iOS)" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				4496F2DD3037702C0073AD82 /* Debug configuration for PBXNativeTarget "RightClickRestore (iOS)" */,
-				4496F2DE3037702C0073AD82 /* Release configuration for PBXNativeTarget "RightClickRestore (iOS)" */,
+				44B023D3303771BB001C20BE /* Debug configuration for PBXNativeTarget "RightClickRestore (iOS)" */,
+				44B023D4303771BB001C20BE /* Release configuration for PBXNativeTarget "RightClickRestore (iOS)" */,
 			);
 			defaultConfigurationName = Release;
 		};
-		4496F2DF3037702C0073AD82 /* Build configuration list for PBXNativeTarget "RightClickRestore Extension (macOS)" */ = {
+		44B023D5303771BB001C20BE /* Build configuration list for PBXNativeTarget "RightClickRestore Extension (macOS)" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				4496F2E03037702C0073AD82 /* Debug configuration for PBXNativeTarget "RightClickRestore Extension (macOS)" */,
-				4496F2E13037702C0073AD82 /* Release configuration for PBXNativeTarget "RightClickRestore Extension (macOS)" */,
+				44B023D6303771BB001C20BE /* Debug configuration for PBXNativeTarget "RightClickRestore Extension (macOS)" */,
+				44B023D7303771BB001C20BE /* Release configuration for PBXNativeTarget "RightClickRestore Extension (macOS)" */,
 			);
 			defaultConfigurationName = Release;
 		};
-		4496F2E33037702C0073AD82 /* Build configuration list for PBXNativeTarget "RightClickRestore (macOS)" */ = {
+		44B023D9303771BB001C20BE /* Build configuration list for PBXNativeTarget "RightClickRestore (macOS)" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				4496F2E43037702C0073AD82 /* Debug configuration for PBXNativeTarget "RightClickRestore (macOS)" */,
-				4496F2E53037702C0073AD82 /* Release configuration for PBXNativeTarget "RightClickRestore (macOS)" */,
+				44B023DA303771BB001C20BE /* Debug configuration for PBXNativeTarget "RightClickRestore (macOS)" */,
+				44B023DB303771BB001C20BE /* Release configuration for PBXNativeTarget "RightClickRestore (macOS)" */,
 			);
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = 4496F2873037702B0073AD82 /* Project object */;
+	rootObject = 44B0237D303771BB001C20BE /* Project object */;
 	validationLevel = 1;
 }

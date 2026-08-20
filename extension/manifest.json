@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Right Click & Selection Restorer",
-  "version": "1.0.0",
-  "description": "Restores right-click context menus, text selection, and copying on websites that disable them.",
+  "version": "1.1.0",
+  "description": "Restores right-click context menus, text selection, and image/video saving on websites that disable them.",
   "permissions": [
     "storage",
     "activeTab",

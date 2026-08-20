@@ -15,9 +15,11 @@ xcodebuild -project ./SafariExtension/RightClickRestore/RightClickRestore.xcodep
   build
 
 echo "🔏 Clearing extended attributes and applying App Sandbox signatures..."
-xattr -cr build/RightClickRestore.app
+dot_clean build
+xattr -rc build
 codesign -s - --force --entitlements entitlements.plist "build/RightClickRestore.app/Contents/PlugIns/RightClickRestore Extension.appex"
-xattr -cr build/RightClickRestore.app
+dot_clean build
+xattr -rc build
 codesign -s - --force --entitlements entitlements.plist "build/RightClickRestore.app"
 
 echo "🔌 Registering extension with PlugInKit & LaunchServices..."

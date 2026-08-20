@@ -123,31 +123,48 @@
     return realAddEventListener.call(this, type, listener, options);
   };
 
-  function handleContextMenuCapture(e) {
-    if (!config.enabled || !config.restoreRightClick) return;
-    if (config.antiShield && e.clientX && e.clientY) {
-      try {
-        const stack = document.elementsFromPoint(e.clientX, e.clientY);
-        const media = stack.find(el => el.tagName === 'IMG' || el.tagName === 'VIDEO' || el.tagName === 'CANVAS');
-        if (media && stack[0] !== media) {
-          for (const el of stack) {
-            if (el === media) break;
-            const cs = window.getComputedStyle(el);
-            if (cs.position === 'absolute' || cs.position === 'fixed') {
-              el.style.setProperty('pointer-events', 'none', 'important');
-              setTimeout(() => el.style.removeProperty('pointer-events'), 600);
-            }
-          }
+  function unmaskMedia(e) {
+    if (!config.enabled || !config.antiShield || !e.clientX || !e.clientY) return;
+    try {
+      const elements = document.elementsFromPoint(e.clientX, e.clientY);
+      if (!elements || elements.length <= 1) return;
+      const media = elements.find(el => el.tagName === 'IMG' || el.tagName === 'VIDEO' || el.tagName === 'CANVAS');
+      if (media && elements[0] !== media) {
+        for (const el of elements) {
+          if (el === media) break;
+          el.classList.add('rcr-unmasked-overlay');
+          el.style.setProperty('pointer-events', 'none', 'important');
+          setTimeout(() => {
+            el.classList.remove('rcr-unmasked-overlay');
+            el.style.removeProperty('pointer-events');
+          }, 800);
         }
-      } catch(err) {}
-    }
+      }
+    } catch(err) {}
+  }
+
+  function handleContextMenu(e) {
+    if (!config.enabled || !config.restoreRightClick) return;
+    unmaskMedia(e);
     if (config.absoluteForce || (config.bypassModifierKey && (e.shiftKey || e.altKey))) {
       e.stopImmediatePropagation();
     }
   }
 
-  window.addEventListener('contextmenu', handleContextMenuCapture, true);
-  document.addEventListener('contextmenu', handleContextMenuCapture, true);
+  function handleMouseDown(e) {
+    if (!config.enabled || !config.restoreRightClick) return;
+    if (e.button === 2) {
+      unmaskMedia(e);
+      if (config.absoluteForce || (config.bypassModifierKey && (e.shiftKey || e.altKey))) {
+        e.stopImmediatePropagation();
+      }
+    }
+  }
+
+  window.addEventListener('contextmenu', handleContextMenu, true);
+  document.addEventListener('contextmenu', handleContextMenu, true);
+  window.addEventListener('mousedown', handleMouseDown, true);
+  document.addEventListener('mousedown', handleMouseDown, true);
 
   ['selectstart', 'copy', 'cut', 'dragstart'].forEach(type => {
     const handler = (e) => {
@@ -157,23 +174,9 @@
     window.addEventListener(type, handler, true);
     document.addEventListener(type, handler, true);
   });
-
-  ['mousedown', 'mouseup', 'pointerdown', 'pointerup'].forEach(type => {
-    const handler = (e) => {
-      if (!config.enabled || !config.restoreRightClick) return;
-      if (e.button === 2 && (config.absoluteForce || (config.bypassModifierKey && (e.shiftKey || e.altKey)))) {
-        e.stopImmediatePropagation();
-      }
-    };
-    window.addEventListener(type, handler, true);
-    document.addEventListener(type, handler, true);
-  });
 })();
 `;
 
-  /**
-   * Synchronously inject script into DOM
-   */
   function injectSynchronousScript() {
     try {
       const script = document.createElement('script');
@@ -183,9 +186,6 @@
     } catch (e) {}
   }
 
-  /**
-   * Inject fallback external script tag as backup
-   */
   function injectExternalScript() {
     try {
       const script = document.createElement('script');
@@ -323,7 +323,6 @@
   }
 
   async function init() {
-    // 1. Synchronously inject before anything else
     injectSynchronousScript();
     injectExternalScript();
 

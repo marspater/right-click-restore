@@ -104,7 +104,7 @@
           if (config.restoreRightClick && event.type === 'contextmenu') {
             if (config.absoluteForce || (config.bypassModifierKey && (event.shiftKey || event.altKey))) return;
           }
-          if (config.restoreSelection && (event.type === 'selectstart' || event.type === 'copy' || event.type === 'cut' || event.type === 'dragstart')) {
+          if (config.restoreSelection && (event.type === 'selectstart' || event.type === 'dragstart')) {
             if (config.absoluteForce) return;
           }
           if (config.restoreRightClick && (event.type === 'mousedown' || event.type === 'mouseup') && event.button === 2) {
@@ -170,7 +170,7 @@
   window.addEventListener('mousedown', handleMouseDown, true);
   document.addEventListener('mousedown', handleMouseDown, true);
 
-  ['selectstart', 'copy', 'cut', 'dragstart'].forEach(type => {
+  ['selectstart', 'dragstart'].forEach(type => {
     const handler = (e) => {
       if (!config.enabled || !config.restoreSelection) return;
       if (config.absoluteForce) e.stopImmediatePropagation();
@@ -381,7 +381,6 @@
     }, 2500);
   }
 
-  // Listen for popup messages
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === 'RCR_CONFIG_CHANGED') {
       currentConfig = { ...DEFAULT_CONFIG, ...message.config };

@@ -2,8 +2,7 @@
 
 /* 1. Universal Text Selection & Interaction */
 html.rcr-enabled,
-html.rcr-enabled body,
-html.rcr-enabled * {
+html.rcr-enabled body {
   -webkit-user-select: auto !important;
   user-select: auto !important;
   -webkit-touch-callout: default !important;
@@ -32,6 +31,19 @@ html.rcr-enabled a {
   user-select: text !important;
 }
 
+html.rcr-enabled input,
+html.rcr-enabled textarea,
+html.rcr-enabled [contenteditable="true"],
+html.rcr-enabled [contenteditable=""] {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+}
+
+html.rcr-enabled button {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+
 /* 2. Universal Media Interactivity (Images, Videos, Canvas) */
 html.rcr-enabled img,
 html.rcr-enabled video,
@@ -42,8 +54,6 @@ html.rcr-enabled figure,
 html.rcr-enabled svg {
   pointer-events: auto !important;
   -webkit-user-drag: auto !important;
-  -webkit-user-select: auto !important;
-  user-select: auto !important;
   -webkit-touch-callout: default !important;
 }
 

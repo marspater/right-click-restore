@@ -1,0 +1,8 @@
+/* Force text selection and pointer events */
+*,
+*::before,
+*::after {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+  pointer-events: auto !important;
+}

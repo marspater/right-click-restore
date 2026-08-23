@@ -16,15 +16,18 @@ function updateStatus(isEnabled, state) {
   if (isEnabled) {
     dot.className = 'status-glow-dot active';
     title.textContent = 'Extension is Active in Safari';
-    desc.textContent = 'Right-click and text selection protections are active across the web.';
+    desc.textContent =
+      'Right-click and text selection protections are active across the web.';
   } else if (state === 'ready') {
     dot.className = 'status-glow-dot disabled';
     title.textContent = 'Extension is Turned Off in Safari';
-    desc.textContent = 'Click "Open Safari Settings…" below to toggle the extension on.';
+    desc.textContent =
+      'Click "Open Safari Settings…" below to toggle the extension on.';
   } else {
     dot.className = 'status-glow-dot';
     title.textContent = 'Awaiting Safari Setup';
-    desc.textContent = 'Check "Allow Unsigned Extensions" in Safari\'s Develop menu.';
+    desc.textContent =
+      'Check "Allow Unsigned Extensions" in Safari\'s Develop menu.';
   }
 }
 
@@ -76,7 +79,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnOpenPreferences) {
     btnOpenPreferences.addEventListener('click', () => {
       if (window.webkit?.messageHandlers?.controller) {
-        window.webkit.messageHandlers.controller.postMessage('open-preferences');
+        window.webkit.messageHandlers.controller.postMessage(
+          'open-preferences',
+        );
       }
     });
   }

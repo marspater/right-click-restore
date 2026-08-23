@@ -1,102 +1,33 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.5.10/schema.json",
-  "root": true,
+  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
     "useIgnoreFile": true,
-    "root": ".",
-    "defaultBranch": "master"
+    "root": "."
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": [
-      "extension/**",
-      "test_page.html",
-      "*.json",
-      "*.js",
-      "*.css",
-      "*.html",
-      "*.md",
-      "!build",
-      "!SafariExtension/RightClickRestore.xcodeproj",
-      "!SafariExtension/RightClickRestore.xcworkspace",
-      "!DerivedData",
-      "!**/*.icns",
-      "!**/*.appiconset",
-      "!**/*.imageset",
-      "!**/*.colorset"
-    ]
+    "ignore": ["node_modules/**", "build/**", "SafariExtension/**", "bun.lock"]
   },
   "formatter": {
     "enabled": true,
-    "formatWithErrors": false,
     "indentStyle": "space",
-    "indentWidth": 2,
-    "lineWidth": 100,
-    "lineEnding": "lf"
-  },
-  "javascript": {
-    "formatter": {
-      "quoteStyle": "single",
-      "jsxQuoteStyle": "double",
-      "trailingCommas": "none",
-      "semicolons": "always",
-      "arrowParentheses": "always"
-    },
-    "globals": [
-      "chrome",
-      "browser",
-      "window",
-      "document",
-      "Event",
-      "EventTarget",
-      "Node",
-      "HTMLElement",
-      "HTMLBodyElement",
-      "SVGElement",
-      "Element",
-      "MutationObserver",
-      "CustomEvent",
-      "URL",
-      "requestIdleCallback",
-      "setTimeout",
-      "clearTimeout",
-      "setInterval",
-      "clearInterval",
-      "console"
-    ]
-  },
-  "css": {
-    "formatter": {
-      "enabled": true,
-      "quoteStyle": "double"
-    },
-    "linter": {
-      "enabled": true
-    }
+    "indentWidth": 2
   },
   "linter": {
     "enabled": true,
     "rules": {
-      "preset": "recommended",
-      "a11y": {
-        "noSvgWithoutTitle": "off",
-        "noLabelWithoutControl": "off",
-        "noStaticElementInteractions": "off"
-      },
-      "complexity": {
-        "noArguments": "off",
-        "noForEach": "off",
-        "noImportantStyles": "off"
-      },
-      "style": {
-        "useSpreadOverApply": "off"
-      },
-      "suspicious": {
-        "noPrototypeBuiltins": "off",
-        "noExplicitAny": "off"
+      "recommended": true,
+      "correctness": {
+        "noUnusedVariables": "error"
       }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "semicolons": "always"
     }
   }
 }

@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light dark;
+}
+body {
+  margin: 0;
+  width: 280px;
+  background: transparent;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.liquid-glass {
+  background: color-mix(in srgb, var(--glass-base, white) 35%, transparent);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+@media (prefers-color-scheme: dark) {
+  .liquid-glass {
+    --glass-base: black;
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+}

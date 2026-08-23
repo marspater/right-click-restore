@@ -66,7 +66,6 @@
 		44B023D1303771BB001C20BE /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			dstPath = "";
-			dstSubfolder = PlugIns;
 			files = (
 				44B023AF303771BB001C20BE /* RightClickRestore Extension.appex in Embed Foundation Extensions */,
 			);
@@ -75,7 +74,6 @@
 		44B023D8303771BB001C20BE /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			dstPath = "";
-			dstSubfolder = PlugIns;
 			files = (
 				44B023B9303771BB001C20BE /* RightClickRestore Extension.appex in Embed Foundation Extensions */,
 			);
@@ -292,9 +290,12 @@
 			buildPhases = (
 				44B023AA303771BB001C20BE /* Sources */,
 				44B023AB303771BB001C20BE /* Frameworks */,
+				FF05D1EF3FC49822EE67FD42 /* Bun esbuild */,
 				44B023AC303771BB001C20BE /* Resources */,
 			);
 			buildRules = (
+			);
+			dependencies = (
 			);
 			name = "RightClickRestore Extension (iOS)";
 			productName = "RightClickRestore Extension (iOS)";
@@ -307,9 +308,12 @@
 			buildPhases = (
 				44B023B4303771BB001C20BE /* Sources */,
 				44B023B5303771BB001C20BE /* Frameworks */,
+				C1DDB6497AE0E60D28FE6C56 /* Bun esbuild */,
 				44B023B6303771BB001C20BE /* Resources */,
 			);
 			buildRules = (
+			);
+			dependencies = (
 			);
 			name = "RightClickRestore Extension (macOS)";
 			productName = "RightClickRestore Extension (macOS)";
@@ -412,6 +416,45 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		C1DDB6497AE0E60D28FE6C56 /* Bun esbuild */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Bun esbuild";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "export PATH=\"/opt/homebrew/bin:$HOME/.bun/bin:$PATH\"\ncd \"${SRCROOT}/../..\"\nbun run build";
+		};
+		FF05D1EF3FC49822EE67FD42 /* Bun esbuild */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Bun esbuild";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "export PATH=\"/opt/homebrew/bin:$HOME/.bun/bin:$PATH\"\ncd \"${SRCROOT}/../..\"\nbun run build";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		44B0238C303771BB001C20BE /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -491,7 +534,7 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
-		44B023CC303771BB001C20BE /* Debug configuration for PBXProject "RightClickRestore" */ = {
+		44B023CC303771BB001C20BE /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -528,7 +571,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -552,7 +595,7 @@
 			};
 			name = Debug;
 		};
-		44B023CD303771BB001C20BE /* Release configuration for PBXProject "RightClickRestore" */ = {
+		44B023CD303771BB001C20BE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -589,7 +632,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -605,11 +648,12 @@
 			};
 			name = Release;
 		};
-		44B023CF303771BB001C20BE /* Debug configuration for PBXNativeTarget "RightClickRestore Extension (iOS)" */ = {
+		44B023CF303771BB001C20BE /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "iOS (Extension)/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "RightClickRestore Extension";
@@ -638,11 +682,12 @@
 			};
 			name = Debug;
 		};
-		44B023D0303771BB001C20BE /* Release configuration for PBXNativeTarget "RightClickRestore Extension (iOS)" */ = {
+		44B023D0303771BB001C20BE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "iOS (Extension)/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "RightClickRestore Extension";
@@ -672,13 +717,14 @@
 			};
 			name = Release;
 		};
-		44B023D3303771BB001C20BE /* Debug configuration for PBXNativeTarget "RightClickRestore (iOS)" */ = {
+		44B023D3303771BB001C20BE /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "iOS (App)/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = RightClickRestore;
@@ -712,13 +758,14 @@
 			};
 			name = Debug;
 		};
-		44B023D4303771BB001C20BE /* Release configuration for PBXNativeTarget "RightClickRestore (iOS)" */ = {
+		44B023D4303771BB001C20BE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "iOS (App)/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = RightClickRestore;
@@ -753,13 +800,14 @@
 			};
 			name = Release;
 		};
-		44B023D6303771BB001C20BE /* Debug configuration for PBXNativeTarget "RightClickRestore Extension (macOS)" */ = {
+		44B023D6303771BB001C20BE /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "macOS (Extension)/Info.plist";
@@ -788,13 +836,14 @@
 			};
 			name = Debug;
 		};
-		44B023D7303771BB001C20BE /* Release configuration for PBXNativeTarget "RightClickRestore Extension (macOS)" */ = {
+		44B023D7303771BB001C20BE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "macOS (Extension)/Info.plist";
@@ -823,7 +872,7 @@
 			};
 			name = Release;
 		};
-		44B023DA303771BB001C20BE /* Debug configuration for PBXNativeTarget "RightClickRestore (macOS)" */ = {
+		44B023DA303771BB001C20BE /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -833,6 +882,7 @@
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "macOS (App)/Info.plist";
@@ -864,7 +914,7 @@
 			};
 			name = Debug;
 		};
-		44B023DB303771BB001C20BE /* Release configuration for PBXNativeTarget "RightClickRestore (macOS)" */ = {
+		44B023DB303771BB001C20BE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -874,6 +924,7 @@
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "macOS (App)/Info.plist";
@@ -911,45 +962,44 @@
 		44B02380303771BB001C20BE /* Build configuration list for PBXProject "RightClickRestore" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				44B023CC303771BB001C20BE /* Debug configuration for PBXProject "RightClickRestore" */,
-				44B023CD303771BB001C20BE /* Release configuration for PBXProject "RightClickRestore" */,
+				44B023CC303771BB001C20BE /* Debug */,
+				44B023CD303771BB001C20BE /* Release */,
 			);
 			defaultConfigurationName = Release;
 		};
 		44B023CE303771BB001C20BE /* Build configuration list for PBXNativeTarget "RightClickRestore Extension (iOS)" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				44B023CF303771BB001C20BE /* Debug configuration for PBXNativeTarget "RightClickRestore Extension (iOS)" */,
-				44B023D0303771BB001C20BE /* Release configuration for PBXNativeTarget "RightClickRestore Extension (iOS)" */,
+				44B023CF303771BB001C20BE /* Debug */,
+				44B023D0303771BB001C20BE /* Release */,
 			);
 			defaultConfigurationName = Release;
 		};
 		44B023D2303771BB001C20BE /* Build configuration list for PBXNativeTarget "RightClickRestore (iOS)" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				44B023D3303771BB001C20BE /* Debug configuration for PBXNativeTarget "RightClickRestore (iOS)" */,
-				44B023D4303771BB001C20BE /* Release configuration for PBXNativeTarget "RightClickRestore (iOS)" */,
+				44B023D3303771BB001C20BE /* Debug */,
+				44B023D4303771BB001C20BE /* Release */,
 			);
 			defaultConfigurationName = Release;
 		};
 		44B023D5303771BB001C20BE /* Build configuration list for PBXNativeTarget "RightClickRestore Extension (macOS)" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				44B023D6303771BB001C20BE /* Debug configuration for PBXNativeTarget "RightClickRestore Extension (macOS)" */,
-				44B023D7303771BB001C20BE /* Release configuration for PBXNativeTarget "RightClickRestore Extension (macOS)" */,
+				44B023D6303771BB001C20BE /* Debug */,
+				44B023D7303771BB001C20BE /* Release */,
 			);
 			defaultConfigurationName = Release;
 		};
 		44B023D9303771BB001C20BE /* Build configuration list for PBXNativeTarget "RightClickRestore (macOS)" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				44B023DA303771BB001C20BE /* Debug configuration for PBXNativeTarget "RightClickRestore (macOS)" */,
-				44B023DB303771BB001C20BE /* Release configuration for PBXNativeTarget "RightClickRestore (macOS)" */,
+				44B023DA303771BB001C20BE /* Debug */,
+				44B023DB303771BB001C20BE /* Release */,
 			);
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
 	rootObject = 44B0237D303771BB001C20BE /* Project object */;
-	validationLevel = 1;
 }

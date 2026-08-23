@@ -9,3 +9,6 @@ build/
 
 # Node / Scratch
 scratch/
+
+SafariExtension/RightClickRestore/Shared (Extension)/Resources/
+node_modules/

@@ -148,19 +148,26 @@ async function forceUnlockPage() {
     </label>
   </header>
 
-  <!-- Active Domain Card with Apple Squircle -->
-  <section class="glass-card p-2.5 mb-2.5 flex items-center justify-between">
-    <div class="flex items-center gap-2 min-w-0 pr-2">
-      <div class={`w-2 h-2 rounded-full flex-shrink-0 transition-colors ${
-        isSiteActive ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.7)]' : 'bg-neutral-400'
-      }`}></div>
-      <div class="min-w-0">
-        <div class="text-[9.5px] uppercase font-semibold tracking-wider text-neutral-400 dark:text-neutral-500">
+  <!-- Active Domain Card with Perfect Alignment -->
+  <section class="glass-card px-3 py-2.5 mb-2.5 flex items-center justify-between">
+    <div class="flex items-center gap-2.5 min-w-0 pr-2">
+      <!-- Status Beacon -->
+      <div class="flex items-center justify-center flex-shrink-0">
+        <span class={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+          isSiteActive
+            ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] ring-2 ring-emerald-500/20'
+            : 'bg-neutral-400 dark:bg-neutral-500 shadow-none'
+        }`}></span>
+      </div>
+
+      <!-- Domain Labels Stack -->
+      <div class="min-w-0 flex flex-col justify-center">
+        <span class="text-[9.5px] uppercase font-semibold tracking-wider text-neutral-500 dark:text-neutral-400 leading-tight">
           {isSiteActive ? 'Active on Domain' : 'Disabled on Domain'}
-        </div>
-        <div class="text-xs font-semibold truncate max-w-[180px]" title={currentHostname}>
+        </span>
+        <span class="text-[12.5px] font-semibold text-neutral-900 dark:text-neutral-100 truncate leading-snug mt-0.5" title={currentHostname}>
           {currentHostname || 'Loading…'}
-        </div>
+        </span>
       </div>
     </div>
 
@@ -271,7 +278,9 @@ async function forceUnlockPage() {
         </div>
         <div>
           <div class="text-xs font-medium">Modifier Key Bypass</div>
-          <div class="text-[9.5px] text-neutral-500 dark:text-neutral-400">Hold <kbd>Shift</kbd> or <kbd>⌥</kbd> + Click</div>
+          <div class="text-[10px] text-neutral-500 dark:text-neutral-400 flex items-center gap-1 mt-0.5">
+            Hold <kbd>⇧ Shift</kbd> or <kbd>⌥ Option</kbd> + Click
+          </div>
         </div>
       </div>
       <label class="apple-switch apple-switch-sm">
@@ -317,8 +326,10 @@ async function forceUnlockPage() {
     </button>
   </div>
 
-  <!-- Tip Footer -->
-  <footer class="text-[9.5px] text-center text-neutral-400 dark:text-neutral-500 leading-tight">
-    💡 Hold <kbd>Shift</kbd> while right-clicking anywhere to force native menu.
+  <!-- Tip Footer with High-Contrast Keycap -->
+  <footer class="text-[10px] text-center text-neutral-500 dark:text-neutral-400 leading-normal flex items-center justify-center gap-1">
+    <span>💡 Hold</span>
+    <kbd>⇧ Shift</kbd>
+    <span>while right-clicking to force native menu.</span>
   </footer>
 </main>

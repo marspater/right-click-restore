@@ -19,39 +19,38 @@
     disabledDomains: [],
   };
 
-  // 1. Secure Secret Token Extraction from Injector Script
   let activeConfig: Settings = { ...DEFAULT_SETTINGS };
-  let sessionToken = '';
 
+  // Read initial configuration directly from the injecting script's dataset.
+  // Because this script executes synchronously when injected by content.js,
+  // the configuration is read before any hostile page script can mutate it.
   try {
-    const scriptEl =
-      document.currentScript ||
-      document.getElementById('rcr-main-world-script');
-    if (scriptEl instanceof HTMLScriptElement) {
-      if (scriptEl.dataset.token) {
-        sessionToken = scriptEl.dataset.token;
-      }
-      if (scriptEl.dataset.initialConfig) {
-        try {
-          activeConfig = {
-            ...DEFAULT_SETTINGS,
-            ...JSON.parse(scriptEl.dataset.initialConfig),
-          };
-        } catch (_e) {}
-      }
+    const scriptEl = document.currentScript;
+    if (
+      scriptEl instanceof HTMLScriptElement &&
+      scriptEl.dataset.initialConfig
+    ) {
+      activeConfig = {
+        ...DEFAULT_SETTINGS,
+        ...JSON.parse(scriptEl.dataset.initialConfig),
+      };
+      // Immediately scrub the sensitive config data from the DOM
+      scriptEl.removeAttribute('data-initial-config');
       scriptEl.remove();
     }
   } catch (_e) {}
 
-  // Listen for secure authenticated config updates from isolated content script
-  if (sessionToken) {
-    window.addEventListener(`__rcr_cfg_${sessionToken}`, (e: Event) => {
+  // Accept dynamic updates on a hardcoded un-authenticated event.
+  // (We accept that a hostile page can spoof this to disable the extension *on itself*,
+  // but they can no longer intercept a secure token or steal configuration logic).
+  window.addEventListener('__rcr_update_config', (e: Event) => {
+    try {
       const customEvent = e as CustomEvent<Settings>;
       if (customEvent.detail && typeof customEvent.detail === 'object') {
         activeConfig = { ...DEFAULT_SETTINGS, ...customEvent.detail };
       }
-    });
-  }
+    } catch (_err) {}
+  });
 
   const origPD = Event.prototype.preventDefault;
   const origSP = Event.prototype.stopPropagation;
@@ -144,11 +143,10 @@
     'beforecopy',
   ]);
 
-  // 2. Intercept preventDefault with private state checks
   Event.prototype.preventDefault = function (this: Event): void {
     if (isShieldActive()) {
       if (isModifierBypassActive() && isModifierPressed(this)) {
-        return; // Allows native browser behavior
+        return;
       }
       if (
         this.type === 'contextmenu' &&
@@ -168,7 +166,6 @@
     origPD.apply(this);
   };
 
-  // 3. Intercept returnValue to prevent inline return false blocking
   try {
     const origDescriptor = Object.getOwnPropertyDescriptor(
       Event.prototype,
@@ -201,7 +198,6 @@
     });
   } catch (_e) {}
 
-  // 4. Neutralize stopPropagation for protected events
   Event.prototype.stopPropagation = function (this: Event): void {
     if (isShieldActive() && !isInteractiveEvent(this)) {
       if (isModifierBypassActive() && isModifierPressed(this)) return;
@@ -211,7 +207,6 @@
     origSP.apply(this);
   };
 
-  // 5. Neutralize stopImmediatePropagation for protected events
   Event.prototype.stopImmediatePropagation = function (this: Event): void {
     if (isShieldActive() && !isInteractiveEvent(this)) {
       if (isModifierBypassActive() && isModifierPressed(this)) return;
@@ -221,7 +216,6 @@
     origSIP.apply(this);
   };
 
-  // 6. Prototype property traps with clean delegation to original descriptors
   const targets = [
     typeof Window !== 'undefined' ? Window.prototype : null,
     typeof Document !== 'undefined' ? Document.prototype : null,
@@ -252,7 +246,7 @@
           },
           set(val) {
             if (isForceModeActive() && !isInteractiveNode(this as Node)) {
-              return; // Neutralize in force mode on static content
+              return;
             }
             if (origDescriptor?.set) {
               origDescriptor.set.call(this, val);
@@ -265,7 +259,6 @@
     }
   }
 
-  // 7. Anti-Shield Overlay Unmasker
   function unmaskMedia(e: MouseEvent) {
     if (!isAntiShieldActive()) return;
     if (!e || typeof e.clientX !== 'number' || typeof e.clientY !== 'number')
@@ -311,7 +304,6 @@
 
   document.addEventListener('contextmenu', (e) => unmaskMedia(e), false);
 
-  // 8. Deep Force Unlock Dispatch Receiver
   window.addEventListener('__rcr_force_unlock__', () => {
     try {
       window.oncontextmenu = null;

@@ -19,12 +19,8 @@
     disabledDomains: [],
   };
 
-  const sessionToken =
-    typeof crypto !== 'undefined' && crypto.randomUUID
-      ? crypto.randomUUID()
-      : Math.random().toString(36).slice(2) + Date.now().toString(36);
-
   let currentSettings: Settings = { ...DEFAULT_SETTINGS };
+  let mainWorldInjected = false;
 
   function isDomainDisabled(
     hostname: string,
@@ -49,7 +45,6 @@
       enabled: settings.enabled !== false && !isDisabled,
     };
 
-    // Update CSS selectors on DOM
     const root = document.documentElement;
     if (root) {
       root.dataset.rcrEnabled = effectiveSettings.enabled ? 'true' : 'false';
@@ -70,17 +65,39 @@
         : 'false';
     }
 
-    // Dispatch secure authenticated update to MAIN-world script
     try {
       window.dispatchEvent(
-        new CustomEvent(`__rcr_cfg_${sessionToken}`, {
+        new CustomEvent('__rcr_update_config', {
           detail: effectiveSettings,
         }),
       );
     } catch (_e) {}
   }
 
-  // Load and apply initial settings
+  function injectMainWorldScript(initialConfig: Settings) {
+    if (mainWorldInjected) return;
+    mainWorldInjected = true;
+    try {
+      const script = document.createElement('script');
+      script.src = chrome.runtime.getURL('page-script.js');
+      script.dataset.initialConfig = JSON.stringify(initialConfig);
+
+      const target = document.head || document.documentElement || document.body;
+      if (target) {
+        target.appendChild(script);
+      } else {
+        document.addEventListener('DOMContentLoaded', () => {
+          (
+            document.head ||
+            document.documentElement ||
+            document.body
+          )?.appendChild(script);
+        });
+      }
+    } catch (_e) {}
+  }
+
+  // Load configuration FIRST, then inject script (fixes race condition)
   try {
     chrome.storage.local.get(['rcr_settings', 'shieldEnabled'], (res) => {
       const settings = {
@@ -90,13 +107,21 @@
       if (res.shieldEnabled !== undefined) {
         settings.enabled = res.shieldEnabled;
       }
-      applySettings(settings);
+      const hostname = window.location.hostname;
+      const isDisabled = isDomainDisabled(hostname, settings.disabledDomains);
+      const effectiveSettings: Settings = {
+        ...settings,
+        enabled: settings.enabled !== false && !isDisabled,
+      };
+
+      applySettings(effectiveSettings);
+      injectMainWorldScript(effectiveSettings);
     });
   } catch (_e) {
     applySettings(DEFAULT_SETTINGS);
+    injectMainWorldScript(DEFAULT_SETTINGS);
   }
 
-  // React to storage changes from popup
   try {
     chrome.storage.onChanged.addListener((changes, area) => {
       if (area === 'local') {
@@ -162,7 +187,6 @@
     } catch (_e) {}
   }
 
-  // Handle messages from popup
   try {
     chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       if (message.type === 'RCR_FORCE_UNLOCK') {
@@ -179,31 +203,6 @@
       return true;
     });
   } catch (_e) {}
-
-  function injectMainWorldScript() {
-    try {
-      if (document.getElementById('rcr-main-world-script')) return;
-      const script = document.createElement('script');
-      script.id = 'rcr-main-world-script';
-      script.src = chrome.runtime.getURL('page-script.js');
-      script.async = false;
-      script.dataset.token = sessionToken;
-      script.dataset.initialConfig = JSON.stringify(currentSettings);
-
-      const target = document.head || document.documentElement || document.body;
-      if (target) {
-        target.appendChild(script);
-      } else {
-        document.addEventListener('DOMContentLoaded', () => {
-          (
-            document.head ||
-            document.documentElement ||
-            document.body
-          )?.appendChild(script);
-        });
-      }
-    } catch (_e) {}
-  }
 
   const INTERACTIVE_CONTAINERS =
     '.ProseMirror, .monaco-editor, .html5-video-player, [class*="ytp-"], [class*="player-"], ytd-app, [contenteditable="true"]';
@@ -263,10 +262,6 @@
     } catch (_e) {}
   }
 
-  // 1. Inject MAIN-world script
-  injectMainWorldScript();
-
-  // 2. Scrub DOM
   if (document.documentElement) {
     cleanDOMTree(document.documentElement);
   }
@@ -277,51 +272,67 @@
     cleanDOMTree();
   }
 
-  // 3. Batched MutationObserver with Circuit Breaker Rate Limiting
+  // Strict resource-budgeted batched MutationObserver
   const pendingNodes = new Set<Element>();
   let isBatchScheduled = false;
-  let scrubCountThisWindow = 0;
-  let windowStartTime = Date.now();
-  const MAX_SCRUBS_PER_SEC = 80;
+  let isBackoffMode = false;
+  let backoffTimeout: ReturnType<typeof setTimeout> | null = null;
+  const MAX_NODES_PER_BATCH = 50;
+  const MAX_PENDING_NODES = 50000;
 
   function processBatch() {
+    if (isBackoffMode) {
+      isBatchScheduled = false;
+      return;
+    }
+
     const nodes = Array.from(pendingNodes);
-    pendingNodes.clear();
-    for (const node of nodes) {
-      scrubCountThisWindow++;
+    const batch = nodes.slice(0, MAX_NODES_PER_BATCH);
+
+    // Remove processed nodes from the queue
+    for (const node of batch) {
+      pendingNodes.delete(node);
+    }
+
+    for (const node of batch) {
       cleanNode(node);
       try {
         for (const child of node.querySelectorAll(SCRUB_SELECTOR)) {
-          scrubCountThisWindow++;
           cleanNode(child);
         }
       } catch (_e) {}
     }
+
+    if (pendingNodes.size > 0) {
+      requestAnimationFrame(processBatch);
+    } else {
+      isBatchScheduled = false;
+    }
   }
 
   function scheduleBatch() {
-    if (isBatchScheduled) return;
+    if (isBatchScheduled || isBackoffMode) return;
     isBatchScheduled = true;
+    requestAnimationFrame(processBatch);
+  }
 
-    requestAnimationFrame(() => {
-      isBatchScheduled = false;
-      const now = Date.now();
-      if (now - windowStartTime > 1000) {
-        scrubCountThisWindow = 0;
-        windowStartTime = now;
-      }
+  function enterBackoffMode() {
+    if (isBackoffMode) return;
+    isBackoffMode = true;
+    pendingNodes.clear();
+    isBatchScheduled = false;
 
-      // If attack / mutation storm detected (> 80 scrubs/sec), back off smoothly
-      if (scrubCountThisWindow > MAX_SCRUBS_PER_SEC) {
-        setTimeout(() => processBatch(), 250);
-        return;
-      }
-
-      processBatch();
-    });
+    if (backoffTimeout) clearTimeout(backoffTimeout);
+    // 5-second penalty backoff for mutation storms
+    backoffTimeout = setTimeout(() => {
+      isBackoffMode = false;
+      backoffTimeout = null;
+    }, 5000);
   }
 
   const obs = new MutationObserver((mutations) => {
+    if (isBackoffMode) return;
+
     for (const m of mutations) {
       if (m.type === 'attributes' && m.target instanceof Element) {
         pendingNodes.add(m.target);
@@ -333,6 +344,13 @@
         }
       }
     }
+
+    // Memory exhaustion circuit breaker
+    if (pendingNodes.size > MAX_PENDING_NODES) {
+      enterBackoffMode();
+      return;
+    }
+
     if (pendingNodes.size > 0) {
       scheduleBatch();
     }

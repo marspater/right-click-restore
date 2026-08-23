@@ -1,14 +1,7 @@
-/* Target text content elements specifically — never apply to *, div, or svg */
-p,
-span,
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
+/* Enable text selection on article content containers without interfering with player controls, buttons, or spans */
 article,
 section,
+p,
 blockquote,
 pre,
 code,
@@ -17,14 +10,26 @@ td,
 th,
 dt,
 dd,
-figcaption,
-label {
+figcaption {
   -webkit-user-select: text !important;
   user-select: text !important;
 }
 
-/* Only restore pointer events on media elements blocked by inline attributes/styles */
+/* Ensure media elements are clickable */
 img,
 video {
   pointer-events: auto !important;
+}
+
+/* Exclude interactive controls, inputs, and video player containers from forced selection */
+input,
+textarea,
+select,
+button,
+.html5-video-player,
+.html5-video-player *,
+[class*="ytp-"],
+[class*="ytp-"] * {
+  -webkit-user-select: auto;
+  user-select: auto;
 }

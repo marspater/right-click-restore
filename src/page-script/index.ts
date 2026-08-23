@@ -1,18 +1,6 @@
 (() => {
-  const TARGET_EVENTS = new Set([
-    'contextmenu',
-    'selectstart',
-    'copy',
-    'cut',
-    'paste',
-    'dragstart',
-  ]);
-
-  const TARGET_RETURN_VALUE_EVENTS = new Set([
-    'contextmenu',
-    'selectstart',
-    'copy',
-  ]);
+  const TARGET_EVENTS = new Set(['contextmenu', 'selectstart']);
+  const TARGET_RETURN_VALUE_EVENTS = new Set(['contextmenu', 'selectstart']);
 
   const origPD = Event.prototype.preventDefault;
   const origSP = Event.prototype.stopPropagation;
@@ -24,11 +12,25 @@
     return document.documentElement?.dataset?.rcrEnabled !== 'false';
   }
 
-  // 1. Intercept preventDefault for protected event types
+  function isInteractiveElement(target: EventTarget | null): boolean {
+    if (!target || !(target instanceof Element)) return false;
+    try {
+      if (
+        target.closest(
+          '.html5-video-player, video, audio, [class*="ytp-"], [class*="player-"], ytd-app, input, textarea, select, button, [contenteditable="true"], [role="textbox"], [role="combobox"], [role="button"], [role="menuitem"], canvas',
+        )
+      ) {
+        return true;
+      }
+    } catch (_e) {}
+    return false;
+  }
+
+  // 1. Intercept preventDefault for protected event types on non-interactive content
   Event.prototype.preventDefault = function (this: Event): void {
-    if (isShieldActive()) {
+    if (isShieldActive() && !isInteractiveElement(this.target)) {
       if (TARGET_EVENTS.has(this.type)) {
-        return; // Silently discard blocking attempts
+        return; // Silently discard blocking attempts on static content
       }
       if (this.type === 'mousedown' || this.type === 'mouseup') {
         if ((this as MouseEvent).button === 2) {
@@ -47,14 +49,22 @@
     );
     Object.defineProperty(Event.prototype, 'returnValue', {
       get() {
-        if (isShieldActive() && TARGET_RETURN_VALUE_EVENTS.has(this.type)) {
+        if (
+          isShieldActive() &&
+          TARGET_RETURN_VALUE_EVENTS.has(this.type) &&
+          !isInteractiveElement(this.target)
+        ) {
           return true;
         }
         if (origDescriptor?.get) return origDescriptor.get.call(this);
         return true;
       },
       set(val) {
-        if (isShieldActive() && TARGET_RETURN_VALUE_EVENTS.has(this.type)) {
+        if (
+          isShieldActive() &&
+          TARGET_RETURN_VALUE_EVENTS.has(this.type) &&
+          !isInteractiveElement(this.target)
+        ) {
           return;
         }
         if (origDescriptor?.set) origDescriptor.set.call(this, val);
@@ -64,27 +74,31 @@
     });
   } catch (_e) {}
 
-  // 3. Neutralize stopPropagation on contextmenu and selection
+  // 3. Neutralize stopPropagation on contextmenu only on non-interactive elements
   Event.prototype.stopPropagation = function (this: Event): void {
-    if (isShieldActive()) {
-      if (this.type === 'contextmenu' || this.type === 'selectstart') {
-        return;
-      }
+    if (
+      isShieldActive() &&
+      !isInteractiveElement(this.target) &&
+      this.type === 'contextmenu'
+    ) {
+      return;
     }
     origSP.apply(this);
   };
 
-  // 4. Neutralize stopImmediatePropagation
+  // 4. Neutralize stopImmediatePropagation on contextmenu only on non-interactive elements
   Event.prototype.stopImmediatePropagation = function (this: Event): void {
-    if (isShieldActive()) {
-      if (this.type === 'contextmenu' || this.type === 'selectstart') {
-        return;
-      }
+    if (
+      isShieldActive() &&
+      !isInteractiveElement(this.target) &&
+      this.type === 'contextmenu'
+    ) {
+      return;
     }
     origSIP.apply(this);
   };
 
-  // 5. WeakMap-based listener tracking + removeEventListener patch
+  // 5. WeakMap-based listener tracking with safe invocation
   const listenerMap = new WeakMap<
     EventListenerOrEventListenerObject,
     Map<string, EventListener>
@@ -121,23 +135,16 @@
       return;
     }
 
-    if (TARGET_EVENTS.has(type) || type === 'mousedown' || type === 'mouseup') {
+    if (
+      type === 'contextmenu' ||
+      type === 'selectstart' ||
+      type === 'mousedown' ||
+      type === 'mouseup'
+    ) {
       const wrappedListener: EventListener = function (
         this: unknown,
         event: Event,
       ) {
-        if (isShieldActive()) {
-          if (type === 'contextmenu' || type === 'selectstart') {
-            // Bypass malicious handler
-            return;
-          }
-          if (
-            (type === 'mousedown' || type === 'mouseup') &&
-            (event as MouseEvent).button === 2
-          ) {
-            return;
-          }
-        }
         if (typeof listener === 'function') {
           listener.apply(this, [event]);
           return;
@@ -173,7 +180,10 @@
   ): void {
     if (
       listener &&
-      (TARGET_EVENTS.has(type) || type === 'mousedown' || type === 'mouseup')
+      (type === 'contextmenu' ||
+        type === 'selectstart' ||
+        type === 'mousedown' ||
+        type === 'mouseup')
     ) {
       try {
         const map = listenerMap.get(listener);
@@ -191,23 +201,15 @@
     origRemoveEventListener.call(this, type, listener, options);
   };
 
-  // 6. Neutralize prototype property setters (e.g. element.oncontextmenu = ...)
+  // 6. Neutralize prototype property setters on Window, Document, HTMLElement
   const targets = [
     typeof Window !== 'undefined' ? Window.prototype : null,
     typeof Document !== 'undefined' ? Document.prototype : null,
     typeof HTMLElement !== 'undefined' ? HTMLElement.prototype : null,
     typeof HTMLBodyElement !== 'undefined' ? HTMLBodyElement.prototype : null,
-    typeof SVGElement !== 'undefined' ? SVGElement.prototype : null,
-    typeof Element !== 'undefined' ? Element.prototype : null,
   ].filter(Boolean) as object[];
 
-  for (const prop of [
-    'oncontextmenu',
-    'onselectstart',
-    'oncopy',
-    'oncut',
-    'ondragstart',
-  ]) {
+  for (const prop of ['oncontextmenu', 'onselectstart', 'ondragstart']) {
     for (const proto of targets) {
       try {
         Object.defineProperty(proto, prop, {
@@ -215,7 +217,7 @@
             return null;
           },
           set(_val) {
-            // Swallow inline assignment
+            // Swallow inline blocking assignments on static prototypes
           },
           configurable: true,
           enumerable: true,
@@ -224,28 +226,23 @@
     }
   }
 
-  // 7. Unmask transparent click shields & overlays under cursor without breaking video players
+  // 7. Unmask transparent click shields & overlays under cursor without touching video players
   function unmaskMedia(e: MouseEvent) {
     if (!isShieldActive()) return;
     if (!e || typeof e.clientX !== 'number' || typeof e.clientY !== 'number')
       return;
     try {
+      if (isInteractiveElement(e.target)) return;
       if (typeof document.elementsFromPoint !== 'function') return;
+
       const elements = document.elementsFromPoint(e.clientX, e.clientY);
       if (!elements || elements.length <= 1) return;
 
-      // Never tamper with video player controls (e.g. YouTube, Vimeo, custom video controls)
-      const isPlayerControl = elements.some((el) => {
-        const className = typeof el.className === 'string' ? el.className : '';
-        return (
-          el.closest('.html5-video-player') !== null ||
-          className.includes('ytp-') ||
-          el.closest('button, input, textarea, select, [contenteditable]') !==
-            null
-        );
-      });
-
-      if (isPlayerControl) return;
+      // Never tamper with video players, interactive controls, or forms
+      const isPlayerOrInteractive = elements.some((el) =>
+        isInteractiveElement(el),
+      );
+      if (isPlayerOrInteractive) return;
 
       const media = elements.find(
         (el) =>
@@ -274,22 +271,7 @@
     } catch (_err) {}
   }
 
-  window.addEventListener('contextmenu', (e) => unmaskMedia(e), true);
-  document.addEventListener('contextmenu', (e) => unmaskMedia(e), true);
-  window.addEventListener(
-    'mousedown',
-    (e) => {
-      if (e.button === 2) unmaskMedia(e);
-    },
-    true,
-  );
-  document.addEventListener(
-    'mousedown',
-    (e) => {
-      if (e.button === 2) unmaskMedia(e);
-    },
-    true,
-  );
+  document.addEventListener('contextmenu', (e) => unmaskMedia(e), false);
 
   // 8. Deep Force Unlock Dispatch Receiver
   window.addEventListener('__rcr_force_unlock__', () => {
@@ -302,10 +284,6 @@
       if (document.body) document.body.onselectstart = null;
       window.ondragstart = null;
       document.ondragstart = null;
-      window.oncopy = null;
-      document.oncopy = null;
-      window.oncut = null;
-      document.oncut = null;
     } catch (_e) {}
   });
 })();

@@ -153,6 +153,16 @@
 
   function cleanNode(el: Element) {
     if (!el || el.nodeType !== Node.ELEMENT_NODE) return;
+
+    // Never alter video players, custom web app elements, or interactive controls
+    if (
+      el.closest(
+        '.html5-video-player, video, audio, [class*="ytp-"], [class*="player-"], ytd-app, input, textarea, select, button, [contenteditable="true"]',
+      )
+    ) {
+      return;
+    }
+
     for (const attr of BLOCKED_ATTRS) {
       if (el.hasAttribute(attr)) {
         try {
@@ -160,26 +170,19 @@
         } catch (_e) {}
       }
     }
-    // Clear userSelect only if explicitly set to none on text containers
+    // Clear userSelect only if explicitly set to none on text content
     if (
       el instanceof HTMLElement &&
       (el.style.userSelect === 'none' || el.style.webkitUserSelect === 'none')
     ) {
-      if (
-        !el.closest(
-          '.html5-video-player, button, input, textarea, select, [contenteditable]',
-        )
-      ) {
-        el.style.userSelect = 'auto';
-        el.style.webkitUserSelect = 'auto';
-      }
+      el.style.userSelect = 'auto';
+      el.style.webkitUserSelect = 'auto';
     }
   }
 
   function cleanDOMTree(root: Element | Document = document) {
     if (root instanceof Element) cleanNode(root);
     try {
-      // Use targeted attribute query instead of expensive querySelectorAll('*')
       for (const node of root.querySelectorAll(TARGET_SELECTOR)) {
         cleanNode(node);
       }

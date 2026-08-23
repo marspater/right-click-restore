@@ -240,7 +240,7 @@
       <h3>Testing Matrix:</h3>
       <ul>
         <li><strong>With Extension Active:</strong> Right-click and copy work across hostile containers 1–7.</li>
-        <li><strong>Modifier Key Bypass:</strong> Hold <kbd>⇧ Shift</kbd> or <kbd>⌥ Option</kbd> while clicking to force native browser menu.</li>
+        <li><strong>Modifier Key Bypass:</strong> Hold <kbd>⇧ Shift</kbd> or <kbd>⌥ Option</kbd> while clicking to bypass and summon native browser menu.</li>
         <li><strong>Interactive Integrity (Test 8 & 9):</strong> Type and paste into text fields to verify normal single-paste without duplicates.</li>
       </ul>
     </div>
@@ -285,8 +285,8 @@
 
       <!-- Test 5 -->
       <div class="card">
-        <h2 class="card-title"><span>5️⃣</span> onselectstart & oncopy Blocker</h2>
-        <p class="card-desc">Cancels <code>selectstart</code>, <code>copy</code>, and <code>dragstart</code>.</p>
+        <h2 class="card-title"><span>5️⃣</span> onselectstart, oncopy & beforecopy Blocker</h2>
+        <p class="card-desc">Cancels <code>selectstart</code>, <code>copy</code>, <code>cut</code>, and <code>beforecopy</code>.</p>
         <div class="test-box" id="test-copy-block">
           📋 Highlight this text and press ⌘C to test copy restoration.
         </div>
@@ -368,6 +368,15 @@
     copyBox.addEventListener('copy', (e) => {
       e.preventDefault();
       logEvent('Website blocked copy event');
+    });
+    copyBox.addEventListener('cut', (e) => {
+      e.preventDefault();
+      logEvent('Website blocked cut event');
+    });
+    copyBox.addEventListener('beforecopy', (e) => {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      logEvent('Website blocked beforecopy event');
     });
     copyBox.addEventListener('dragstart', (e) => {
       e.preventDefault();

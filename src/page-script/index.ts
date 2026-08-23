@@ -97,12 +97,20 @@
     return false;
   }
 
+  const SELECTION_EVENTS = new Set([
+    'selectstart',
+    'dragstart',
+    'copy',
+    'cut',
+    'beforecopy',
+  ]);
+
   // 1. Intercept preventDefault with granular capability checks
   Event.prototype.preventDefault = function (this: Event): void {
     if (isShieldActive()) {
       // 1a. Modifier Key Bypass (<kbd>Shift</kbd> / <kbd>Option</kbd>)
       if (isModifierBypassActive() && isModifierPressed(this)) {
-        return; // Always force native browser behavior
+        return; // Allows native browser behavior
       }
 
       // 1b. Right-Click Restoration
@@ -115,16 +123,12 @@
       }
 
       // 1c. Text Selection & Copy Restoration on static content
-      if (isSelectionActive() && !isInteractiveEvent(this)) {
-        if (
-          this.type === 'selectstart' ||
-          this.type === 'dragstart' ||
-          this.type === 'copy' ||
-          this.type === 'cut' ||
-          this.type === 'beforecopy'
-        ) {
-          return;
-        }
+      if (
+        isSelectionActive() &&
+        SELECTION_EVENTS.has(this.type) &&
+        !isInteractiveEvent(this)
+      ) {
+        return;
       }
     }
     origPD.apply(this);
@@ -141,12 +145,7 @@
         if (isShieldActive() && !isInteractiveEvent(this)) {
           if (isModifierBypassActive() && isModifierPressed(this)) return true;
           if (this.type === 'contextmenu' && isRightClickActive()) return true;
-          if (
-            (this.type === 'selectstart' ||
-              this.type === 'copy' ||
-              this.type === 'dragstart') &&
-            isSelectionActive()
-          ) {
+          if (SELECTION_EVENTS.has(this.type) && isSelectionActive()) {
             return true;
           }
         }
@@ -157,12 +156,7 @@
         if (isShieldActive() && !isInteractiveEvent(this)) {
           if (isModifierBypassActive() && isModifierPressed(this)) return;
           if (this.type === 'contextmenu' && isRightClickActive()) return;
-          if (
-            (this.type === 'selectstart' ||
-              this.type === 'copy' ||
-              this.type === 'dragstart') &&
-            isSelectionActive()
-          ) {
+          if (SELECTION_EVENTS.has(this.type) && isSelectionActive()) {
             return;
           }
         }
@@ -178,12 +172,7 @@
     if (isShieldActive() && !isInteractiveEvent(this)) {
       if (isModifierBypassActive() && isModifierPressed(this)) return;
       if (this.type === 'contextmenu' && isRightClickActive()) return;
-      if (
-        (this.type === 'selectstart' || this.type === 'copy') &&
-        isSelectionActive()
-      ) {
-        return;
-      }
+      if (SELECTION_EVENTS.has(this.type) && isSelectionActive()) return;
     }
     origSP.apply(this);
   };
@@ -193,17 +182,12 @@
     if (isShieldActive() && !isInteractiveEvent(this)) {
       if (isModifierBypassActive() && isModifierPressed(this)) return;
       if (this.type === 'contextmenu' && isRightClickActive()) return;
-      if (
-        (this.type === 'selectstart' || this.type === 'copy') &&
-        isSelectionActive()
-      ) {
-        return;
-      }
+      if (SELECTION_EVENTS.has(this.type) && isSelectionActive()) return;
     }
     origSIP.apply(this);
   };
 
-  // 5. Prototype property traps (Active when Absolute Force Mode is ON)
+  // 5. Prototype property traps with clean delegation to original descriptors
   const targets = [
     typeof Window !== 'undefined' ? Window.prototype : null,
     typeof Document !== 'undefined' ? Document.prototype : null,
@@ -217,16 +201,27 @@
     'ondragstart',
     'oncopy',
     'oncut',
+    'onbeforecopy',
   ]) {
     for (const proto of targets) {
       try {
+        const origDescriptor = Object.getOwnPropertyDescriptor(proto, prop);
         Object.defineProperty(proto, prop, {
           get() {
-            return null;
+            if (isForceModeActive() && !isInteractiveNode(this as Node)) {
+              return null;
+            }
+            if (origDescriptor?.get) {
+              return origDescriptor.get.call(this);
+            }
+            return undefined;
           },
-          set(_val) {
-            if (!isForceModeActive()) {
-              // If force mode is disabled, do not swallow
+          set(val) {
+            if (isForceModeActive() && !isInteractiveNode(this as Node)) {
+              return; // Neutralize in force mode on static content
+            }
+            if (origDescriptor?.set) {
+              origDescriptor.set.call(this, val);
             }
           },
           configurable: true,
@@ -236,7 +231,7 @@
     }
   }
 
-  // 6. Anti-Shield Overlay Unmasker (Active when Anti-Shield is ON)
+  // 6. Anti-Shield Overlay Unmasker (Active only when Anti-Shield is ON)
   function unmaskMedia(e: MouseEvent) {
     if (!isAntiShieldActive()) return;
     if (!e || typeof e.clientX !== 'number' || typeof e.clientY !== 'number')

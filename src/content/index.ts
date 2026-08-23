@@ -183,6 +183,15 @@
   const INTERACTIVE_ELEMENTS =
     'input, textarea, select, button, [contenteditable], [contenteditable="true"]';
 
+  const SCRUB_ATTRS = [
+    'oncontextmenu',
+    'onselectstart',
+    'ondragstart',
+    'oncopy',
+    'oncut',
+    'onbeforecopy',
+  ];
+
   function cleanNode(el: Element) {
     if (!el || el.nodeType !== Node.ELEMENT_NODE) return;
 
@@ -199,7 +208,13 @@
     }
 
     if (currentSettings.restoreSelection) {
-      for (const attr of ['onselectstart', 'ondragstart', 'oncopy', 'oncut']) {
+      for (const attr of [
+        'onselectstart',
+        'ondragstart',
+        'oncopy',
+        'oncut',
+        'onbeforecopy',
+      ]) {
         if (el.hasAttribute(attr)) {
           try {
             el.removeAttribute(attr);
@@ -219,14 +234,8 @@
   function cleanDOMTree(root: Element | Document = document) {
     if (root instanceof Element) cleanNode(root);
     try {
-      const attrs = [
-        '[oncontextmenu]',
-        '[onselectstart]',
-        '[ondragstart]',
-        '[oncopy]',
-        '[oncut]',
-      ];
-      for (const node of root.querySelectorAll(attrs.join(','))) {
+      const selector = SCRUB_ATTRS.map((a) => `[${a}]`).join(',');
+      for (const node of root.querySelectorAll(selector)) {
         cleanNode(node);
       }
     } catch (_e) {}
@@ -255,14 +264,8 @@
         for (const n of m.addedNodes) {
           if (n instanceof Element) {
             cleanNode(n);
-            const attrs = [
-              '[oncontextmenu]',
-              '[onselectstart]',
-              '[ondragstart]',
-              '[oncopy]',
-              '[oncut]',
-            ];
-            for (const child of n.querySelectorAll(attrs.join(','))) {
+            const selector = SCRUB_ATTRS.map((a) => `[${a}]`).join(',');
+            for (const child of n.querySelectorAll(selector)) {
               cleanNode(child);
             }
           }
@@ -276,12 +279,6 @@
     childList: true,
     subtree: true,
     attributes: true,
-    attributeFilter: [
-      'oncontextmenu',
-      'onselectstart',
-      'ondragstart',
-      'oncopy',
-      'oncut',
-    ],
+    attributeFilter: SCRUB_ATTRS,
   });
 })();

@@ -4,12 +4,13 @@
   const origPD = Event.prototype.preventDefault;
   const origSP = Event.prototype.stopPropagation;
   const origSIP = Event.prototype.stopImmediatePropagation;
-  const origAddEventListener = EventTarget.prototype.addEventListener;
-  const origRemoveEventListener = EventTarget.prototype.removeEventListener;
 
   function isShieldActive(): boolean {
     return document.documentElement?.dataset?.rcrEnabled !== 'false';
   }
+
+  const INTERACTIVE_SELECTOR =
+    'input, textarea, select, button, [contenteditable], [contenteditable="true"], .ProseMirror, .monaco-editor, .html5-video-player, video, audio, [class*="ytp-"], [class*="player-"], ytd-app, [role="textbox"], [role="combobox"], [role="button"], [role="menuitem"], [role="dialog"], canvas, form';
 
   function isInteractiveElement(target: EventTarget | null): boolean {
     if (!target) return false;
@@ -25,11 +26,7 @@
 
     if (node instanceof Element) {
       try {
-        if (
-          node.closest(
-            'input, textarea, select, button, [contenteditable], [contenteditable="true"], .ProseMirror, .monaco-editor, .html5-video-player, video, audio, [class*="ytp-"], [class*="player-"], ytd-app, [role="textbox"], [role="combobox"], [role="button"], [role="menuitem"], canvas, form',
-          )
-        ) {
+        if (node.closest(INTERACTIVE_SELECTOR)) {
           return true;
         }
       } catch (_e) {}
@@ -37,12 +34,28 @@
     return false;
   }
 
-  // 1. Intercept preventDefault ONLY for contextmenu and selectstart on non-interactive content
+  function isInteractiveEvent(event: Event): boolean {
+    try {
+      if (typeof event.composedPath === 'function') {
+        const path = event.composedPath();
+        for (const item of path) {
+          if (item instanceof Element) {
+            if (item.matches(INTERACTIVE_SELECTOR)) {
+              return true;
+            }
+          }
+        }
+      }
+    } catch (_e) {}
+    return isInteractiveElement(event.target);
+  }
+
+  // 1. Intercept preventDefault ONLY for contextmenu and selectstart on non-interactive static content
   Event.prototype.preventDefault = function (this: Event): void {
     if (
       isShieldActive() &&
       TARGET_EVENTS.has(this.type) &&
-      !isInteractiveElement(this.target)
+      !isInteractiveEvent(this)
     ) {
       return; // Silently discard blocking attempts on static content
     }
@@ -60,7 +73,7 @@
         if (
           isShieldActive() &&
           TARGET_EVENTS.has(this.type) &&
-          !isInteractiveElement(this.target)
+          !isInteractiveEvent(this)
         ) {
           return true;
         }
@@ -71,7 +84,7 @@
         if (
           isShieldActive() &&
           TARGET_EVENTS.has(this.type) &&
-          !isInteractiveElement(this.target)
+          !isInteractiveEvent(this)
         ) {
           return;
         }
@@ -87,7 +100,7 @@
     if (
       isShieldActive() &&
       this.type === 'contextmenu' &&
-      !isInteractiveElement(this.target)
+      !isInteractiveEvent(this)
     ) {
       return;
     }
@@ -99,107 +112,14 @@
     if (
       isShieldActive() &&
       this.type === 'contextmenu' &&
-      !isInteractiveElement(this.target)
+      !isInteractiveEvent(this)
     ) {
       return;
     }
     origSIP.apply(this);
   };
 
-  // 5. WeakMap-based listener tracking strictly scoped to contextmenu and selectstart
-  const listenerMap = new WeakMap<
-    EventListenerOrEventListenerObject,
-    Map<string, EventListener>
-  >();
-
-  function getOrCreateMap(
-    listener: EventListenerOrEventListenerObject,
-  ): Map<string, EventListener> {
-    let map = listenerMap.get(listener);
-    if (!map) {
-      map = new Map<string, EventListener>();
-      listenerMap.set(listener, map);
-    }
-    return map;
-  }
-
-  function listenerKey(
-    type: string,
-    options?: boolean | AddEventListenerOptions,
-  ): string {
-    const capture =
-      typeof options === 'boolean' ? options : options?.capture || false;
-    return `${type}|${capture}`;
-  }
-
-  EventTarget.prototype.addEventListener = function (
-    this: EventTarget,
-    type: string,
-    listener: EventListenerOrEventListenerObject | null,
-    options?: boolean | AddEventListenerOptions,
-  ): void {
-    if (!listener) {
-      origAddEventListener.call(this, type, listener, options);
-      return;
-    }
-
-    // Only wrap contextmenu and selectstart — NEVER wrap mousedown, mouseup, copy, or paste!
-    if (type === 'contextmenu' || type === 'selectstart') {
-      const wrappedListener: EventListener = function (
-        this: unknown,
-        event: Event,
-      ) {
-        if (typeof listener === 'function') {
-          listener.apply(this, [event]);
-          return;
-        }
-        if (listener && typeof listener.handleEvent === 'function') {
-          listener.handleEvent(event);
-          return;
-        }
-      };
-
-      try {
-        const map = getOrCreateMap(listener);
-        map.set(listenerKey(type, options), wrappedListener);
-      } catch (_e) {}
-
-      try {
-        origAddEventListener.call(this, type, wrappedListener, options);
-        return;
-      } catch (_e) {
-        origAddEventListener.call(this, type, listener, options);
-        return;
-      }
-    }
-
-    origAddEventListener.call(this, type, listener, options);
-  };
-
-  EventTarget.prototype.removeEventListener = function (
-    this: EventTarget,
-    type: string,
-    listener: EventListenerOrEventListenerObject | null,
-    options?: boolean | EventListenerOptions,
-  ): void {
-    if (listener && (type === 'contextmenu' || type === 'selectstart')) {
-      try {
-        const map = listenerMap.get(listener);
-        if (map) {
-          const key = listenerKey(type, options);
-          const wrapped = map.get(key);
-          if (wrapped) {
-            map.delete(key);
-            origRemoveEventListener.call(this, type, wrapped, options);
-            return;
-          }
-        }
-      } catch (_e) {}
-    }
-    origRemoveEventListener.call(this, type, listener, options);
-  };
-
-  // 6. Neutralize prototype property setters on Window, Document, HTMLElement
+  // 5. Neutralize prototype property setters on Window, Document, HTMLElement
   const targets = [
     typeof Window !== 'undefined' ? Window.prototype : null,
     typeof Document !== 'undefined' ? Document.prototype : null,
@@ -224,13 +144,13 @@
     }
   }
 
-  // 7. Unmask transparent click shields without touching interactive inputs
+  // 6. Unmask transparent click shields without touching interactive inputs
   function unmaskMedia(e: MouseEvent) {
     if (!isShieldActive()) return;
     if (!e || typeof e.clientX !== 'number' || typeof e.clientY !== 'number')
       return;
     try {
-      if (isInteractiveElement(e.target)) return;
+      if (isInteractiveEvent(e)) return;
       if (typeof document.elementsFromPoint !== 'function') return;
 
       const elements = document.elementsFromPoint(e.clientX, e.clientY);
@@ -270,7 +190,7 @@
 
   document.addEventListener('contextmenu', (e) => unmaskMedia(e), false);
 
-  // 8. Deep Force Unlock Dispatch Receiver
+  // 7. Deep Force Unlock Dispatch Receiver
   window.addEventListener('__rcr_force_unlock__', () => {
     try {
       window.oncontextmenu = null;

@@ -42,12 +42,12 @@ $effect(() => {
         try {
           currentHostname = new URL(tab.url).hostname;
         } catch (_e) {
-          currentHostname = 'Active Webpage';
+          currentHostname = 'Active Page';
         }
       } else if (tab.url?.startsWith('file://')) {
-        currentHostname = 'Local File Page';
+        currentHostname = 'Local Test Page';
       } else {
-        currentHostname = 'Special Safari Page';
+        currentHostname = 'Safari Page';
       }
     }
   });
@@ -111,189 +111,188 @@ async function forceUnlockPage() {
     unlockStatus = 'success';
     setTimeout(() => {
       unlockStatus = 'idle';
-    }, 1600);
+    }, 1500);
   } catch (_err) {
     unlockStatus = 'error';
     setTimeout(() => {
       unlockStatus = 'idle';
-    }, 1600);
+    }, 1500);
   }
 }
 </script>
 
-<main class="liquid-glass-shell p-3.5 text-neutral-900 dark:text-neutral-100 rounded-3xl relative overflow-hidden">
-  <!-- Header -->
-  <header class="flex items-center justify-between pb-3 px-1">
+<main class="popover-root">
+  <!-- Clean Apple-style Header -->
+  <header class="flex items-center justify-between pb-3">
     <div class="flex items-center gap-2.5">
-      <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 p-0.5 shadow-md shadow-blue-500/30 flex items-center justify-center">
-        <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <div class="w-7 h-7 rounded-[9px] bg-gradient-to-b from-blue-500 to-blue-600 flex items-center justify-center shadow-sm shadow-blue-500/40">
+        <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           <polyline points="9 12 11 14 15 10" />
         </svg>
       </div>
       <div>
-        <div class="flex items-center gap-1.5">
-          <h1 class="text-sm font-bold tracking-tight">RightClickRestore</h1>
-          <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400 border border-cyan-500/30">macOS 27</span>
-        </div>
-        <p class="text-[10.5px] text-neutral-500 dark:text-neutral-400">Liquid Glass Shield Engine</p>
+        <h1 class="text-[13.5px] font-semibold tracking-tight text-neutral-900 dark:text-neutral-100 leading-tight">
+          RightClickRestore
+        </h1>
+        <p class="text-[10.5px] text-neutral-500 dark:text-neutral-400 font-normal">
+          Context Menu & Selection Restorer
+        </p>
       </div>
     </div>
 
-    <!-- Master Switch -->
-    <label class="switch" title="Global On/Off Switch">
+    <!-- Master Apple Switch -->
+    <label class="apple-switch" title="Global Toggle">
       <input type="checkbox" checked={settings.enabled} onchange={toggleGlobal} />
-      <span class="slider"></span>
+      <span class="apple-slider"></span>
     </label>
   </header>
 
-  <!-- Active Domain Card -->
-  <section class="liquid-card rounded-2xl p-2.5 mb-2.5 flex items-center justify-between transition-all">
-    <div class="flex items-center gap-2.5 min-w-0 pr-2">
-      <div class={`w-2.5 h-2.5 rounded-full flex-shrink-0 transition-all ${
-        isSiteActive
-          ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]'
-          : 'bg-neutral-500 shadow-none'
+  <!-- Active Domain Card with Apple Squircle -->
+  <section class="glass-card p-2.5 mb-2.5 flex items-center justify-between">
+    <div class="flex items-center gap-2 min-w-0 pr-2">
+      <div class={`w-2 h-2 rounded-full flex-shrink-0 transition-colors ${
+        isSiteActive ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.7)]' : 'bg-neutral-400'
       }`}></div>
       <div class="min-w-0">
-        <div class="text-[10px] uppercase font-semibold tracking-wider text-neutral-500 dark:text-neutral-400">
+        <div class="text-[9.5px] uppercase font-semibold tracking-wider text-neutral-400 dark:text-neutral-500">
           {isSiteActive ? 'Active on Domain' : 'Disabled on Domain'}
         </div>
-        <div class="text-xs font-semibold truncate max-w-[190px]" title={currentHostname}>
+        <div class="text-xs font-semibold truncate max-w-[180px]" title={currentHostname}>
           {currentHostname || 'Loading…'}
         </div>
       </div>
     </div>
 
-    {#if currentHostname && !currentHostname.includes('Special Safari')}
-      <label class="switch small-switch" title="Toggle protection on this site">
+    {#if currentHostname && !currentHostname.includes('Safari Page')}
+      <label class="apple-switch apple-switch-sm" title="Toggle protection on this domain">
         <input type="checkbox" checked={!isSiteDisabled} onchange={toggleCurrentSite} />
-        <span class="slider"></span>
+        <span class="apple-slider"></span>
       </label>
     {/if}
   </section>
 
-  <!-- Settings Grid -->
-  <section class={`liquid-card rounded-2xl p-2 mb-2.5 flex flex-col gap-1 ${settings.enabled ? '' : 'dimmed'}`}>
+  <!-- Settings List with Apple Continuous Squircles -->
+  <section class={`glass-card p-1.5 mb-2.5 flex flex-col ${settings.enabled ? '' : 'dimmed'}`}>
     <!-- Feature 1: Restore Right Click -->
-    <div class="flex items-center justify-between p-1.5 rounded-xl hover:bg-white/5 transition-colors">
+    <div class="flex items-center justify-between p-1.5 rounded-lg hover:bg-white/5 transition-colors">
       <div class="flex items-center gap-2.5">
-        <div class="w-6 h-6 rounded-lg bg-cyan-500/15 text-cyan-400 flex items-center justify-center">
-          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <div class="w-5 h-5 rounded-md bg-cyan-500/15 text-cyan-400 flex items-center justify-center">
+          <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
             <path d="M7 11V7a5 5 0 0 1 9.9-1" />
           </svg>
         </div>
         <div>
-          <div class="text-xs font-semibold">Restore Right Click</div>
-          <div class="text-[10px] text-neutral-500 dark:text-neutral-400">Unlocks native context menu</div>
+          <div class="text-xs font-medium">Restore Right Click</div>
+          <div class="text-[9.5px] text-neutral-500 dark:text-neutral-400">Unlocks native context menu</div>
         </div>
       </div>
-      <label class="switch small-switch">
+      <label class="apple-switch apple-switch-sm">
         <input type="checkbox" checked={settings.restoreRightClick} onchange={() => toggleFeature('restoreRightClick')} />
-        <span class="slider"></span>
+        <span class="apple-slider"></span>
       </label>
     </div>
 
-    <div class="h-px bg-white/10 mx-1"></div>
+    <div class="h-[0.5px] bg-neutral-200 dark:bg-white/10 mx-2"></div>
 
     <!-- Feature 2: Allow Selection & Copy -->
-    <div class="flex items-center justify-between p-1.5 rounded-xl hover:bg-white/5 transition-colors">
+    <div class="flex items-center justify-between p-1.5 rounded-lg hover:bg-white/5 transition-colors">
       <div class="flex items-center gap-2.5">
-        <div class="w-6 h-6 rounded-lg bg-purple-500/15 text-purple-400 flex items-center justify-center">
-          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <div class="w-5 h-5 rounded-md bg-purple-500/15 text-purple-400 flex items-center justify-center">
+          <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 20h9" />
             <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
           </svg>
         </div>
         <div>
-          <div class="text-xs font-semibold">Allow Selection & Copy</div>
-          <div class="text-[10px] text-neutral-500 dark:text-neutral-400">Enables text highlight & ⌘C</div>
+          <div class="text-xs font-medium">Allow Selection & Copy</div>
+          <div class="text-[9.5px] text-neutral-500 dark:text-neutral-400">Enables text highlight & ⌘C</div>
         </div>
       </div>
-      <label class="switch small-switch">
+      <label class="apple-switch apple-switch-sm">
         <input type="checkbox" checked={settings.restoreSelection} onchange={() => toggleFeature('restoreSelection')} />
-        <span class="slider"></span>
+        <span class="apple-slider"></span>
       </label>
     </div>
 
-    <div class="h-px bg-white/10 mx-1"></div>
+    <div class="h-[0.5px] bg-neutral-200 dark:bg-white/10 mx-2"></div>
 
     <!-- Feature 3: Anti-Shield Overlay -->
-    <div class="flex items-center justify-between p-1.5 rounded-xl hover:bg-white/5 transition-colors">
+    <div class="flex items-center justify-between p-1.5 rounded-lg hover:bg-white/5 transition-colors">
       <div class="flex items-center gap-2.5">
-        <div class="w-6 h-6 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
-          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <div class="w-5 h-5 rounded-md bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
+          <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           </svg>
         </div>
         <div>
-          <div class="text-xs font-semibold">Anti-Shield Overlay</div>
-          <div class="text-[10px] text-neutral-500 dark:text-neutral-400">Pierces invisible click covers</div>
+          <div class="text-xs font-medium">Anti-Shield Overlay</div>
+          <div class="text-[9.5px] text-neutral-500 dark:text-neutral-400">Pierces transparent click covers</div>
         </div>
       </div>
-      <label class="switch small-switch">
+      <label class="apple-switch apple-switch-sm">
         <input type="checkbox" checked={settings.antiShield} onchange={() => toggleFeature('antiShield')} />
-        <span class="slider"></span>
+        <span class="apple-slider"></span>
       </label>
     </div>
 
-    <div class="h-px bg-white/10 mx-1"></div>
+    <div class="h-[0.5px] bg-neutral-200 dark:bg-white/10 mx-2"></div>
 
     <!-- Feature 4: Absolute Force Mode -->
-    <div class="flex items-center justify-between p-1.5 rounded-xl hover:bg-white/5 transition-colors">
+    <div class="flex items-center justify-between p-1.5 rounded-lg hover:bg-white/5 transition-colors">
       <div class="flex items-center gap-2.5">
-        <div class="w-6 h-6 rounded-lg bg-amber-500/15 text-amber-400 flex items-center justify-center">
-          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <div class="w-5 h-5 rounded-md bg-amber-500/15 text-amber-400 flex items-center justify-center">
+          <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
           </svg>
         </div>
         <div>
-          <div class="text-xs font-semibold">Absolute Force Mode</div>
-          <div class="text-[10px] text-neutral-500 dark:text-neutral-400">Deep prototype event override</div>
+          <div class="text-xs font-medium">Absolute Force Mode</div>
+          <div class="text-[9.5px] text-neutral-500 dark:text-neutral-400">Deep prototype event override</div>
         </div>
       </div>
-      <label class="switch small-switch">
+      <label class="apple-switch apple-switch-sm">
         <input type="checkbox" checked={settings.absoluteForce} onchange={() => toggleFeature('absoluteForce')} />
-        <span class="slider"></span>
+        <span class="apple-slider"></span>
       </label>
     </div>
 
-    <div class="h-px bg-white/10 mx-1"></div>
+    <div class="h-[0.5px] bg-neutral-200 dark:bg-white/10 mx-2"></div>
 
     <!-- Feature 5: Modifier Key Bypass -->
-    <div class="flex items-center justify-between p-1.5 rounded-xl hover:bg-white/5 transition-colors">
+    <div class="flex items-center justify-between p-1.5 rounded-lg hover:bg-white/5 transition-colors">
       <div class="flex items-center gap-2.5">
-        <div class="w-6 h-6 rounded-lg bg-blue-500/15 text-blue-400 flex items-center justify-center">
-          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <div class="w-5 h-5 rounded-md bg-blue-500/15 text-blue-400 flex items-center justify-center">
+          <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="2" y="4" width="20" height="16" rx="2" />
             <path d="M6 8h.001M10 8h.001M14 8h.001M18 8h.001M8 12h.001M12 12h.001M16 12h.001M7 16h10" />
           </svg>
         </div>
         <div>
-          <div class="text-xs font-semibold">Modifier Key Bypass</div>
-          <div class="text-[10px] text-neutral-500 dark:text-neutral-400">Hold <kbd>Shift</kbd> or <kbd>⌥</kbd> + Click</div>
+          <div class="text-xs font-medium">Modifier Key Bypass</div>
+          <div class="text-[9.5px] text-neutral-500 dark:text-neutral-400">Hold <kbd>Shift</kbd> or <kbd>⌥</kbd> + Click</div>
         </div>
       </div>
-      <label class="switch small-switch">
+      <label class="apple-switch apple-switch-sm">
         <input type="checkbox" checked={settings.bypassModifierKey} onchange={() => toggleFeature('bypassModifierKey')} />
-        <span class="slider"></span>
+        <span class="apple-slider"></span>
       </label>
     </div>
   </section>
 
   <!-- Force Unlock Action Button -->
-  <div class="mb-2.5">
+  <div class="mb-2">
     <button
       type="button"
       onclick={forceUnlockPage}
       disabled={unlockStatus === 'unlocking'}
-      class={`w-full py-2 px-3 rounded-xl font-semibold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg active:scale-[0.98] ${
+      class={`w-full py-1.5 px-3 rounded-xl font-medium text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-[0.99] ${
         unlockStatus === 'success'
-          ? 'bg-emerald-500 text-white shadow-emerald-500/30'
+          ? 'bg-emerald-500 text-white'
           : unlockStatus === 'error'
-          ? 'bg-rose-500 text-white shadow-rose-500/30'
-          : 'bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 text-white shadow-blue-500/30 hover:opacity-95'
+          ? 'bg-rose-500 text-white'
+          : 'bg-blue-500 hover:bg-blue-600 text-white'
       }`}
     >
       {#if unlockStatus === 'unlocking'}
@@ -310,7 +309,7 @@ async function forceUnlockPage() {
       {:else if unlockStatus === 'error'}
         <span>⚠️ Unable to Unlock Tab</span>
       {:else}
-        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
         </svg>
         <span>Force Unlock Page Now</span>
@@ -319,7 +318,7 @@ async function forceUnlockPage() {
   </div>
 
   <!-- Tip Footer -->
-  <footer class="text-[10px] text-center text-neutral-500 dark:text-neutral-400 px-1 leading-tight">
+  <footer class="text-[9.5px] text-center text-neutral-400 dark:text-neutral-500 leading-tight">
     💡 Hold <kbd>Shift</kbd> while right-clicking anywhere to force native menu.
   </footer>
 </main>

@@ -57,11 +57,59 @@
     });
   } catch (_e) {}
 
+  function showUnlockToast() {
+    try {
+      const existing = document.getElementById('rcr-unlock-toast');
+      if (existing) existing.remove();
+
+      const toast = document.createElement('div');
+      toast.id = 'rcr-unlock-toast';
+      toast.textContent = '🔓 Protection & Right-Click Unlocked';
+      Object.assign(toast.style, {
+        position: 'fixed',
+        top: '18px',
+        left: '50%',
+        transform: 'translateX(-50%) translateY(-10px)',
+        zIndex: '2147483647',
+        background: 'rgba(20, 24, 35, 0.94)',
+        color: '#ffffff',
+        padding: '8px 18px',
+        borderRadius: '9999px',
+        fontSize: '12.5px',
+        fontWeight: '600',
+        fontFamily:
+          '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
+        boxShadow:
+          '0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.25)',
+        border: '0.5px solid rgba(255,255,255,0.25)',
+        backdropFilter: 'blur(16px)',
+        webkitBackdropFilter: 'blur(16px)',
+        pointerEvents: 'none',
+        transition: 'opacity 0.25s ease, transform 0.25s ease',
+        opacity: '0',
+      });
+
+      document.documentElement.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(-50%) translateY(0)';
+      });
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(-50%) translateY(-10px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 1600);
+    } catch (_e) {}
+  }
+
   // Handle messages from popup (force unlock & dynamic config)
   try {
     chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       if (message.type === 'RCR_FORCE_UNLOCK') {
         cleanDOMTree();
+        window.dispatchEvent(new CustomEvent('__rcr_force_unlock__'));
+        showUnlockToast();
         sendResponse({ status: 'unlocked' });
       } else if (message.type === 'RCR_CONFIG_CHANGED') {
         const hostname = window.location.hostname;

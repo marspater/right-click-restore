@@ -84,7 +84,7 @@
     origSIP.apply(this);
   };
 
-  // 5. WeakMap-based listener tracking + removeEventListener patch (Fixes memory leaks & handler stacking)
+  // 5. WeakMap-based listener tracking + removeEventListener patch
   const listenerMap = new WeakMap<
     EventListenerOrEventListenerObject,
     Map<string, EventListener>
@@ -290,4 +290,22 @@
     },
     true,
   );
+
+  // 8. Deep Force Unlock Dispatch Receiver
+  window.addEventListener('__rcr_force_unlock__', () => {
+    try {
+      window.oncontextmenu = null;
+      document.oncontextmenu = null;
+      if (document.body) document.body.oncontextmenu = null;
+      window.onselectstart = null;
+      document.onselectstart = null;
+      if (document.body) document.body.onselectstart = null;
+      window.ondragstart = null;
+      document.ondragstart = null;
+      window.oncopy = null;
+      document.oncopy = null;
+      window.oncut = null;
+      document.oncut = null;
+    } catch (_e) {}
+  });
 })();

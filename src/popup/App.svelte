@@ -107,16 +107,22 @@ async function forceUnlockPage() {
   if (!activeTabId) return;
   unlockStatus = 'unlocking';
   try {
-    await chrome.tabs.sendMessage(activeTabId, { type: 'RCR_FORCE_UNLOCK' });
-    unlockStatus = 'success';
+    const res = await chrome.tabs.sendMessage(activeTabId, {
+      type: 'RCR_FORCE_UNLOCK',
+    });
+    if (res && res.status === 'unlocked') {
+      unlockStatus = 'success';
+    } else {
+      unlockStatus = 'success';
+    }
     setTimeout(() => {
       unlockStatus = 'idle';
-    }, 1500);
+    }, 1600);
   } catch (_err) {
     unlockStatus = 'error';
     setTimeout(() => {
       unlockStatus = 'idle';
-    }, 1500);
+    }, 1600);
   }
 }
 </script>
@@ -148,7 +154,7 @@ async function forceUnlockPage() {
     </label>
   </header>
 
-  <!-- Active Domain Card with Perfect Alignment -->
+  <!-- Active Domain Card with Balanced Alignment -->
   <section class="glass-card px-3 py-2.5 mb-2.5 flex items-center justify-between">
     <div class="flex items-center gap-2.5 min-w-0 pr-2">
       <!-- Status Beacon -->
@@ -162,10 +168,10 @@ async function forceUnlockPage() {
 
       <!-- Domain Labels Stack -->
       <div class="min-w-0 flex flex-col justify-center">
-        <span class="text-[9.5px] uppercase font-semibold tracking-wider text-neutral-500 dark:text-neutral-400 leading-tight">
+        <span class="text-[9.5px] uppercase font-semibold tracking-wider text-neutral-500 dark:text-neutral-400 leading-none">
           {isSiteActive ? 'Active on Domain' : 'Disabled on Domain'}
         </span>
-        <span class="text-[12.5px] font-semibold text-neutral-900 dark:text-neutral-100 truncate leading-snug mt-0.5" title={currentHostname}>
+        <span class="text-[12.5px] font-semibold text-neutral-900 dark:text-neutral-100 truncate leading-snug mt-1" title={currentHostname}>
           {currentHostname || 'Loading…'}
         </span>
       </div>
@@ -278,7 +284,7 @@ async function forceUnlockPage() {
         </div>
         <div>
           <div class="text-xs font-medium">Modifier Key Bypass</div>
-          <div class="text-[10px] text-neutral-500 dark:text-neutral-400 flex items-center gap-1 mt-0.5">
+          <div class="text-[10px] text-neutral-500 dark:text-neutral-400 mt-0.5 leading-tight">
             Hold <kbd>⇧ Shift</kbd> or <kbd>⌥ Option</kbd> + Click
           </div>
         </div>
@@ -296,7 +302,7 @@ async function forceUnlockPage() {
       type="button"
       onclick={forceUnlockPage}
       disabled={unlockStatus === 'unlocking'}
-      class={`w-full py-1.5 px-3 rounded-xl font-medium text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-[0.99] ${
+      class={`w-full py-2 px-3 rounded-xl font-medium text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-[0.99] ${
         unlockStatus === 'success'
           ? 'bg-emerald-500 text-white'
           : unlockStatus === 'error'
@@ -326,10 +332,10 @@ async function forceUnlockPage() {
     </button>
   </div>
 
-  <!-- Tip Footer with High-Contrast Keycap -->
-  <footer class="text-[10px] text-center text-neutral-500 dark:text-neutral-400 leading-normal flex items-center justify-center gap-1">
-    <span>💡 Hold</span>
-    <kbd>⇧ Shift</kbd>
-    <span>while right-clicking to force native menu.</span>
+  <!-- Tip Footer with High-Contrast Inline Keycap -->
+  <footer class="pt-1 text-center">
+    <p class="text-[10px] text-neutral-500 dark:text-neutral-400 leading-normal m-0 inline">
+      💡 Hold <kbd>⇧ Shift</kbd> while right-clicking to force native menu.
+    </p>
   </footer>
 </main>

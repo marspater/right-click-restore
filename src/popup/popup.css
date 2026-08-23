@@ -128,25 +128,24 @@ body {
   transform: translateX(14px);
 }
 
-/* High-Contrast Apple Keycap Badges */
+/* Authentic Inline Apple Keycap Badges */
 kbd {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  padding: 1px 5px;
-  font-size: 11px;
+  display: inline-block;
+  padding: 0 4px;
+  height: 17px;
+  line-height: 16px;
+  font-size: 10px;
   font-weight: 600;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui,
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui,
     sans-serif;
-  background: rgba(255, 255, 255, 0.18);
-  border: 0.5px solid rgba(255, 255, 255, 0.32);
-  border-radius: 5px;
-  color: #ffffff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25), inset 0 0.5px 0.5px
-    rgba(255, 255, 255, 0.5);
-  line-height: 1.25;
-  vertical-align: middle;
+  background: rgba(255, 255, 255, 0.16);
+  border: 0.5px solid rgba(255, 255, 255, 0.28);
+  border-radius: 4px;
+  color: inherit;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.18);
+  vertical-align: 0.5px;
+  margin: 0 1px;
+  white-space: nowrap;
 }
 
 @media (prefers-color-scheme: light) {
@@ -154,8 +153,7 @@ kbd {
     background: rgba(0, 0, 0, 0.08);
     border: 0.5px solid rgba(0, 0, 0, 0.18);
     color: #0f172a;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), inset 0 0.5px 0.5px
-      rgba(255, 255, 255, 0.8);
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
   }
 }
 

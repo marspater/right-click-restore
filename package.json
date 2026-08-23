@@ -4,10 +4,10 @@
   "description": "Safari Web Extension restoring right-click context menus and text selection",
   "private": true,
   "scripts": {
-    "check": "biome check .",
-    "check:write": "biome check --write .",
-    "format": "biome format --write .",
-    "lint": "biome lint ."
+    "check": "npx @biomejs/biome check --config-path=. .",
+    "check:write": "npx @biomejs/biome check --write --config-path=. .",
+    "format": "npx @biomejs/biome format --write --config-path=. .",
+    "lint": "npx @biomejs/biome lint --config-path=. ."
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.10"

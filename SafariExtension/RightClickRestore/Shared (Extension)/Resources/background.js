@@ -16,7 +16,7 @@ const DEFAULT_SETTINGS = {
 chrome.runtime.onInstalled.addListener(async () => {
   try {
     const data = await chrome.storage.local.get('rcr_settings');
-    if (!data || !data.rcr_settings) {
+    if (!data?.rcr_settings) {
       await chrome.storage.local.set({ rcr_settings: DEFAULT_SETTINGS });
     }
   } catch (err) {
@@ -35,7 +35,7 @@ async function updateBadge(tabId, url) {
   ) {
     try {
       await chrome.action.setBadgeText({ tabId, text: '' });
-    } catch (e) {}
+    } catch (_e) {}
     return;
   }
 
@@ -47,10 +47,10 @@ async function updateBadge(tabId, url) {
     if (isEnabled && url) {
       try {
         const hostname = new URL(url).hostname;
-        if (settings.disabledDomains?.some((d) => hostname === d || hostname.endsWith('.' + d))) {
+        if (settings.disabledDomains?.some((d) => hostname === d || hostname.endsWith(`.${d}`))) {
           isEnabled = false;
         }
-      } catch (e) {}
+      } catch (_e) {}
     }
 
     if (isEnabled) {
@@ -60,7 +60,7 @@ async function updateBadge(tabId, url) {
       await chrome.action.setBadgeText({ tabId, text: 'OFF' });
       await chrome.action.setBadgeBackgroundColor({ tabId, color: '#8E8E93' });
     }
-  } catch (err) {
+  } catch (_err) {
     // Ignore errors when tab is closed
   }
 }
@@ -72,7 +72,7 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
     if (tab?.url) {
       await updateBadge(activeInfo.tabId, tab.url);
     }
-  } catch (e) {}
+  } catch (_e) {}
 });
 
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
@@ -82,7 +82,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 });
 
 // Listen for settings change notifications to update all tabs
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === 'RCR_SETTINGS_UPDATED') {
     // Bug 11 Fix: Respond immediately, update badges fire-and-forget
     sendResponse({ status: 'ok' });
@@ -94,7 +94,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             await updateBadge(tab.id, tab.url);
           }
         }
-      } catch (e) {}
+      } catch (_e) {}
     })();
     return false; // No need to keep channel open
   }

@@ -18,7 +18,7 @@
   try {
     const raw = document.documentElement?.dataset?.rcrConfig;
     if (raw) config = Object.assign(config, JSON.parse(raw));
-  } catch (e) {}
+  } catch (_e) {}
 
   window.addEventListener('__rcr_update_config__', (event) => {
     if (event.detail && typeof event.detail === 'object') {
@@ -50,7 +50,7 @@
           return true;
         }
         // Delegate to original getter for all other events
-        if (originalDescriptor && originalDescriptor.get) {
+        if (originalDescriptor?.get) {
           return originalDescriptor.get.call(this);
         }
         return true;
@@ -60,14 +60,14 @@
           return; // Swallow — prevent cancellation of our target events
         }
         // Delegate to original setter for all other events
-        if (originalDescriptor && originalDescriptor.set) {
+        if (originalDescriptor?.set) {
           originalDescriptor.set.call(this, val);
         }
       },
       configurable: true,
       enumerable: true
     });
-  } catch (e) {}
+  } catch (_e) {}
 
   // 1. Prevent default override — only for target events
   Event.prototype.preventDefault = function () {
@@ -109,7 +109,7 @@
           get() {
             return null;
           },
-          set(val) {
+          set(_val) {
             if (config.enabled) {
               if (propName === 'oncontextmenu' && config.restoreRightClick) return;
               if (propName !== 'oncontextmenu' && config.restoreSelection) return;
@@ -118,7 +118,7 @@
           configurable: true,
           enumerable: true
         });
-      } catch (err) {}
+      } catch (_err) {}
     });
   });
 
@@ -137,7 +137,7 @@
   // Build a stable key for deduplication: "type|capture"
   function listenerKey(type, options) {
     const capture = typeof options === 'boolean' ? options : options?.capture || false;
-    return type + '|' + capture;
+    return `${type}|${capture}`;
   }
 
   EventTarget.prototype.addEventListener = function (type, listener, options) {
@@ -176,11 +176,11 @@
       try {
         const map = getOrCreateMap(listener);
         map.set(listenerKey(type, options), wrappedListener);
-      } catch (e) {}
+      } catch (_e) {}
 
       try {
         return realAddEventListener.call(this, type, wrappedListener, options);
-      } catch (e) {
+      } catch (_e) {
         return realAddEventListener.call(this, type, listener, options);
       }
     }
@@ -199,7 +199,7 @@
             return realRemoveEventListener.call(this, type, wrapped, options);
           }
         }
-      } catch (e) {}
+      } catch (_e) {}
     }
     return realRemoveEventListener.call(this, type, listener, options);
   };
@@ -239,11 +239,11 @@
             try {
               el.classList.remove('rcr-unmasked-overlay');
               el.style.removeProperty('pointer-events');
-            } catch (err) {}
+            } catch (_err) {}
           }, 800);
         }
       }
-    } catch (err) {}
+    } catch (_err) {}
   }
 
   // 6. Capture listeners

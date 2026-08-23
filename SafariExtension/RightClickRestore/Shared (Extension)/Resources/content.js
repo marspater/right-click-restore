@@ -2,9 +2,7 @@
  * Right Click & Selection Restorer - Content Script
  * Synchronously injects main world overrides, sanitizes DOM, and neutralizes overlays.
  */
-(function () {
-  'use strict';
-
+(() => {
   const DEFAULT_CONFIG = {
     enabled: true,
     restoreRightClick: true,
@@ -21,7 +19,7 @@
   function isSiteEnabled(cfg) {
     if (!cfg.enabled) return false;
     const disabledList = cfg.disabledDomains || [];
-    return !disabledList.some((domain) => hostname === domain || hostname.endsWith('.' + domain));
+    return !disabledList.some((domain) => hostname === domain || hostname.endsWith(`.${domain}`));
   }
 
   /**
@@ -235,7 +233,7 @@
       script.textContent = MAIN_WORLD_SCRIPT;
       (document.head || document.documentElement).appendChild(script);
       script.remove();
-    } catch (e) {}
+    } catch (_e) {}
   }
 
   // Bug 8 Fix: Removed injectExternalScript() — inline script handles everything
@@ -255,7 +253,7 @@
 
     try {
       document.documentElement.dataset.rcrConfig = JSON.stringify(payload);
-    } catch (e) {}
+    } catch (_e) {}
 
     window.dispatchEvent(new CustomEvent('__rcr_update_config__', { detail: payload }));
   }
@@ -271,7 +269,7 @@
       if (el.hasAttribute(INLINE_ATTRIBUTES[i])) {
         try {
           el.removeAttribute(INLINE_ATTRIBUTES[i]);
-        } catch (e) {}
+        } catch (_e) {}
       }
     }
 
@@ -290,13 +288,13 @@
     cleanElement(root);
 
     // Only query elements that actually have the inline attributes we target
-    const selector = INLINE_ATTRIBUTES.map((attr) => '[' + attr + ']').join(',');
+    const selector = INLINE_ATTRIBUTES.map((attr) => `[${attr}]`).join(',');
     try {
       const elements = root.querySelectorAll(selector);
       for (let i = 0; i < elements.length; i++) {
         cleanElement(elements[i]);
       }
-    } catch (e) {}
+    } catch (_e) {}
 
     // Also fix user-select:none on text-like elements
     try {
@@ -304,7 +302,7 @@
       for (let i = 0; i < selectBlocked.length; i++) {
         cleanElement(selectBlocked[i]);
       }
-    } catch (e) {}
+    } catch (_e) {}
   }
 
   // Bug 3 Fix: Pre-filter shields with cheap checks, use requestIdleCallback for batching
@@ -331,7 +329,7 @@
 
       const style = window.getComputedStyle(el);
       const zIndex = parseInt(style.zIndex, 10);
-      if (isNaN(zIndex) || zIndex <= 100) continue;
+      if (Number.isNaN(zIndex) || zIndex <= 100) continue;
 
       const rect = el.getBoundingClientRect();
       const coversViewport = rect.width >= vw * 0.85 && rect.height >= vh * 0.85;
@@ -383,7 +381,7 @@
         document.body.oncopy = null;
         document.body.oncut = null;
       }
-    } catch (e) {}
+    } catch (_e) {}
     showToast('Right-click & selection unlocked!', '✨');
   }
 
@@ -393,10 +391,10 @@
 
     try {
       const stored = await chrome.storage.local.get('rcr_settings');
-      if (stored && stored.rcr_settings) {
+      if (stored?.rcr_settings) {
         currentConfig = { ...DEFAULT_CONFIG, ...stored.rcr_settings };
       }
-    } catch (err) {}
+    } catch (_err) {}
 
     applyDOMState();
 
@@ -450,7 +448,7 @@
     }
   }
 
-  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message.type === 'RCR_CONFIG_CHANGED') {
       currentConfig = { ...DEFAULT_CONFIG, ...message.config };
       applyDOMState();

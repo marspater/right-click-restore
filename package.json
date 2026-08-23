@@ -6,6 +6,7 @@
   "scripts": {
     "check": "npx @biomejs/biome check --config-path=. .",
     "check:write": "npx @biomejs/biome check --write --config-path=. .",
+    "fix": "npx @biomejs/biome check --write --unsafe --config-path=. .",
     "format": "npx @biomejs/biome format --write --config-path=. .",
     "lint": "npx @biomejs/biome lint --config-path=. ."
   },

@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 1. Get current active tab
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (tab && tab.url) {
+    if (tab?.url) {
       activeTabId = tab.id;
       if (tab.url.startsWith('http://') || tab.url.startsWith('https://')) {
         currentHostname = new URL(tab.url).hostname;
@@ -42,14 +42,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         siteToggle.disabled = true;
       }
     }
-  } catch (err) {
+  } catch (_err) {
     siteDomain.textContent = 'Active Page';
   }
 
   // 2. Load stored settings
   try {
     const stored = await chrome.storage.local.get('rcr_settings');
-    if (stored && stored.rcr_settings) {
+    if (stored?.rcr_settings) {
       currentSettings = { ...DEFAULT_SETTINGS, ...stored.rcr_settings };
     }
   } catch (err) {
@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
       chrome.runtime.sendMessage({ type: 'RCR_SETTINGS_UPDATED' });
-    } catch (e) {}
+    } catch (_e) {}
 
     if (activeTabId) {
       try {
@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           type: 'RCR_CONFIG_CHANGED',
           config: currentSettings
         });
-      } catch (e) {}
+      } catch (_e) {}
     }
     updateUI();
   }
@@ -191,7 +191,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <span class="btn-text">Force Unlock Page Now</span>
         `;
       }, 1500);
-    } catch (e) {
+    } catch (_e) {
       btnForceUnlock.innerHTML = `<span>⚠️ Unable to Unlock</span>`;
       setTimeout(() => {
         btnForceUnlock.disabled = false;

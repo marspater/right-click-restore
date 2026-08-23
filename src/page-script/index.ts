@@ -1,6 +1,4 @@
 (() => {
-  const TARGET_EVENTS = new Set(['contextmenu', 'selectstart']);
-
   const origPD = Event.prototype.preventDefault;
   const origSP = Event.prototype.stopPropagation;
   const origSIP = Event.prototype.stopImmediatePropagation;
@@ -9,26 +7,57 @@
     return document.documentElement?.dataset?.rcrEnabled !== 'false';
   }
 
-  const INTERACTIVE_SELECTOR =
-    'input, textarea, select, button, [contenteditable], [contenteditable="true"], .ProseMirror, .monaco-editor, .html5-video-player, video, audio, [class*="ytp-"], [class*="player-"], ytd-app, [role="textbox"], [role="combobox"], [role="button"], [role="menuitem"], [role="dialog"], canvas, form';
+  function isRightClickActive(): boolean {
+    return (
+      isShieldActive() &&
+      document.documentElement?.dataset?.rcrRightClick !== 'false'
+    );
+  }
 
-  function isInteractiveElement(target: EventTarget | null): boolean {
-    if (!target) return false;
-    let node: Node | null =
-      target instanceof Node
-        ? target
-        : (target as { correspondingElement?: Node }).correspondingElement ||
-          null;
+  function isSelectionActive(): boolean {
+    return (
+      isShieldActive() &&
+      document.documentElement?.dataset?.rcrSelection !== 'false'
+    );
+  }
 
-    if (node && node.nodeType === Node.TEXT_NODE) {
-      node = node.parentElement;
+  function isAntiShieldActive(): boolean {
+    return (
+      isShieldActive() &&
+      document.documentElement?.dataset?.rcrAntiShield !== 'false'
+    );
+  }
+
+  function isForceModeActive(): boolean {
+    return (
+      isShieldActive() &&
+      document.documentElement?.dataset?.rcrForceMode !== 'false'
+    );
+  }
+
+  function isModifierBypassActive(): boolean {
+    return (
+      isShieldActive() &&
+      document.documentElement?.dataset?.rcrModifierBypass !== 'false'
+    );
+  }
+
+  const INTERACTIVE_CONTAINERS =
+    '.ProseMirror, .monaco-editor, .html5-video-player, [class*="ytp-"], [class*="player-"], ytd-app, [contenteditable="true"]';
+
+  const INTERACTIVE_ELEMENTS =
+    'input, textarea, select, button, [contenteditable], [contenteditable="true"], [role="textbox"], [role="combobox"], [role="button"], [role="menuitem"], [role="dialog"], canvas';
+
+  function isInteractiveNode(node: Node | null): boolean {
+    if (!node) return false;
+    let curr: Node | null = node;
+    if (curr.nodeType === Node.TEXT_NODE) {
+      curr = curr.parentElement;
     }
-
-    if (node instanceof Element) {
+    if (curr instanceof Element) {
       try {
-        if (node.closest(INTERACTIVE_SELECTOR)) {
-          return true;
-        }
+        if (curr.matches(INTERACTIVE_ELEMENTS)) return true;
+        if (curr.closest(INTERACTIVE_CONTAINERS)) return true;
       } catch (_e) {}
     }
     return false;
@@ -40,29 +69,68 @@
         const path = event.composedPath();
         for (const item of path) {
           if (item instanceof Element) {
-            if (item.matches(INTERACTIVE_SELECTOR)) {
+            if (
+              item.matches(INTERACTIVE_ELEMENTS) ||
+              item.matches(INTERACTIVE_CONTAINERS)
+            ) {
               return true;
             }
           }
         }
       }
     } catch (_e) {}
-    return isInteractiveElement(event.target);
+    return isInteractiveNode(
+      event.target instanceof Node ? event.target : null,
+    );
   }
 
-  // 1. Intercept preventDefault ONLY for contextmenu and selectstart on non-interactive static content
-  Event.prototype.preventDefault = function (this: Event): void {
+  function isModifierPressed(event: Event): boolean {
     if (
-      isShieldActive() &&
-      TARGET_EVENTS.has(this.type) &&
-      !isInteractiveEvent(this)
+      event instanceof MouseEvent ||
+      event instanceof KeyboardEvent ||
+      'shiftKey' in event ||
+      'altKey' in event
     ) {
-      return; // Silently discard blocking attempts on static content
+      const e = event as MouseEvent;
+      return Boolean(e.shiftKey || e.altKey);
+    }
+    return false;
+  }
+
+  // 1. Intercept preventDefault with granular capability checks
+  Event.prototype.preventDefault = function (this: Event): void {
+    if (isShieldActive()) {
+      // 1a. Modifier Key Bypass (<kbd>Shift</kbd> / <kbd>Option</kbd>)
+      if (isModifierBypassActive() && isModifierPressed(this)) {
+        return; // Always force native browser behavior
+      }
+
+      // 1b. Right-Click Restoration
+      if (
+        this.type === 'contextmenu' &&
+        isRightClickActive() &&
+        !isInteractiveEvent(this)
+      ) {
+        return;
+      }
+
+      // 1c. Text Selection & Copy Restoration on static content
+      if (isSelectionActive() && !isInteractiveEvent(this)) {
+        if (
+          this.type === 'selectstart' ||
+          this.type === 'dragstart' ||
+          this.type === 'copy' ||
+          this.type === 'cut' ||
+          this.type === 'beforecopy'
+        ) {
+          return;
+        }
+      }
     }
     origPD.apply(this);
   };
 
-  // 2. Intercept returnValue to prevent legacy inline return false blocking on contextmenu
+  // 2. Intercept returnValue to prevent inline return false blocking
   try {
     const origDescriptor = Object.getOwnPropertyDescriptor(
       Event.prototype,
@@ -70,23 +138,33 @@
     );
     Object.defineProperty(Event.prototype, 'returnValue', {
       get() {
-        if (
-          isShieldActive() &&
-          TARGET_EVENTS.has(this.type) &&
-          !isInteractiveEvent(this)
-        ) {
-          return true;
+        if (isShieldActive() && !isInteractiveEvent(this)) {
+          if (isModifierBypassActive() && isModifierPressed(this)) return true;
+          if (this.type === 'contextmenu' && isRightClickActive()) return true;
+          if (
+            (this.type === 'selectstart' ||
+              this.type === 'copy' ||
+              this.type === 'dragstart') &&
+            isSelectionActive()
+          ) {
+            return true;
+          }
         }
         if (origDescriptor?.get) return origDescriptor.get.call(this);
         return true;
       },
       set(val) {
-        if (
-          isShieldActive() &&
-          TARGET_EVENTS.has(this.type) &&
-          !isInteractiveEvent(this)
-        ) {
-          return;
+        if (isShieldActive() && !isInteractiveEvent(this)) {
+          if (isModifierBypassActive() && isModifierPressed(this)) return;
+          if (this.type === 'contextmenu' && isRightClickActive()) return;
+          if (
+            (this.type === 'selectstart' ||
+              this.type === 'copy' ||
+              this.type === 'dragstart') &&
+            isSelectionActive()
+          ) {
+            return;
+          }
         }
         if (origDescriptor?.set) origDescriptor.set.call(this, val);
       },
@@ -95,31 +173,37 @@
     });
   } catch (_e) {}
 
-  // 3. Neutralize stopPropagation on contextmenu only on non-interactive elements
+  // 3. Neutralize stopPropagation for protected events
   Event.prototype.stopPropagation = function (this: Event): void {
-    if (
-      isShieldActive() &&
-      this.type === 'contextmenu' &&
-      !isInteractiveEvent(this)
-    ) {
-      return;
+    if (isShieldActive() && !isInteractiveEvent(this)) {
+      if (isModifierBypassActive() && isModifierPressed(this)) return;
+      if (this.type === 'contextmenu' && isRightClickActive()) return;
+      if (
+        (this.type === 'selectstart' || this.type === 'copy') &&
+        isSelectionActive()
+      ) {
+        return;
+      }
     }
     origSP.apply(this);
   };
 
-  // 4. Neutralize stopImmediatePropagation on contextmenu only on non-interactive elements
+  // 4. Neutralize stopImmediatePropagation for protected events
   Event.prototype.stopImmediatePropagation = function (this: Event): void {
-    if (
-      isShieldActive() &&
-      this.type === 'contextmenu' &&
-      !isInteractiveEvent(this)
-    ) {
-      return;
+    if (isShieldActive() && !isInteractiveEvent(this)) {
+      if (isModifierBypassActive() && isModifierPressed(this)) return;
+      if (this.type === 'contextmenu' && isRightClickActive()) return;
+      if (
+        (this.type === 'selectstart' || this.type === 'copy') &&
+        isSelectionActive()
+      ) {
+        return;
+      }
     }
     origSIP.apply(this);
   };
 
-  // 5. Neutralize prototype property setters on Window, Document, HTMLElement
+  // 5. Prototype property traps (Active when Absolute Force Mode is ON)
   const targets = [
     typeof Window !== 'undefined' ? Window.prototype : null,
     typeof Document !== 'undefined' ? Document.prototype : null,
@@ -127,7 +211,13 @@
     typeof HTMLBodyElement !== 'undefined' ? HTMLBodyElement.prototype : null,
   ].filter(Boolean) as object[];
 
-  for (const prop of ['oncontextmenu', 'onselectstart', 'ondragstart']) {
+  for (const prop of [
+    'oncontextmenu',
+    'onselectstart',
+    'ondragstart',
+    'oncopy',
+    'oncut',
+  ]) {
     for (const proto of targets) {
       try {
         Object.defineProperty(proto, prop, {
@@ -135,7 +225,9 @@
             return null;
           },
           set(_val) {
-            // Swallow inline blocking assignments on static prototypes
+            if (!isForceModeActive()) {
+              // If force mode is disabled, do not swallow
+            }
           },
           configurable: true,
           enumerable: true,
@@ -144,9 +236,9 @@
     }
   }
 
-  // 6. Unmask transparent click shields without touching interactive inputs
+  // 6. Anti-Shield Overlay Unmasker (Active when Anti-Shield is ON)
   function unmaskMedia(e: MouseEvent) {
-    if (!isShieldActive()) return;
+    if (!isAntiShieldActive()) return;
     if (!e || typeof e.clientX !== 'number' || typeof e.clientY !== 'number')
       return;
     try {
@@ -157,7 +249,7 @@
       if (!elements || elements.length <= 1) return;
 
       const isPlayerOrInteractive = elements.some((el) =>
-        isInteractiveElement(el),
+        isInteractiveNode(el),
       );
       if (isPlayerOrInteractive) return;
 
@@ -201,6 +293,9 @@
       if (document.body) document.body.onselectstart = null;
       window.ondragstart = null;
       document.ondragstart = null;
+      window.oncopy = null;
+      document.oncopy = null;
+      if (document.body) document.body.oncopy = null;
     } catch (_e) {}
   });
 })();

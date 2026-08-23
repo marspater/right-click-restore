@@ -1,27 +1,49 @@
-/* Enable text selection on article content containers */
-article,
-section,
-p,
-blockquote,
-pre,
-code,
-li,
-td,
-th,
-dt,
-dd,
-figcaption {
-  -webkit-user-select: text;
-  user-select: text;
+/*
+ * RightClickRestore Scoped CSS
+ * Driven by HTML dataset attributes synchronized live from popup settings.
+ */
+
+/* 1. Dynamic Text Selection Restoration (Active only when both Global & Selection toggles are ON) */
+html[data-rcr-enabled="true"][data-rcr-selection="true"] body,
+html[data-rcr-enabled="true"][data-rcr-selection="true"] p,
+html[data-rcr-enabled="true"][data-rcr-selection="true"]
+  div:not([class*="ytp-"]):not(.html5-video-player):not(.ProseMirror):not(
+    .monaco-editor
+  ),
+html[data-rcr-enabled="true"][data-rcr-selection="true"]
+  span:not([class*="ytp-"]):not(.html5-video-player *),
+html[data-rcr-enabled="true"][data-rcr-selection="true"] h1,
+html[data-rcr-enabled="true"][data-rcr-selection="true"] h2,
+html[data-rcr-enabled="true"][data-rcr-selection="true"] h3,
+html[data-rcr-enabled="true"][data-rcr-selection="true"] h4,
+html[data-rcr-enabled="true"][data-rcr-selection="true"] h5,
+html[data-rcr-enabled="true"][data-rcr-selection="true"] h6,
+html[data-rcr-enabled="true"][data-rcr-selection="true"] article,
+html[data-rcr-enabled="true"][data-rcr-selection="true"] section,
+html[data-rcr-enabled="true"][data-rcr-selection="true"] aside,
+html[data-rcr-enabled="true"][data-rcr-selection="true"] main,
+html[data-rcr-enabled="true"][data-rcr-selection="true"] header,
+html[data-rcr-enabled="true"][data-rcr-selection="true"] footer,
+html[data-rcr-enabled="true"][data-rcr-selection="true"] li,
+html[data-rcr-enabled="true"][data-rcr-selection="true"] td,
+html[data-rcr-enabled="true"][data-rcr-selection="true"] th,
+html[data-rcr-enabled="true"][data-rcr-selection="true"] dt,
+html[data-rcr-enabled="true"][data-rcr-selection="true"] dd,
+html[data-rcr-enabled="true"][data-rcr-selection="true"] blockquote,
+html[data-rcr-enabled="true"][data-rcr-selection="true"] pre,
+html[data-rcr-enabled="true"][data-rcr-selection="true"] code,
+html[data-rcr-enabled="true"][data-rcr-selection="true"] figcaption {
+  -webkit-user-select: text !important;
+  user-select: text !important;
 }
 
-/* Ensure media elements are clickable */
-img,
-video {
+/* 2. Media Clickability (Active only when Anti-Shield toggle is ON) */
+html[data-rcr-enabled="true"][data-rcr-anti-shield="true"] img,
+html[data-rcr-enabled="true"][data-rcr-anti-shield="true"] video {
   pointer-events: auto !important;
 }
 
-/* CRITICAL: Never override selection or editing in inputs, contenteditable editors, or web apps */
+/* 3. Input & Rich Text Editor Protection (Always preserved) */
 [contenteditable],
 [contenteditable="true"],
 [contenteditable="true"] *,
@@ -33,8 +55,6 @@ input,
 textarea,
 select,
 button,
-form,
-form *,
 .html5-video-player,
 .html5-video-player *,
 [class*="ytp-"],

@@ -1,50 +1,88 @@
 (() => {
-  const BLOCKED_ATTRS = ['oncontextmenu', 'onselectstart', 'ondragstart'];
-
-  const TARGET_SELECTOR = BLOCKED_ATTRS.map((a) => `[${a}]`).join(',');
-
-  function updateEnabledState(enabled: boolean) {
-    if (document.documentElement) {
-      document.documentElement.dataset.rcrEnabled = enabled ? 'true' : 'false';
-    }
+  interface Settings {
+    enabled: boolean;
+    restoreRightClick: boolean;
+    restoreSelection: boolean;
+    antiShield: boolean;
+    absoluteForce: boolean;
+    bypassModifierKey: boolean;
+    disabledDomains: string[];
   }
 
-  // Sync initial state from storage
+  const DEFAULT_SETTINGS: Settings = {
+    enabled: true,
+    restoreRightClick: true,
+    restoreSelection: true,
+    antiShield: true,
+    absoluteForce: true,
+    bypassModifierKey: true,
+    disabledDomains: [],
+  };
+
+  let currentSettings: Settings = { ...DEFAULT_SETTINGS };
+
+  function isDomainDisabled(
+    hostname: string,
+    disabledDomains: string[],
+  ): boolean {
+    if (!hostname || !disabledDomains || disabledDomains.length === 0)
+      return false;
+    const cleanHost = hostname.toLowerCase().replace(/^www\./, '');
+    return disabledDomains.some((d) => {
+      const cleanDomain = d.toLowerCase().replace(/^www\./, '');
+      return cleanHost === cleanDomain || cleanHost.endsWith(`.${cleanDomain}`);
+    });
+  }
+
+  function applySettingsToDOM(settings: Settings) {
+    currentSettings = settings;
+    const root = document.documentElement;
+    if (!root) return;
+
+    const hostname = window.location.hostname;
+    const isDisabled = isDomainDisabled(hostname, settings.disabledDomains);
+    const isGloballyEnabled = settings.enabled !== false && !isDisabled;
+
+    root.dataset.rcrEnabled = isGloballyEnabled ? 'true' : 'false';
+    root.dataset.rcrRightClick = settings.restoreRightClick ? 'true' : 'false';
+    root.dataset.rcrSelection = settings.restoreSelection ? 'true' : 'false';
+    root.dataset.rcrAntiShield = settings.antiShield ? 'true' : 'false';
+    root.dataset.rcrForceMode = settings.absoluteForce ? 'true' : 'false';
+    root.dataset.rcrModifierBypass = settings.bypassModifierKey
+      ? 'true'
+      : 'false';
+  }
+
+  // Load and apply initial settings
   try {
-    chrome.storage.local.get(['shieldEnabled', 'rcr_settings'], (res) => {
-      const hostname = window.location.hostname;
-      const settings = res.rcr_settings;
-      if (
-        settings?.disabledDomains &&
-        hostname &&
-        settings.disabledDomains.includes(hostname)
-      ) {
-        updateEnabledState(false);
-      } else {
-        updateEnabledState(res.shieldEnabled !== false);
+    chrome.storage.local.get(['rcr_settings', 'shieldEnabled'], (res) => {
+      const settings = {
+        ...DEFAULT_SETTINGS,
+        ...(res.rcr_settings || {}),
+      };
+      if (res.shieldEnabled !== undefined) {
+        settings.enabled = res.shieldEnabled;
       }
+      applySettingsToDOM(settings);
     });
   } catch (_e) {
-    updateEnabledState(true);
+    applySettingsToDOM(DEFAULT_SETTINGS);
   }
 
-  // Listen for dynamic toggle changes from popup
+  // React to storage changes from popup
   try {
     chrome.storage.onChanged.addListener((changes, area) => {
       if (area === 'local') {
-        if (changes.shieldEnabled || changes.rcr_settings) {
-          chrome.storage.local.get(['shieldEnabled', 'rcr_settings'], (res) => {
-            const hostname = window.location.hostname;
-            const settings = res.rcr_settings;
-            if (
-              settings?.disabledDomains &&
-              hostname &&
-              settings.disabledDomains.includes(hostname)
-            ) {
-              updateEnabledState(false);
-            } else {
-              updateEnabledState(res.shieldEnabled !== false);
+        if (changes.rcr_settings || changes.shieldEnabled) {
+          chrome.storage.local.get(['rcr_settings', 'shieldEnabled'], (res) => {
+            const settings = {
+              ...DEFAULT_SETTINGS,
+              ...(res.rcr_settings || {}),
+            };
+            if (res.shieldEnabled !== undefined) {
+              settings.enabled = res.shieldEnabled;
             }
+            applySettingsToDOM(settings);
           });
         }
       }
@@ -97,7 +135,7 @@
     } catch (_e) {}
   }
 
-  // Handle messages from popup (force unlock & dynamic config)
+  // Handle messages from popup
   try {
     chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       if (message.type === 'RCR_FORCE_UNLOCK') {
@@ -106,16 +144,8 @@
         showUnlockToast();
         sendResponse({ status: 'unlocked' });
       } else if (message.type === 'RCR_CONFIG_CHANGED') {
-        const hostname = window.location.hostname;
-        const settings = message.config;
-        if (
-          settings?.disabledDomains &&
-          hostname &&
-          settings.disabledDomains.includes(hostname)
-        ) {
-          updateEnabledState(false);
-        } else {
-          updateEnabledState(settings?.enabled !== false);
+        if (message.config) {
+          applySettingsToDOM(message.config);
         }
         sendResponse({ status: 'ok' });
       }
@@ -125,7 +155,9 @@
 
   function injectMainWorldScript() {
     try {
+      if (document.getElementById('rcr-main-world-script')) return;
       const script = document.createElement('script');
+      script.id = 'rcr-main-world-script';
       script.src = chrome.runtime.getURL('page-script.js');
       script.async = false;
       const target = document.head || document.documentElement || document.body;
@@ -145,45 +177,62 @@
     } catch (_e) {}
   }
 
+  const INTERACTIVE_CONTAINERS =
+    '.ProseMirror, .monaco-editor, .html5-video-player, [class*="ytp-"], [class*="player-"], ytd-app, [contenteditable="true"]';
+
+  const INTERACTIVE_ELEMENTS =
+    'input, textarea, select, button, [contenteditable], [contenteditable="true"]';
+
   function cleanNode(el: Element) {
     if (!el || el.nodeType !== Node.ELEMENT_NODE) return;
 
-    // Never alter inputs, contenteditable editors, or web app containers
-    if (
-      el.closest(
-        'input, textarea, select, button, [contenteditable], [contenteditable="true"], .ProseMirror, .monaco-editor, .html5-video-player, video, audio, [class*="ytp-"], [class*="player-"], ytd-app, form',
-      )
-    ) {
-      return;
-    }
+    // Never alter interactive inputs, rich text editors, or video players
+    if (el.matches(INTERACTIVE_ELEMENTS)) return;
+    if (el.closest(INTERACTIVE_CONTAINERS)) return;
 
-    for (const attr of BLOCKED_ATTRS) {
-      if (el.hasAttribute(attr)) {
+    if (currentSettings.restoreRightClick) {
+      if (el.hasAttribute('oncontextmenu')) {
         try {
-          el.removeAttribute(attr);
+          el.removeAttribute('oncontextmenu');
         } catch (_e) {}
       }
     }
-    // Clear userSelect only if explicitly set to none on text content
-    if (
-      el instanceof HTMLElement &&
-      (el.style.userSelect === 'none' || el.style.webkitUserSelect === 'none')
-    ) {
-      el.style.userSelect = 'auto';
-      el.style.webkitUserSelect = 'auto';
+
+    if (currentSettings.restoreSelection) {
+      for (const attr of ['onselectstart', 'ondragstart', 'oncopy', 'oncut']) {
+        if (el.hasAttribute(attr)) {
+          try {
+            el.removeAttribute(attr);
+          } catch (_e) {}
+        }
+      }
+      if (
+        el instanceof HTMLElement &&
+        (el.style.userSelect === 'none' || el.style.webkitUserSelect === 'none')
+      ) {
+        el.style.userSelect = 'auto';
+        el.style.webkitUserSelect = 'auto';
+      }
     }
   }
 
   function cleanDOMTree(root: Element | Document = document) {
     if (root instanceof Element) cleanNode(root);
     try {
-      for (const node of root.querySelectorAll(TARGET_SELECTOR)) {
+      const attrs = [
+        '[oncontextmenu]',
+        '[onselectstart]',
+        '[ondragstart]',
+        '[oncopy]',
+        '[oncut]',
+      ];
+      for (const node of root.querySelectorAll(attrs.join(','))) {
         cleanNode(node);
       }
     } catch (_e) {}
   }
 
-  // 1. Synchronously inject MAIN-world script
+  // 1. Inject MAIN-world script
   injectMainWorldScript();
 
   // 2. Scrub DOM
@@ -197,7 +246,7 @@
     cleanDOMTree();
   }
 
-  // 3. Observe mutations with fast attributeFilter
+  // 3. Observe dynamic mutations
   const obs = new MutationObserver((mutations) => {
     for (const m of mutations) {
       if (m.type === 'attributes' && m.target instanceof Element) {
@@ -206,10 +255,15 @@
         for (const n of m.addedNodes) {
           if (n instanceof Element) {
             cleanNode(n);
-            if (n.querySelector(TARGET_SELECTOR)) {
-              for (const child of n.querySelectorAll(TARGET_SELECTOR)) {
-                cleanNode(child);
-              }
+            const attrs = [
+              '[oncontextmenu]',
+              '[onselectstart]',
+              '[ondragstart]',
+              '[oncopy]',
+              '[oncut]',
+            ];
+            for (const child of n.querySelectorAll(attrs.join(','))) {
+              cleanNode(child);
             }
           }
         }
@@ -217,21 +271,17 @@
     }
   });
 
-  if (document.documentElement) {
-    obs.observe(document.documentElement, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: BLOCKED_ATTRS,
-    });
-  } else {
-    document.addEventListener('DOMContentLoaded', () => {
-      obs.observe(document.documentElement, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        attributeFilter: BLOCKED_ATTRS,
-      });
-    });
-  }
+  const targetObs = document.documentElement || document;
+  obs.observe(targetObs, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: [
+      'oncontextmenu',
+      'onselectstart',
+      'ondragstart',
+      'oncopy',
+      'oncut',
+    ],
+  });
 })();

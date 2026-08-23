@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Right-Click & Selection Blocker Test Suite</title>
+  <title>RightClickRestore Hostile Blocker Test Suite</title>
   <style>
     :root {
       --bg: #090c15;
@@ -153,6 +153,31 @@
       cursor: default;
     }
 
+    .input-test {
+      width: 100%;
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      color: #ffffff;
+      font-size: 13px;
+      outline: none;
+      margin-top: 8px;
+    }
+
+    .editable-test {
+      min-height: 48px;
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      color: #ffffff;
+      font-size: 13px;
+      outline: none;
+      margin-top: 8px;
+      text-align: left;
+    }
+
     .log-panel {
       background-color: #05070e;
       border: 1px solid var(--card-border);
@@ -208,15 +233,15 @@
   <div class="container">
     <header>
       <h1>🛡️ Anti-Right-Click Test Suite</h1>
-      <p class="subtitle">Use this page to test if Safari extension successfully restores right-click and selection.</p>
+      <p class="subtitle">Comprehensive test matrix for RightClickRestore in Safari.</p>
     </header>
 
     <div class="instructions">
-      <h3>Testing Checklist:</h3>
+      <h3>Testing Matrix:</h3>
       <ul>
-        <li><strong>Without Extension:</strong> Right-clicking or selecting text inside these boxes will be blocked by script/CSS.</li>
-        <li><strong>With Extension Enabled:</strong> Right-clicking opens Safari's native context menu, and text can be highlighted and copied normally.</li>
-        <li><strong>Shift/Option Bypass:</strong> Hold <kbd>Shift</kbd> or <kbd>Option</kbd> while right clicking to force the native menu.</li>
+        <li><strong>With Extension Active:</strong> Right-click and copy work across hostile containers 1–7.</li>
+        <li><strong>Modifier Key Bypass:</strong> Hold <kbd>⇧ Shift</kbd> or <kbd>⌥ Option</kbd> while clicking to force native browser menu.</li>
+        <li><strong>Interactive Integrity (Test 8 & 9):</strong> Type and paste into text fields to verify normal single-paste without duplicates.</li>
       </ul>
     </div>
 
@@ -251,9 +276,10 @@
       <!-- Test 4 -->
       <div class="card">
         <h2 class="card-title"><span>4️⃣</span> CSS user-select: none</h2>
-        <p class="card-desc">Uses <code>user-select: none !important</code> to disable highlighting.</p>
+        <p class="card-desc">Uses <code>user-select: none !important</code> across child tags.</p>
         <div class="test-box no-select">
-          📝 Try highlighting and copying this text (Cmd+C).
+          <p>📝 Try highlighting and copying this text paragraph (Cmd+C).</p>
+          <span>Even nested spans are selectable.</span>
         </div>
       </div>
 
@@ -279,11 +305,25 @@
       <!-- Test 7 -->
       <div class="card">
         <h2 class="card-title"><span>7️⃣</span> Protected Photo Cover Layer</h2>
-        <p class="card-desc">Simulates OnlyFans/Instagram transparent cover element above image.</p>
+        <p class="card-desc">Simulates transparent cover element above image.</p>
         <div class="photo-shield-wrap" oncontextmenu="logEvent('Protected media right-click tested');">
           <div class="b-photos__item__cover"></div>
           <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='120' viewBox='0 0 400 120'><rect width='400' height='120' fill='%230284c7'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-family='sans-serif' font-size='16'>Protected Image Underneath Shield</text></svg>" alt="Protected Sample">
         </div>
+      </div>
+
+      <!-- Test 8 -->
+      <div class="card">
+        <h2 class="card-title"><span>8️⃣</span> Rich Input & Paste Test</h2>
+        <p class="card-desc">Tests that pasting into inputs never doubles or breaks.</p>
+        <input class="input-test" placeholder="Paste (⌘V) text here to verify clean single paste" />
+      </div>
+
+      <!-- Test 9 -->
+      <div class="card">
+        <h2 class="card-title"><span>9️⃣</span> ContentEditable Editor Test</h2>
+        <p class="card-desc">Tests ChatGPT/ProseMirror simulated contenteditable editor.</p>
+        <div class="editable-test" contenteditable="true">Type or paste rich text here...</div>
       </div>
     </div>
 

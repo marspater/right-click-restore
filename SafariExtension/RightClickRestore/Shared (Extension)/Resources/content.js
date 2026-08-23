@@ -25,7 +25,10 @@
   }
 
   /**
-   * Main world script payload embedded directly for 0ms synchronous injection
+   * Main world script payload — synchronized with page-script.js
+   * Fixes applied:
+   *   Bug 1: returnValue override with original descriptor fallback
+   *   Bug 2: WeakMap listener tracking + removeEventListener patch
    */
   const MAIN_WORLD_SCRIPT = `
 (function() {
@@ -46,7 +49,28 @@
 
   const realPreventDefault = Event.prototype.preventDefault;
   const realAddEventListener = EventTarget.prototype.addEventListener;
-  const eventsToUnblock = new Set(['contextmenu', 'selectstart', 'copy', 'cut', 'dragstart', 'mousedown', 'mouseup']);
+  const realRemoveEventListener = EventTarget.prototype.removeEventListener;
+  const eventsToUnblock = new Set(['contextmenu', 'selectstart', 'dragstart', 'mousedown', 'mouseup']);
+
+  // Bug 1 Fix: returnValue override with original descriptor fallback
+  try {
+    const originalDescriptor = Object.getOwnPropertyDescriptor(Event.prototype, 'returnValue');
+    const targetReturnValueEvents = new Set(['contextmenu', 'selectstart', 'copy']);
+
+    Object.defineProperty(Event.prototype, 'returnValue', {
+      get() {
+        if (config.enabled && targetReturnValueEvents.has(this.type)) return true;
+        if (originalDescriptor && originalDescriptor.get) return originalDescriptor.get.call(this);
+        return true;
+      },
+      set(val) {
+        if (config.enabled && targetReturnValueEvents.has(this.type)) return;
+        if (originalDescriptor && originalDescriptor.set) originalDescriptor.set.call(this, val);
+      },
+      configurable: true,
+      enumerable: true
+    });
+  } catch(e) {}
 
   Event.prototype.preventDefault = function() {
     if (config.enabled) {
@@ -56,17 +80,6 @@
     }
     return realPreventDefault.apply(this, arguments);
   };
-
-  try {
-    Object.defineProperty(Event.prototype, 'returnValue', {
-      get() { return true; },
-      set(val) {
-        if (config.enabled && (this.type === 'contextmenu' || this.type === 'selectstart' || this.type === 'copy')) return;
-      },
-      configurable: true,
-      enumerable: true
-    });
-  } catch(e) {}
 
   const blockedProps = ['oncontextmenu', 'onselectstart', 'oncopy', 'oncut', 'ondragstart'];
   const targets = [
@@ -96,6 +109,20 @@
     });
   });
 
+  // Bug 2 Fix: WeakMap-based listener tracking + removeEventListener patch
+  const listenerMap = new WeakMap();
+
+  function getOrCreateMap(listener) {
+    let map = listenerMap.get(listener);
+    if (!map) { map = new Map(); listenerMap.set(listener, map); }
+    return map;
+  }
+
+  function listenerKey(type, options) {
+    const capture = typeof options === 'boolean' ? options : (options?.capture || false);
+    return type + '|' + capture;
+  }
+
   EventTarget.prototype.addEventListener = function(type, listener, options) {
     if (!listener) return realAddEventListener.call(this, type, listener, options);
     if (eventsToUnblock.has(type)) {
@@ -115,12 +142,33 @@
         else if (listener && typeof listener.handleEvent === 'function') return listener.handleEvent(event);
       };
       try {
+        const map = getOrCreateMap(listener);
+        map.set(listenerKey(type, options), wrappedListener);
+      } catch(e) {}
+      try {
         return realAddEventListener.call(this, type, wrappedListener, options);
       } catch(e) {
         return realAddEventListener.call(this, type, listener, options);
       }
     }
     return realAddEventListener.call(this, type, listener, options);
+  };
+
+  EventTarget.prototype.removeEventListener = function(type, listener, options) {
+    if (listener && eventsToUnblock.has(type)) {
+      try {
+        const map = listenerMap.get(listener);
+        if (map) {
+          const key = listenerKey(type, options);
+          const wrapped = map.get(key);
+          if (wrapped) {
+            map.delete(key);
+            return realRemoveEventListener.call(this, type, wrapped, options);
+          }
+        }
+      } catch(e) {}
+    }
+    return realRemoveEventListener.call(this, type, listener, options);
   };
 
   function unmaskMedia(e) {
@@ -190,15 +238,7 @@
     } catch (e) {}
   }
 
-  function injectExternalScript() {
-    try {
-      const script = document.createElement('script');
-      script.src = chrome.runtime.getURL('page-script.js');
-      script.async = false;
-      (document.head || document.documentElement).appendChild(script);
-      script.onload = () => script.remove();
-    } catch (e) {}
-  }
+  // Bug 8 Fix: Removed injectExternalScript() — inline script handles everything
 
   function applyDOMState() {
     const active = isSiteEnabled(currentConfig);
@@ -220,27 +260,26 @@
     window.dispatchEvent(new CustomEvent('__rcr_update_config__', { detail: payload }));
   }
 
+  // Bug 6/7 Fix: Removed onmousedown, onmouseup, onpaste — too aggressive,
+  // breaks YouTube player controls. addEventListener wrapper handles right-click.
   const INLINE_ATTRIBUTES = [
     'oncontextmenu',
     'onselectstart',
     'ondragstart',
     'oncopy',
-    'oncut',
-    'onpaste',
-    'onmousedown',
-    'onmouseup'
+    'oncut'
   ];
 
   function cleanElement(el) {
     if (!el || el.nodeType !== Node.ELEMENT_NODE) return;
 
-    INLINE_ATTRIBUTES.forEach((attr) => {
-      if (el.hasAttribute(attr)) {
+    for (let i = 0; i < INLINE_ATTRIBUTES.length; i++) {
+      if (el.hasAttribute(INLINE_ATTRIBUTES[i])) {
         try {
-          el.removeAttribute(attr);
+          el.removeAttribute(INLINE_ATTRIBUTES[i]);
         } catch (e) {}
       }
-    });
+    }
 
     if (el.style) {
       if (el.style.userSelect === 'none') el.style.userSelect = 'auto';
@@ -251,40 +290,65 @@
     }
   }
 
+  // Bug 9 Fix: Use targeted attribute selectors instead of querySelectorAll('*')
   function cleanDOMTree(root = document.documentElement) {
     if (!root) return;
     cleanElement(root);
-    const elements = root.querySelectorAll('*');
-    for (let i = 0; i < elements.length; i++) {
-      cleanElement(elements[i]);
-    }
+
+    // Only query elements that actually have the inline attributes we target
+    const selector = INLINE_ATTRIBUTES.map(attr => '[' + attr + ']').join(',');
+    try {
+      const elements = root.querySelectorAll(selector);
+      for (let i = 0; i < elements.length; i++) {
+        cleanElement(elements[i]);
+      }
+    } catch (e) {}
+
+    // Also fix user-select:none on text-like elements
+    try {
+      const selectBlocked = root.querySelectorAll('[style*="user-select"]');
+      for (let i = 0; i < selectBlocked.length; i++) {
+        cleanElement(selectBlocked[i]);
+      }
+    } catch (e) {}
   }
 
+  // Bug 3 Fix: Pre-filter shields with cheap checks, use requestIdleCallback for batching
   function neutralizeClickShields() {
     if (!isSiteEnabled(currentConfig) || !currentConfig.antiShield) return;
 
-    const allDivs = document.querySelectorAll('div, section, span, ins');
     const vw = window.innerWidth;
     const vh = window.innerHeight;
 
-    for (let i = 0; i < allDivs.length; i++) {
-      const el = allDivs[i];
+    // Only query elements with explicit positioning styles — much smaller set
+    const candidates = document.querySelectorAll(
+      '[style*="position: fixed"], [style*="position:fixed"], ' +
+      '[style*="position: absolute"], [style*="position:absolute"]'
+    );
+
+    for (let i = 0; i < candidates.length; i++) {
+      const el = candidates[i];
       if (el.id === 'rcr-notification-toast') continue;
+      if (el.classList.contains('rcr-shield-disabled')) continue;
+
+      // Cheap pre-filter: skip elements with visible content
+      if (el.children.length > 0) continue;
+      if (el.innerText && el.innerText.trim().length > 0) continue;
 
       const style = window.getComputedStyle(el);
-      const isFixed = style.position === 'fixed' || style.position === 'absolute';
       const zIndex = parseInt(style.zIndex, 10);
+      if (isNaN(zIndex) || zIndex <= 100) continue;
 
-      if (isFixed && zIndex > 100) {
-        const rect = el.getBoundingClientRect();
-        const coversViewport = rect.width >= vw * 0.85 && rect.height >= vh * 0.85;
-        const isTransparent = style.opacity === '0' || style.backgroundColor === 'rgba(0, 0, 0, 0)' || style.backgroundColor === 'transparent';
-        const hasNoText = el.innerText.trim().length === 0;
+      const rect = el.getBoundingClientRect();
+      const coversViewport = rect.width >= vw * 0.85 && rect.height >= vh * 0.85;
+      if (!coversViewport) continue;
 
-        if (coversViewport && (isTransparent || style.opacity < 0.05) && hasNoText && el.children.length === 0) {
-          el.classList.add('rcr-shield-disabled');
-          el.style.setProperty('pointer-events', 'none', 'important');
-        }
+      const isTransparent = style.opacity === '0' || parseFloat(style.opacity) < 0.05 ||
+                            style.backgroundColor === 'rgba(0, 0, 0, 0)' || style.backgroundColor === 'transparent';
+
+      if (isTransparent) {
+        el.classList.add('rcr-shield-disabled');
+        el.style.setProperty('pointer-events', 'none', 'important');
       }
     }
   }
@@ -327,8 +391,8 @@
   }
 
   async function init() {
+    // Bug 8 Fix: Only inject inline script — external script is redundant
     injectSynchronousScript();
-    injectExternalScript();
 
     try {
       const stored = await chrome.storage.local.get('rcr_settings');
@@ -374,13 +438,17 @@
       attributeFilter: INLINE_ATTRIBUTES
     });
 
-    // Only run periodic shield scan in top-level window to avoid accumulation across iframes
+    // Bug 3 Fix: Only run in top frame, use requestIdleCallback, longer interval
     if (window === window.top) {
+      const scheduleShieldScan = typeof requestIdleCallback === 'function'
+        ? (fn) => requestIdleCallback(fn, { timeout: 2000 })
+        : (fn) => setTimeout(fn, 0);
+
       setInterval(() => {
         if (isSiteEnabled(currentConfig) && currentConfig.antiShield) {
-          neutralizeClickShields();
+          scheduleShieldScan(neutralizeClickShields);
         }
-      }, 4000);
+      }, 8000);
     }
   }
 

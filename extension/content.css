@@ -1,6 +1,6 @@
 /* Right Click & Selection Restorer Content Styles */
 
-/* 1. Universal Text Selection & Interaction */
+/* 1. Universal Text Selection & Interaction — on html/body only */
 html.rcr-enabled,
 html.rcr-enabled body {
   -webkit-user-select: auto !important;
@@ -8,13 +8,14 @@ html.rcr-enabled body {
   -webkit-touch-callout: default !important;
 }
 
+/* Bug 4 Fix: Removed div and span — they break YouTube player controls,
+   seek bars, volume sliders, and all custom UI elements.
+   Only target actual text-containing elements. */
 html.rcr-enabled p,
-html.rcr-enabled span,
 html.rcr-enabled pre,
 html.rcr-enabled code,
 html.rcr-enabled article,
 html.rcr-enabled section,
-html.rcr-enabled div,
 html.rcr-enabled h1,
 html.rcr-enabled h2,
 html.rcr-enabled h3,
@@ -44,14 +45,13 @@ html.rcr-enabled button {
   user-select: none !important;
 }
 
-/* 2. Universal Media Interactivity (Images, Videos, Canvas) */
+/* 2. Media Interactivity — only actual media elements
+   Bug 5 Fix: Removed svg (breaks YouTube icon click delegation),
+   source and picture (non-visual, never need pointer events). */
 html.rcr-enabled img,
 html.rcr-enabled video,
 html.rcr-enabled canvas,
-html.rcr-enabled picture,
-html.rcr-enabled source,
-html.rcr-enabled figure,
-html.rcr-enabled svg {
+html.rcr-enabled figure {
   pointer-events: auto !important;
   -webkit-user-drag: auto !important;
   -webkit-touch-callout: default !important;
@@ -73,10 +73,11 @@ html.rcr-enabled .rcr-unmasked-overlay {
   pointer-events: none !important;
 }
 
-/* 4. Neutralize transparent shields */
+/* 4. Neutralize transparent shields
+   Bug 12 Fix: Use visibility:hidden instead of display:none to preserve layout */
 .rcr-shield-disabled {
   pointer-events: none !important;
-  display: none !important;
+  visibility: hidden !important;
 }
 
 /* 5. Sleek Notification Toast */

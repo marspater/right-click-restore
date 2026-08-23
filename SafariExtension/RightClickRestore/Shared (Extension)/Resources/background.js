@@ -78,6 +78,8 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 // Listen for settings change notifications to update all tabs
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'RCR_SETTINGS_UPDATED') {
+    // Bug 11 Fix: Respond immediately, update badges fire-and-forget
+    sendResponse({ status: 'ok' });
     (async () => {
       try {
         const tabs = await chrome.tabs.query({});
@@ -87,8 +89,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           }
         }
       } catch (e) {}
-      sendResponse({ status: 'ok' });
     })();
-    return true;
+    return false; // No need to keep channel open
   }
 });

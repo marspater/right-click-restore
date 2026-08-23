@@ -63,7 +63,6 @@ body {
   background-color: var(--bg-base);
   color: var(--text-primary);
   width: 336px;
-  min-height: 480px;
   user-select: none;
   -webkit-user-select: none;
   overflow: hidden;
@@ -497,4 +496,19 @@ kbd {
 .btn-force-unlock:focus-visible {
   outline: 2px solid var(--accent-blue);
   outline-offset: 2px;
+}
+
+/* Disabled state — global toggle off */
+.popup-disabled .site-card,
+.popup-disabled .settings-card,
+.popup-disabled .action-section,
+.popup-disabled .footer {
+  opacity: 0.4;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.popup-disabled .site-card {
+  pointer-events: auto; /* Keep site toggle accessible */
+  opacity: 0.5;
 }

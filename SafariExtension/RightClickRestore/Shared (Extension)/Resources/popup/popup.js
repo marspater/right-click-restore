@@ -74,6 +74,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
       siteStatusDot.classList.add('disabled');
     }
+
+    // Bug 10/14 Fix: Dim feature controls when global toggle is off
+    const container = document.querySelector('.popup-container');
+    if (container) {
+      if (!currentSettings.enabled) {
+        container.classList.add('popup-disabled');
+      } else {
+        container.classList.remove('popup-disabled');
+      }
+    }
   }
 
   updateUI();

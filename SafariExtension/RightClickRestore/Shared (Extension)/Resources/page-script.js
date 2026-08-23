@@ -30,9 +30,42 @@
 
   const realPreventDefault = Event.prototype.preventDefault;
   const realAddEventListener = EventTarget.prototype.addEventListener;
-  const eventsToUnblock = new Set(['contextmenu', 'selectstart', 'copy', 'cut', 'dragstart', 'mousedown', 'mouseup']);
+  const realRemoveEventListener = EventTarget.prototype.removeEventListener;
 
-  // 1. Prevent default override
+  // Target events that anti-right-click scripts abuse
+  const eventsToUnblock = new Set(['contextmenu', 'selectstart', 'dragstart', 'mousedown', 'mouseup']);
+
+  // --- Bug 1 Fix: returnValue override with original descriptor fallback ---
+  try {
+    const originalDescriptor = Object.getOwnPropertyDescriptor(Event.prototype, 'returnValue');
+    const targetReturnValueEvents = new Set(['contextmenu', 'selectstart', 'copy']);
+
+    Object.defineProperty(Event.prototype, 'returnValue', {
+      get() {
+        if (config.enabled && targetReturnValueEvents.has(this.type)) {
+          return true;
+        }
+        // Delegate to original getter for all other events
+        if (originalDescriptor && originalDescriptor.get) {
+          return originalDescriptor.get.call(this);
+        }
+        return true;
+      },
+      set(val) {
+        if (config.enabled && targetReturnValueEvents.has(this.type)) {
+          return; // Swallow — prevent cancellation of our target events
+        }
+        // Delegate to original setter for all other events
+        if (originalDescriptor && originalDescriptor.set) {
+          originalDescriptor.set.call(this, val);
+        }
+      },
+      configurable: true,
+      enumerable: true
+    });
+  } catch (e) {}
+
+  // 1. Prevent default override — only for target events
   Event.prototype.preventDefault = function () {
     if (config.enabled) {
       if (config.restoreRightClick && this.type === 'contextmenu') return;
@@ -41,18 +74,6 @@
     }
     return realPreventDefault.apply(this, arguments);
   };
-
-  // 2. ReturnValue override
-  try {
-    Object.defineProperty(Event.prototype, 'returnValue', {
-      get() { return true; },
-      set(val) {
-        if (config.enabled && (this.type === 'contextmenu' || this.type === 'selectstart' || this.type === 'copy')) return;
-      },
-      configurable: true,
-      enumerable: true
-    });
-  } catch (e) {}
 
   // 3. Neutralize property setters on prototypes
   const blockedProps = ['oncontextmenu', 'onselectstart', 'oncopy', 'oncut', 'ondragstart'];
@@ -83,7 +104,24 @@
     });
   });
 
-  // 4. Intercept addEventListener
+  // --- Bug 2 Fix: WeakMap-based listener tracking + removeEventListener patch ---
+  const listenerMap = new WeakMap();
+
+  function getOrCreateMap(listener) {
+    let map = listenerMap.get(listener);
+    if (!map) {
+      map = new Map();
+      listenerMap.set(listener, map);
+    }
+    return map;
+  }
+
+  // Build a stable key for deduplication: "type|capture"
+  function listenerKey(type, options) {
+    const capture = typeof options === 'boolean' ? options : (options?.capture || false);
+    return type + '|' + capture;
+  }
+
   EventTarget.prototype.addEventListener = function (type, listener, options) {
     if (!listener) return realAddEventListener.call(this, type, listener, options);
 
@@ -103,6 +141,13 @@
         if (typeof listener === 'function') return listener.apply(this, arguments);
         else if (listener && typeof listener.handleEvent === 'function') return listener.handleEvent(event);
       };
+
+      // Store mapping so removeEventListener can find the wrapper
+      try {
+        const map = getOrCreateMap(listener);
+        map.set(listenerKey(type, options), wrappedListener);
+      } catch (e) {}
+
       try {
         return realAddEventListener.call(this, type, wrappedListener, options);
       } catch (e) {
@@ -112,7 +157,24 @@
     return realAddEventListener.call(this, type, listener, options);
   };
 
-  // 5. Unmask media underneath cursor
+  EventTarget.prototype.removeEventListener = function (type, listener, options) {
+    if (listener && eventsToUnblock.has(type)) {
+      try {
+        const map = listenerMap.get(listener);
+        if (map) {
+          const key = listenerKey(type, options);
+          const wrapped = map.get(key);
+          if (wrapped) {
+            map.delete(key);
+            return realRemoveEventListener.call(this, type, wrapped, options);
+          }
+        }
+      } catch (e) {}
+    }
+    return realRemoveEventListener.call(this, type, listener, options);
+  };
+
+  // 5. Unmask media underneath cursor (only on right-click)
   function unmaskMedia(e) {
     if (!config.enabled || !config.antiShield || !e || typeof e.clientX !== 'number' || typeof e.clientY !== 'number') return;
     if (e.clientX < 0 || e.clientY < 0 || e.clientX > window.innerWidth || e.clientY > window.innerHeight) return;

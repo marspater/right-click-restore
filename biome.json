@@ -29,5 +29,17 @@
       "quoteStyle": "single",
       "semicolons": "always"
     }
-  }
+  },
+  "overrides": [
+    {
+      "include": ["*.svelte", "**/*.svelte"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnusedVariables": "off"
+          }
+        }
+      }
+    }
+  ]
 }

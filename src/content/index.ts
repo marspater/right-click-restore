@@ -17,8 +17,18 @@
 
   // Sync initial state from storage
   try {
-    chrome.storage.local.get(['shieldEnabled'], (res) => {
-      updateEnabledState(res.shieldEnabled !== false);
+    chrome.storage.local.get(['shieldEnabled', 'rcr_settings'], (res) => {
+      const hostname = window.location.hostname;
+      const settings = res.rcr_settings;
+      if (
+        settings?.disabledDomains &&
+        hostname &&
+        settings.disabledDomains.includes(hostname)
+      ) {
+        updateEnabledState(false);
+      } else {
+        updateEnabledState(res.shieldEnabled !== false);
+      }
     });
   } catch (_e) {
     updateEnabledState(true);
@@ -27,9 +37,47 @@
   // Listen for dynamic toggle changes from popup
   try {
     chrome.storage.onChanged.addListener((changes, area) => {
-      if (area === 'local' && changes.shieldEnabled) {
-        updateEnabledState(changes.shieldEnabled.newValue !== false);
+      if (area === 'local') {
+        if (changes.shieldEnabled || changes.rcr_settings) {
+          chrome.storage.local.get(['shieldEnabled', 'rcr_settings'], (res) => {
+            const hostname = window.location.hostname;
+            const settings = res.rcr_settings;
+            if (
+              settings?.disabledDomains &&
+              hostname &&
+              settings.disabledDomains.includes(hostname)
+            ) {
+              updateEnabledState(false);
+            } else {
+              updateEnabledState(res.shieldEnabled !== false);
+            }
+          });
+        }
       }
+    });
+  } catch (_e) {}
+
+  // Handle messages from popup (force unlock & dynamic config)
+  try {
+    chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+      if (message.type === 'RCR_FORCE_UNLOCK') {
+        cleanDOMTree();
+        sendResponse({ status: 'unlocked' });
+      } else if (message.type === 'RCR_CONFIG_CHANGED') {
+        const hostname = window.location.hostname;
+        const settings = message.config;
+        if (
+          settings?.disabledDomains &&
+          hostname &&
+          settings.disabledDomains.includes(hostname)
+        ) {
+          updateEnabledState(false);
+        } else {
+          updateEnabledState(settings?.enabled !== false);
+        }
+        sendResponse({ status: 'ok' });
+      }
+      return true;
     });
   } catch (_e) {}
 

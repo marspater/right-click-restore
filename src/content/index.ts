@@ -19,6 +19,11 @@
     disabledDomains: [],
   };
 
+  const sessionToken =
+    typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2) + Date.now().toString(36);
+
   let currentSettings: Settings = { ...DEFAULT_SETTINGS };
 
   function isDomainDisabled(
@@ -34,23 +39,45 @@
     });
   }
 
-  function applySettingsToDOM(settings: Settings) {
+  function applySettings(settings: Settings) {
     currentSettings = settings;
-    const root = document.documentElement;
-    if (!root) return;
 
     const hostname = window.location.hostname;
     const isDisabled = isDomainDisabled(hostname, settings.disabledDomains);
-    const isGloballyEnabled = settings.enabled !== false && !isDisabled;
+    const effectiveSettings: Settings = {
+      ...settings,
+      enabled: settings.enabled !== false && !isDisabled,
+    };
 
-    root.dataset.rcrEnabled = isGloballyEnabled ? 'true' : 'false';
-    root.dataset.rcrRightClick = settings.restoreRightClick ? 'true' : 'false';
-    root.dataset.rcrSelection = settings.restoreSelection ? 'true' : 'false';
-    root.dataset.rcrAntiShield = settings.antiShield ? 'true' : 'false';
-    root.dataset.rcrForceMode = settings.absoluteForce ? 'true' : 'false';
-    root.dataset.rcrModifierBypass = settings.bypassModifierKey
-      ? 'true'
-      : 'false';
+    // Update CSS selectors on DOM
+    const root = document.documentElement;
+    if (root) {
+      root.dataset.rcrEnabled = effectiveSettings.enabled ? 'true' : 'false';
+      root.dataset.rcrRightClick = effectiveSettings.restoreRightClick
+        ? 'true'
+        : 'false';
+      root.dataset.rcrSelection = effectiveSettings.restoreSelection
+        ? 'true'
+        : 'false';
+      root.dataset.rcrAntiShield = effectiveSettings.antiShield
+        ? 'true'
+        : 'false';
+      root.dataset.rcrForceMode = effectiveSettings.absoluteForce
+        ? 'true'
+        : 'false';
+      root.dataset.rcrModifierBypass = effectiveSettings.bypassModifierKey
+        ? 'true'
+        : 'false';
+    }
+
+    // Dispatch secure authenticated update to MAIN-world script
+    try {
+      window.dispatchEvent(
+        new CustomEvent(`__rcr_cfg_${sessionToken}`, {
+          detail: effectiveSettings,
+        }),
+      );
+    } catch (_e) {}
   }
 
   // Load and apply initial settings
@@ -63,10 +90,10 @@
       if (res.shieldEnabled !== undefined) {
         settings.enabled = res.shieldEnabled;
       }
-      applySettingsToDOM(settings);
+      applySettings(settings);
     });
   } catch (_e) {
-    applySettingsToDOM(DEFAULT_SETTINGS);
+    applySettings(DEFAULT_SETTINGS);
   }
 
   // React to storage changes from popup
@@ -82,7 +109,7 @@
             if (res.shieldEnabled !== undefined) {
               settings.enabled = res.shieldEnabled;
             }
-            applySettingsToDOM(settings);
+            applySettings(settings);
           });
         }
       }
@@ -145,7 +172,7 @@
         sendResponse({ status: 'unlocked' });
       } else if (message.type === 'RCR_CONFIG_CHANGED') {
         if (message.config) {
-          applySettingsToDOM(message.config);
+          applySettings(message.config);
         }
         sendResponse({ status: 'ok' });
       }
@@ -160,10 +187,12 @@
       script.id = 'rcr-main-world-script';
       script.src = chrome.runtime.getURL('page-script.js');
       script.async = false;
+      script.dataset.token = sessionToken;
+      script.dataset.initialConfig = JSON.stringify(currentSettings);
+
       const target = document.head || document.documentElement || document.body;
       if (target) {
         target.appendChild(script);
-        script.onload = () => script.remove();
       } else {
         document.addEventListener('DOMContentLoaded', () => {
           (
@@ -171,7 +200,6 @@
             document.documentElement ||
             document.body
           )?.appendChild(script);
-          script.onload = () => script.remove();
         });
       }
     } catch (_e) {}
@@ -192,10 +220,11 @@
     'onbeforecopy',
   ];
 
+  const SCRUB_SELECTOR = SCRUB_ATTRS.map((a) => `[${a}]`).join(',');
+
   function cleanNode(el: Element) {
     if (!el || el.nodeType !== Node.ELEMENT_NODE) return;
 
-    // Never alter interactive inputs, rich text editors, or video players
     if (el.matches(INTERACTIVE_ELEMENTS)) return;
     if (el.closest(INTERACTIVE_CONTAINERS)) return;
 
@@ -208,14 +237,8 @@
     }
 
     if (currentSettings.restoreSelection) {
-      for (const attr of [
-        'onselectstart',
-        'ondragstart',
-        'oncopy',
-        'oncut',
-        'onbeforecopy',
-      ]) {
-        if (el.hasAttribute(attr)) {
+      for (const attr of SCRUB_ATTRS) {
+        if (attr !== 'oncontextmenu' && el.hasAttribute(attr)) {
           try {
             el.removeAttribute(attr);
           } catch (_e) {}
@@ -234,8 +257,7 @@
   function cleanDOMTree(root: Element | Document = document) {
     if (root instanceof Element) cleanNode(root);
     try {
-      const selector = SCRUB_ATTRS.map((a) => `[${a}]`).join(',');
-      for (const node of root.querySelectorAll(selector)) {
+      for (const node of root.querySelectorAll(SCRUB_SELECTOR)) {
         cleanNode(node);
       }
     } catch (_e) {}
@@ -255,22 +277,64 @@
     cleanDOMTree();
   }
 
-  // 3. Observe dynamic mutations
+  // 3. Batched MutationObserver with Circuit Breaker Rate Limiting
+  const pendingNodes = new Set<Element>();
+  let isBatchScheduled = false;
+  let scrubCountThisWindow = 0;
+  let windowStartTime = Date.now();
+  const MAX_SCRUBS_PER_SEC = 80;
+
+  function processBatch() {
+    const nodes = Array.from(pendingNodes);
+    pendingNodes.clear();
+    for (const node of nodes) {
+      scrubCountThisWindow++;
+      cleanNode(node);
+      try {
+        for (const child of node.querySelectorAll(SCRUB_SELECTOR)) {
+          scrubCountThisWindow++;
+          cleanNode(child);
+        }
+      } catch (_e) {}
+    }
+  }
+
+  function scheduleBatch() {
+    if (isBatchScheduled) return;
+    isBatchScheduled = true;
+
+    requestAnimationFrame(() => {
+      isBatchScheduled = false;
+      const now = Date.now();
+      if (now - windowStartTime > 1000) {
+        scrubCountThisWindow = 0;
+        windowStartTime = now;
+      }
+
+      // If attack / mutation storm detected (> 80 scrubs/sec), back off smoothly
+      if (scrubCountThisWindow > MAX_SCRUBS_PER_SEC) {
+        setTimeout(() => processBatch(), 250);
+        return;
+      }
+
+      processBatch();
+    });
+  }
+
   const obs = new MutationObserver((mutations) => {
     for (const m of mutations) {
       if (m.type === 'attributes' && m.target instanceof Element) {
-        cleanNode(m.target);
+        pendingNodes.add(m.target);
       } else if (m.type === 'childList') {
         for (const n of m.addedNodes) {
           if (n instanceof Element) {
-            cleanNode(n);
-            const selector = SCRUB_ATTRS.map((a) => `[${a}]`).join(',');
-            for (const child of n.querySelectorAll(selector)) {
-              cleanNode(child);
-            }
+            pendingNodes.add(n);
           }
         }
       }
+    }
+    if (pendingNodes.size > 0) {
+      scheduleBatch();
     }
   });
 

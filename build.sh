@@ -35,8 +35,8 @@ xattr -rc build 2>/dev/null || true
 codesign -s - --force --entitlements entitlements.plist "build/RightClickRestore.app"
 
 echo "🔌 Registering extension with PlugInKit & LaunchServices..."
-pluginkit -a -e use -i com.antigravity.RightClickRestore.Extension "build/RightClickRestore.app/Contents/PlugIns/RightClickRestore Extension.appex" 2>/dev/null || true
-/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f -R -trusted build/RightClickRestore.app 2>/dev/null || true
+pluginkit -a -e use -i com.antigravity.RightClickRestore.Extension "build/RightClickRestore.app/Contents/PlugIns/RightClickRestore Extension.appex"
+/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f -R -trusted build/RightClickRestore.app
 
 echo ""
 echo "✅ Build & Registration Succeeded!"

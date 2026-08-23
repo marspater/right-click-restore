@@ -1,4 +1,4 @@
-/* Enable text selection on article content containers without interfering with player controls, buttons, or spans */
+/* Enable text selection on article content containers */
 article,
 section,
 p,
@@ -11,8 +11,8 @@ th,
 dt,
 dd,
 figcaption {
-  -webkit-user-select: text !important;
-  user-select: text !important;
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 /* Ensure media elements are clickable */
@@ -21,15 +21,24 @@ video {
   pointer-events: auto !important;
 }
 
-/* Exclude interactive controls, inputs, and video player containers from forced selection */
+/* CRITICAL: Never override selection or editing in inputs, contenteditable editors, or web apps */
+[contenteditable],
+[contenteditable="true"],
+[contenteditable="true"] *,
+.ProseMirror,
+.ProseMirror *,
+.monaco-editor,
+.monaco-editor *,
 input,
 textarea,
 select,
 button,
+form,
+form *,
 .html5-video-player,
 .html5-video-player *,
 [class*="ytp-"],
 [class*="ytp-"] * {
-  -webkit-user-select: auto;
-  user-select: auto;
+  -webkit-user-select: auto !important;
+  user-select: auto !important;
 }

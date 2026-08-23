@@ -1,11 +1,5 @@
 (() => {
-  const BLOCKED_ATTRS = [
-    'oncontextmenu',
-    'onselectstart',
-    'ondragstart',
-    'oncopy',
-    'oncut',
-  ];
+  const BLOCKED_ATTRS = ['oncontextmenu', 'onselectstart', 'ondragstart'];
 
   const TARGET_SELECTOR = BLOCKED_ATTRS.map((a) => `[${a}]`).join(',');
 
@@ -154,10 +148,10 @@
   function cleanNode(el: Element) {
     if (!el || el.nodeType !== Node.ELEMENT_NODE) return;
 
-    // Never alter video players, custom web app elements, or interactive controls
+    // Never alter inputs, contenteditable editors, or web app containers
     if (
       el.closest(
-        '.html5-video-player, video, audio, [class*="ytp-"], [class*="player-"], ytd-app, input, textarea, select, button, [contenteditable="true"]',
+        'input, textarea, select, button, [contenteditable], [contenteditable="true"], .ProseMirror, .monaco-editor, .html5-video-player, video, audio, [class*="ytp-"], [class*="player-"], ytd-app, form',
       )
     ) {
       return;

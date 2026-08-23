@@ -14,7 +14,9 @@ async function toggleShield() {
   isEnabled = !isEnabled;
   await chrome.storage.local.set({ shieldEnabled: isEnabled });
   chrome.action.setBadgeText({ text: isEnabled ? 'ON' : 'OFF' });
-  chrome.action.setBadgeBackgroundColor({ color: '#007AFF' });
+  chrome.action.setBadgeBackgroundColor({
+    color: isEnabled ? '#007AFF' : '#8E8E93',
+  });
 }
 </script>
 

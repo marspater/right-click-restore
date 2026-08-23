@@ -5,9 +5,33 @@
     'ondragstart',
     'oncopy',
     'oncut',
-    'onmousedown',
-    'onmouseup',
   ];
+
+  const TARGET_SELECTOR = BLOCKED_ATTRS.map((a) => `[${a}]`).join(',');
+
+  function updateEnabledState(enabled: boolean) {
+    if (document.documentElement) {
+      document.documentElement.dataset.rcrEnabled = enabled ? 'true' : 'false';
+    }
+  }
+
+  // Sync initial state from storage
+  try {
+    chrome.storage.local.get(['shieldEnabled'], (res) => {
+      updateEnabledState(res.shieldEnabled !== false);
+    });
+  } catch (_e) {
+    updateEnabledState(true);
+  }
+
+  // Listen for dynamic toggle changes from popup
+  try {
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area === 'local' && changes.shieldEnabled) {
+        updateEnabledState(changes.shieldEnabled.newValue !== false);
+      }
+    });
+  } catch (_e) {}
 
   function injectMainWorldScript() {
     try {
@@ -40,57 +64,59 @@
         } catch (_e) {}
       }
     }
-    // Also remove inline styles blocking selection
-    if (el instanceof HTMLElement && el.style) {
-      if (el.style.userSelect === 'none') el.style.userSelect = 'auto';
-      if (el.style.webkitUserSelect === 'none')
+    // Clear userSelect only if explicitly set to none on text containers
+    if (
+      el instanceof HTMLElement &&
+      (el.style.userSelect === 'none' || el.style.webkitUserSelect === 'none')
+    ) {
+      if (
+        !el.closest(
+          '.html5-video-player, button, input, textarea, select, [contenteditable]',
+        )
+      ) {
+        el.style.userSelect = 'auto';
         el.style.webkitUserSelect = 'auto';
+      }
     }
   }
 
   function cleanDOMTree(root: Element | Document = document) {
     if (root instanceof Element) cleanNode(root);
     try {
-      const selector = BLOCKED_ATTRS.map((a) => `[${a}]`).join(',');
-      for (const node of root.querySelectorAll(selector)) {
-        cleanNode(node);
-      }
-    } catch (_e) {}
-    try {
-      for (const node of root.querySelectorAll('[style*="user-select"]')) {
+      // Use targeted attribute query instead of expensive querySelectorAll('*')
+      for (const node of root.querySelectorAll(TARGET_SELECTOR)) {
         cleanNode(node);
       }
     } catch (_e) {}
   }
 
-  // 1. Inject MAIN-world interceptor
+  // 1. Synchronously inject MAIN-world script
   injectMainWorldScript();
 
-  // 2. Initial scrub
+  // 2. Scrub DOM
   if (document.documentElement) {
     cleanDOMTree(document.documentElement);
   }
 
-  // 3. Scrub on DOM ready & load
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => cleanDOMTree());
   } else {
     cleanDOMTree();
   }
-  window.addEventListener('load', () => cleanDOMTree());
 
-  // 4. Observe dynamic subtree mutations and inline attribute additions
+  // 3. Observe mutations with fast attributeFilter
   const obs = new MutationObserver((mutations) => {
     for (const m of mutations) {
       if (m.type === 'attributes' && m.target instanceof Element) {
         cleanNode(m.target);
-      }
-      if (m.type === 'childList') {
+      } else if (m.type === 'childList') {
         for (const n of m.addedNodes) {
           if (n instanceof Element) {
             cleanNode(n);
-            for (const child of n.querySelectorAll('*')) {
-              cleanNode(child);
+            if (n.querySelector(TARGET_SELECTOR)) {
+              for (const child of n.querySelectorAll(TARGET_SELECTOR)) {
+                cleanNode(child);
+              }
             }
           }
         }

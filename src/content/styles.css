@@ -1,8 +1,30 @@
-/* Force text selection and pointer events */
-*,
-*::before,
-*::after {
+/* Target text content elements specifically — never apply to *, div, or svg */
+p,
+span,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+article,
+section,
+blockquote,
+pre,
+code,
+li,
+td,
+th,
+dt,
+dd,
+figcaption,
+label {
   -webkit-user-select: text !important;
   user-select: text !important;
+}
+
+/* Only restore pointer events on media elements blocked by inline attributes/styles */
+img,
+video {
   pointer-events: auto !important;
 }

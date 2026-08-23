@@ -33,7 +33,13 @@
   const realRemoveEventListener = EventTarget.prototype.removeEventListener;
 
   // Target events that anti-right-click scripts abuse
-  const eventsToUnblock = new Set(['contextmenu', 'selectstart', 'dragstart', 'mousedown', 'mouseup']);
+  const eventsToUnblock = new Set([
+    'contextmenu',
+    'selectstart',
+    'dragstart',
+    'mousedown',
+    'mouseup'
+  ]);
 
   // --- Bug 1 Fix: returnValue override with original descriptor fallback ---
   try {
@@ -69,8 +75,20 @@
   Event.prototype.preventDefault = function () {
     if (config.enabled) {
       if (config.restoreRightClick && this.type === 'contextmenu') return;
-      if (config.restoreSelection && (this.type === 'selectstart' || this.type === 'copy' || this.type === 'cut' || this.type === 'dragstart')) return;
-      if (config.restoreRightClick && (this.type === 'mousedown' || this.type === 'mouseup') && this.button === 2) return;
+      if (
+        config.restoreSelection &&
+        (this.type === 'selectstart' ||
+          this.type === 'copy' ||
+          this.type === 'cut' ||
+          this.type === 'dragstart')
+      )
+        return;
+      if (
+        config.restoreRightClick &&
+        (this.type === 'mousedown' || this.type === 'mouseup') &&
+        this.button === 2
+      )
+        return;
     }
     return realPreventDefault.apply(this, arguments);
   };
@@ -90,7 +108,9 @@
     targets.forEach((proto) => {
       try {
         Object.defineProperty(proto, propName, {
-          get() { return null; },
+          get() {
+            return null;
+          },
           set(val) {
             if (config.enabled) {
               if (propName === 'oncontextmenu' && config.restoreRightClick) return;
@@ -118,7 +138,7 @@
 
   // Build a stable key for deduplication: "type|capture"
   function listenerKey(type, options) {
-    const capture = typeof options === 'boolean' ? options : (options?.capture || false);
+    const capture = typeof options === 'boolean' ? options : options?.capture || false;
     return type + '|' + capture;
   }
 
@@ -129,17 +149,29 @@
       const wrappedListener = function (event) {
         if (config.enabled) {
           if (config.restoreRightClick && event.type === 'contextmenu') {
-            if (config.absoluteForce || (config.bypassModifierKey && (event.shiftKey || event.altKey))) return;
+            if (
+              config.absoluteForce ||
+              (config.bypassModifierKey && (event.shiftKey || event.altKey))
+            )
+              return;
           }
-          if (config.restoreSelection && (event.type === 'selectstart' || event.type === 'dragstart')) {
+          if (
+            config.restoreSelection &&
+            (event.type === 'selectstart' || event.type === 'dragstart')
+          ) {
             if (config.absoluteForce) return;
           }
-          if (config.restoreRightClick && (event.type === 'mousedown' || event.type === 'mouseup') && event.button === 2) {
+          if (
+            config.restoreRightClick &&
+            (event.type === 'mousedown' || event.type === 'mouseup') &&
+            event.button === 2
+          ) {
             return;
           }
         }
         if (typeof listener === 'function') return listener.apply(this, arguments);
-        else if (listener && typeof listener.handleEvent === 'function') return listener.handleEvent(event);
+        else if (listener && typeof listener.handleEvent === 'function')
+          return listener.handleEvent(event);
       };
 
       // Store mapping so removeEventListener can find the wrapper
@@ -176,15 +208,30 @@
 
   // 5. Unmask media underneath cursor (only on right-click)
   function unmaskMedia(e) {
-    if (!config.enabled || !config.antiShield || !e || typeof e.clientX !== 'number' || typeof e.clientY !== 'number') return;
-    if (e.clientX < 0 || e.clientY < 0 || e.clientX > window.innerWidth || e.clientY > window.innerHeight) return;
+    if (
+      !config.enabled ||
+      !config.antiShield ||
+      !e ||
+      typeof e.clientX !== 'number' ||
+      typeof e.clientY !== 'number'
+    )
+      return;
+    if (
+      e.clientX < 0 ||
+      e.clientY < 0 ||
+      e.clientX > window.innerWidth ||
+      e.clientY > window.innerHeight
+    )
+      return;
 
     try {
       if (typeof document.elementsFromPoint !== 'function') return;
       const elements = document.elementsFromPoint(e.clientX, e.clientY);
       if (!elements || elements.length <= 1) return;
 
-      const media = elements.find((el) => el.tagName === 'IMG' || el.tagName === 'VIDEO' || el.tagName === 'CANVAS');
+      const media = elements.find(
+        (el) => el.tagName === 'IMG' || el.tagName === 'VIDEO' || el.tagName === 'CANVAS'
+      );
       if (media && elements[0] !== media) {
         for (const el of elements) {
           if (el === media) break;

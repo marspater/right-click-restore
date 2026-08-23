@@ -26,7 +26,13 @@ chrome.runtime.onInstalled.addListener(async () => {
 
 // Update badge status based on active tab and settings
 async function updateBadge(tabId, url) {
-  if (!tabId || !url || url.startsWith('chrome://') || url.startsWith('safari-extension://') || url.startsWith('about:')) {
+  if (
+    !tabId ||
+    !url ||
+    url.startsWith('chrome://') ||
+    url.startsWith('safari-extension://') ||
+    url.startsWith('about:')
+  ) {
     try {
       await chrome.action.setBadgeText({ tabId, text: '' });
     } catch (e) {}

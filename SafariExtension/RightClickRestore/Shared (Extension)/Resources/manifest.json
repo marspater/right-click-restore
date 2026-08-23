@@ -3,14 +3,8 @@
   "name": "Right Click & Selection Restorer",
   "version": "1.1.0",
   "description": "Restores right-click context menus, text selection, and image/video saving on websites that disable them.",
-  "permissions": [
-    "storage",
-    "activeTab",
-    "scripting"
-  ],
-  "host_permissions": [
-    "<all_urls>"
-  ],
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": ["<all_urls>"],
   "action": {
     "default_popup": "popup/popup.html",
     "default_icon": {
@@ -35,29 +29,17 @@
   },
   "content_scripts": [
     {
-      "matches": [
-        "<all_urls>"
-      ],
-      "js": [
-        "content.js"
-      ],
-      "css": [
-        "content.css"
-      ],
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["content.css"],
       "run_at": "document_start",
       "all_frames": true
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": [
-        "page-script.js",
-        "content.css",
-        "icons/*"
-      ],
-      "matches": [
-        "<all_urls>"
-      ]
+      "resources": ["page-script.js", "content.css", "icons/*"],
+      "matches": ["<all_urls>"]
     }
   ]
 }

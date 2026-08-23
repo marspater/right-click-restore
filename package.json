@@ -1,0 +1,15 @@
+{
+  "name": "right-click-restore-extension",
+  "version": "1.1.0",
+  "description": "Safari Web Extension restoring right-click context menus and text selection",
+  "private": true,
+  "scripts": {
+    "check": "biome check .",
+    "check:write": "biome check --write .",
+    "format": "biome format --write .",
+    "lint": "biome lint ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.10"
+  }
+}

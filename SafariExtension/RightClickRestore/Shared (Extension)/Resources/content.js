@@ -262,13 +262,7 @@
 
   // Bug 6/7 Fix: Removed onmousedown, onmouseup, onpaste — too aggressive,
   // breaks YouTube player controls. addEventListener wrapper handles right-click.
-  const INLINE_ATTRIBUTES = [
-    'oncontextmenu',
-    'onselectstart',
-    'ondragstart',
-    'oncopy',
-    'oncut'
-  ];
+  const INLINE_ATTRIBUTES = ['oncontextmenu', 'onselectstart', 'ondragstart', 'oncopy', 'oncut'];
 
   function cleanElement(el) {
     if (!el || el.nodeType !== Node.ELEMENT_NODE) return;
@@ -296,7 +290,7 @@
     cleanElement(root);
 
     // Only query elements that actually have the inline attributes we target
-    const selector = INLINE_ATTRIBUTES.map(attr => '[' + attr + ']').join(',');
+    const selector = INLINE_ATTRIBUTES.map((attr) => '[' + attr + ']').join(',');
     try {
       const elements = root.querySelectorAll(selector);
       for (let i = 0; i < elements.length; i++) {
@@ -323,7 +317,7 @@
     // Only query elements with explicit positioning styles — much smaller set
     const candidates = document.querySelectorAll(
       '[style*="position: fixed"], [style*="position:fixed"], ' +
-      '[style*="position: absolute"], [style*="position:absolute"]'
+        '[style*="position: absolute"], [style*="position:absolute"]'
     );
 
     for (let i = 0; i < candidates.length; i++) {
@@ -343,8 +337,11 @@
       const coversViewport = rect.width >= vw * 0.85 && rect.height >= vh * 0.85;
       if (!coversViewport) continue;
 
-      const isTransparent = style.opacity === '0' || parseFloat(style.opacity) < 0.05 ||
-                            style.backgroundColor === 'rgba(0, 0, 0, 0)' || style.backgroundColor === 'transparent';
+      const isTransparent =
+        style.opacity === '0' ||
+        parseFloat(style.opacity) < 0.05 ||
+        style.backgroundColor === 'rgba(0, 0, 0, 0)' ||
+        style.backgroundColor === 'transparent';
 
       if (isTransparent) {
         el.classList.add('rcr-shield-disabled');
@@ -440,9 +437,10 @@
 
     // Bug 3 Fix: Only run in top frame, use requestIdleCallback, longer interval
     if (window === window.top) {
-      const scheduleShieldScan = typeof requestIdleCallback === 'function'
-        ? (fn) => requestIdleCallback(fn, { timeout: 2000 })
-        : (fn) => setTimeout(fn, 0);
+      const scheduleShieldScan =
+        typeof requestIdleCallback === 'function'
+          ? (fn) => requestIdleCallback(fn, { timeout: 2000 })
+          : (fn) => setTimeout(fn, 0);
 
       setInterval(() => {
         if (isSiteEnabled(currentConfig) && currentConfig.antiShield) {

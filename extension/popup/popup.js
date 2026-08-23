@@ -65,7 +65,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     toggleAbsoluteForce.checked = !!currentSettings.absoluteForce;
     toggleModifierBypass.checked = !!currentSettings.bypassModifierKey;
 
-    const isSiteDisabled = currentHostname && currentSettings.disabledDomains?.includes(currentHostname);
+    const isSiteDisabled =
+      currentHostname && currentSettings.disabledDomains?.includes(currentHostname);
     siteToggle.checked = !isSiteDisabled;
 
     const isActive = currentSettings.enabled && !isSiteDisabled;

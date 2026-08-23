@@ -8,6 +8,12 @@
 import SafariServices
 import os.log
 
+/// Native Messaging Bridge for Safari Web Extension
+///
+/// NOTE: RightClickRestore is a standard Safari Web Extension (Manifest V3).
+/// The core extension runtime (DOM unblocking, event interception, Svelte 5 popup)
+/// executes inside WebKit via `src/content`, `src/page-script`, and `src/popup`.
+/// This native handler handles optional native messages sent via `browser.runtime.sendNativeMessage`.
 class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
 
     func beginRequest(with context: NSExtensionContext) {
@@ -27,13 +33,13 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
             message = request?.userInfo?["message"]
         }
 
-        os_log(.default, "Received message from browser.runtime.sendNativeMessage: %@ (profile: %@)", String(describing: message), profile?.uuidString ?? "none")
+        os_log(.default, "Received native message: %@ (profile: %@)", String(describing: message), profile?.uuidString ?? "none")
 
         let response = NSExtensionItem()
         if #available(iOS 15.0, macOS 11.0, *) {
-            response.userInfo = [ SFExtensionMessageKey: [ "echo": message ] ]
+            response.userInfo = [ SFExtensionMessageKey: [ "status": "ok", "message": message ] ]
         } else {
-            response.userInfo = [ "message": [ "echo": message ] ]
+            response.userInfo = [ "message": [ "status": "ok", "message": message ] ]
         }
 
         context.completeRequest(returningItems: [ response ], completionHandler: nil)

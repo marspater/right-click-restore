@@ -8,18 +8,32 @@
 import SwiftUI
 import SafariServices
 
-let extensionBundleIdentifier = "com.antigravity.RightClickRestore.Extension"
+// Dynamic bundle identifier derived from host app container
+private var extensionBundleIdentifier: String {
+    if let bundleId = Bundle.main.bundleIdentifier {
+        return bundleId.hasSuffix(".Extension") ? bundleId : "\(bundleId).Extension"
+    }
+    return "com.antigravity.RightClickRestore.Extension"
+}
+
+// MARK: - Extension State Model
+
+enum ExtensionState: Equatable {
+    case checking
+    case enabled
+    case disabled
+    case unavailable(String)
+}
 
 // MARK: - SwiftUI Onboarding View (Apple HIG Compliant)
 
 struct ContentView: View {
-    @State private var isExtensionEnabled: Bool? = nil
+    @State private var state: ExtensionState = .checking
     @State private var isChecking = false
-    @State private var timer: Timer? = nil
 
     var body: some View {
-        VStack(spacing: 22) {
-            // Header: Vibrant App Icon & Branding
+        VStack(spacing: 20) {
+            // Header: App Icon & Title
             ZStack {
                 Circle()
                     .fill(
@@ -29,11 +43,11 @@ struct ContentView: View {
                             endPoint: .bottomTrailing
                         )
                     )
-                    .frame(width: 68, height: 68)
-                    .shadow(color: Color.blue.opacity(0.35), radius: 12, x: 0, y: 6)
+                    .frame(width: 64, height: 64)
+                    .shadow(color: Color.blue.opacity(0.35), radius: 10, x: 0, y: 5)
 
                 Image(systemName: "shield.lefthalf.filled.badge.checkmark")
-                    .font(.system(size: 34, weight: .semibold))
+                    .font(.system(size: 32, weight: .semibold))
                     .foregroundStyle(.white)
             }
 
@@ -45,20 +59,20 @@ struct ContentView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
-                    .frame(maxWidth: 320)
+                    .frame(maxWidth: 300)
             }
 
             // Live Extension Status Card
-            HStack(spacing: 14) {
+            HStack(spacing: 12) {
                 ZStack {
                     Circle()
                         .fill(statusColor)
-                        .frame(width: 12, height: 12)
+                        .frame(width: 10, height: 10)
 
-                    if isExtensionEnabled == true {
+                    if state == .enabled {
                         Circle()
-                            .stroke(statusColor.opacity(0.4), lineWidth: 4)
-                            .frame(width: 20, height: 20)
+                            .stroke(statusColor.opacity(0.4), lineWidth: 3)
+                            .frame(width: 18, height: 18)
                     }
                 }
 
@@ -73,9 +87,7 @@ struct ContentView: View {
 
                 Spacer()
 
-                Button(action: {
-                    checkExtensionState()
-                }) {
+                Button(action: checkExtensionState) {
                     Image(systemName: "arrow.clockwise")
                         .font(.system(size: 13, weight: .semibold))
                         .rotationEffect(.degrees(isChecking ? 360 : 0))
@@ -85,8 +97,8 @@ struct ContentView: View {
                 .foregroundStyle(.secondary)
                 .help("Refresh extension status")
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(Color.primary.opacity(0.04))
@@ -95,7 +107,7 @@ struct ContentView: View {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .stroke(Color.primary.opacity(0.08), lineWidth: 1)
             )
-            .frame(maxWidth: 340)
+            .frame(maxWidth: 330)
 
             // Primary Action Button
             Button(action: openSafariPreferences) {
@@ -108,75 +120,84 @@ struct ContentView: View {
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
-            .frame(maxWidth: 340)
+            .frame(maxWidth: 330)
 
             // HIG Calm Tip
-            Text("💡 Tip: Hold Shift or Option while right-clicking to force native menus.")
+            Text("💡 Tip: Hold Shift while right-clicking anywhere to force native menus.")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }
-        .padding(32)
-        .frame(minWidth: 400, minHeight: 390)
+        .padding(28)
+        .frame(width: 380, height: 380)
         .background(.ultraThinMaterial)
         .onAppear {
             checkExtensionState()
-            startPeriodicCheck()
         }
-        .onDisappear {
-            timer?.invalidate()
+        #if os(macOS)
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            checkExtensionState()
         }
+        #elseif os(iOS)
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            checkExtensionState()
+        }
+        #endif
     }
 
     private var statusColor: Color {
-        switch isExtensionEnabled {
-        case true:
+        switch state {
+        case .enabled:
             return .green
-        case false:
+        case .disabled:
             return .orange
-        case nil:
+        case .checking:
             return .gray
+        case .unavailable:
+            return .red
         }
     }
 
     private var statusTitle: String {
-        switch isExtensionEnabled {
-        case true:
+        switch state {
+        case .enabled:
             return "Extension is Active in Safari"
-        case false:
+        case .disabled:
             return "Extension Not Enabled"
-        case nil:
+        case .checking:
             return "Checking Safari Status…"
+        case .unavailable:
+            return "Extension Unavailable"
         }
     }
 
     private var statusSubtitle: String {
-        switch isExtensionEnabled {
-        case true:
+        switch state {
+        case .enabled:
             return "Protection is active on all web pages."
-        case false:
+        case .disabled:
             return "Turn on in Safari > Settings > Extensions."
-        case nil:
-            return "Querying macOS Safari Extension Manager…"
+        case .checking:
+            return "Querying macOS Extension Manager…"
+        case .unavailable(let reason):
+            return reason
         }
     }
 
     private func checkExtensionState() {
+        guard !isChecking else { return }
         isChecking = true
-        SFSafariExtensionManager.getStateOfSafariExtension(withIdentifier: extensionBundleIdentifier) { state, error in
+
+        SFSafariExtensionManager.getStateOfSafariExtension(withIdentifier: extensionBundleIdentifier) { safariState, error in
             DispatchQueue.main.async {
                 isChecking = false
-                if let state = state, error == nil {
-                    self.isExtensionEnabled = state.isEnabled
+                if let error = error {
+                    self.state = .unavailable(error.localizedDescription)
+                } else if let safariState = safariState {
+                    self.state = safariState.isEnabled ? .enabled : .disabled
                 } else {
-                    self.isExtensionEnabled = false
+                    self.state = .disabled
                 }
             }
-        }
-    }
-
-    private func startPeriodicCheck() {
-        timer = Timer.scheduledTimer(withTimeInterval: 2.5, repeats: true) { _ in
-            checkExtensionState()
         }
     }
 
@@ -184,7 +205,6 @@ struct ContentView: View {
         #if os(macOS)
         SFSafariApplication.showPreferencesForExtension(withIdentifier: extensionBundleIdentifier) { error in
             if error != nil {
-                // Fallback deep-link directly to Safari Settings > Extensions on macOS
                 if let url = URL(string: "x-apple.systempreferences:com.apple.Safari-Settings.extension.pref") ?? URL(string: "x-apple.systempreferences:com.apple.Safari.Extensions") {
                     NSWorkspace.shared.open(url)
                 }
@@ -208,11 +228,9 @@ class ViewController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        // Clear any placeholder subviews from storyboard
         self.view.subviews.forEach { $0.removeFromSuperview() }
         self.view.wantsLayer = true
 
-        // Embed SwiftUI ContentView
         let hostingView = NSHostingView(rootView: ContentView())
         hostingView.translatesAutoresizingMaskIntoConstraints = false
         self.view.addSubview(hostingView)
@@ -233,9 +251,9 @@ class ViewController: NSViewController {
             window.titleVisibility = .hidden
             window.styleMask.insert(.fullSizeContentView)
             window.isMovableByWindowBackground = true
-            window.setContentSize(NSSize(width: 400, height: 400))
+            window.setContentSize(NSSize(width: 380, height: 380))
             window.minSize = NSSize(width: 380, height: 380)
-            window.maxSize = NSSize(width: 460, height: 460)
+            window.maxSize = NSSize(width: 380, height: 380)
             window.center()
         }
     }

@@ -49,9 +49,11 @@ import {
         : 'false';
     }
 
-    window.dispatchEvent(
-      new CustomEvent('__rcr_update_config', { detail: currentSettings }),
-    );
+    try {
+      window.dispatchEvent(
+        new CustomEvent('__rcr_update_config', { detail: currentSettings }),
+      );
+    } catch (_e) {}
   }
 
   function injectMainWorldScript(initialConfig: Settings) {
@@ -59,14 +61,18 @@ import {
     mainWorldInjected = true;
 
     const inject = () => {
-      if (document.querySelector('script[data-rcr-page-script]')) return;
-      const script = document.createElement('script');
-      script.dataset.rcrPageScript = 'true';
-      script.src = chrome.runtime.getURL('page-script.js');
-      script.dataset.initialConfig = JSON.stringify(initialConfig);
-      (document.head || document.documentElement || document.body)?.appendChild(
-        script,
-      );
+      try {
+        if (document.querySelector('script[data-rcr-page-script]')) return;
+        const script = document.createElement('script');
+        script.dataset.rcrPageScript = 'true';
+        script.src = chrome.runtime.getURL('page-script.js');
+        script.dataset.initialConfig = JSON.stringify(initialConfig);
+        (
+          document.head ||
+          document.documentElement ||
+          document.body
+        )?.appendChild(script);
+      } catch (_e) {}
     };
 
     try {
@@ -155,24 +161,38 @@ import {
 
   function cleanNode(node: Element) {
     if (!(node instanceof Element)) return;
-    if (
-      node.matches(INTERACTIVE_ELEMENTS) ||
-      node.closest(INTERACTIVE_CONTAINERS)
-    )
+    try {
+      if (
+        node.matches(INTERACTIVE_ELEMENTS) ||
+        node.closest(INTERACTIVE_CONTAINERS)
+      ) {
+        return;
+      }
+    } catch (_e) {
       return;
+    }
 
     if (currentSettings.restoreRightClick) {
-      node.removeAttribute('oncontextmenu');
+      try {
+        node.removeAttribute('oncontextmenu');
+      } catch (_e) {}
     }
 
     if (currentSettings.restoreSelection) {
       for (const attr of SCRUB_ATTRS) {
-        if (attr !== 'oncontextmenu') node.removeAttribute(attr);
+        if (attr !== 'oncontextmenu') {
+          try {
+            node.removeAttribute(attr);
+          } catch (_e) {}
+        }
       }
       if (node instanceof HTMLElement) {
-        if (node.style.userSelect === 'none') node.style.userSelect = 'auto';
-        if (node.style.webkitUserSelect === 'none')
-          node.style.webkitUserSelect = 'auto';
+        try {
+          if (node.style.userSelect === 'none') node.style.userSelect = 'auto';
+          if (node.style.webkitUserSelect === 'none') {
+            node.style.webkitUserSelect = 'auto';
+          }
+        } catch (_e) {}
       }
     }
   }
@@ -180,11 +200,20 @@ import {
   function cleanAddedNode(node: Node) {
     if (!(node instanceof Element)) return;
     cleanNode(node);
-    for (const child of node.querySelectorAll(SCRUB_SELECTOR)) cleanNode(child);
+    try {
+      for (const child of node.querySelectorAll(SCRUB_SELECTOR)) {
+        cleanNode(child);
+      }
+    } catch (_e) {}
   }
 
   function cleanDOMTree(root: ParentNode = document) {
-    for (const node of root.querySelectorAll(SCRUB_SELECTOR)) cleanNode(node);
+    if (root instanceof Element) cleanNode(root);
+    try {
+      for (const node of root.querySelectorAll(SCRUB_SELECTOR)) {
+        cleanNode(node);
+      }
+    } catch (_e) {}
   }
 
   function startObserver() {
@@ -213,12 +242,14 @@ import {
       }
     });
 
-    observer.observe(document.documentElement, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: SCRUB_ATTRS,
-    });
+    try {
+      observer.observe(document.documentElement, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: SCRUB_ATTRS,
+      });
+    } catch (_e) {}
   }
 
   function handleMessage(
@@ -227,7 +258,9 @@ import {
   ) {
     if (message.type === 'RCR_FORCE_UNLOCK') {
       cleanDOMTree();
-      window.dispatchEvent(new CustomEvent('__rcr_force_unlock__'));
+      try {
+        window.dispatchEvent(new CustomEvent('__rcr_force_unlock__'));
+      } catch (_e) {}
       showUnlockToast();
       sendResponse({ status: 'unlocked' });
       return;

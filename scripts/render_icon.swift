@@ -217,10 +217,11 @@ func savePNG(image: NSImage, path: String) {
 }
 
 let fileManager = FileManager.default
-let basePath = "/Users/marspater/Documents/antigravity/wise-carson"
+let scriptURL = URL(fileURLWithPath: CommandLine.arguments[0]).standardized
+let basePath = scriptURL.deletingLastPathComponent().deletingLastPathComponent().path
 let appIconSet = "\(basePath)/SafariExtension/RightClickRestore/Shared (App)/Assets.xcassets/AppIcon.appiconset"
 let largeIconSet = "\(basePath)/SafariExtension/RightClickRestore/Shared (App)/Assets.xcassets/LargeIcon.imageset"
-let extIcons = "\(basePath)/extension/icons"
+let extIcons = "\(basePath)/src/icons"
 let sharedExtIcons = "\(basePath)/SafariExtension/RightClickRestore/Shared (Extension)/Resources/icons"
 
 try? fileManager.createDirectory(atPath: appIconSet, withIntermediateDirectories: true)

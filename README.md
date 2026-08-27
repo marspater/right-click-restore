@@ -54,7 +54,7 @@ Install dependencies and run the checks:
 ```bash
 bun install
 bun run check
-bun test src/**/*.test.ts
+bun test
 ```
 
 Build extension resources:

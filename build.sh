@@ -1,43 +1,66 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-echo "🔨 Building RightClickRestore Safari Extension for macOS..."
+ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$ROOT_DIR"
 
-mkdir -p build
+APP_NAME="RightClickRestore"
+SCHEME="RightClickRestore (macOS)"
+BUILD_DIR="$ROOT_DIR/build"
+CONFIGURATION="Release"
 
-xcodebuild -project ./SafariExtension/RightClickRestore/RightClickRestore.xcodeproj \
-  -scheme "RightClickRestore (macOS)" \
-  -configuration Debug \
-  CODE_SIGN_IDENTITY="" \
-  CODE_SIGNING_REQUIRED=NO \
-  CODE_SIGNING_ALLOWED=NO \
-  CONFIGURATION_BUILD_DIR="$(pwd)/build" \
-  build
+command -v xcodebuild >/dev/null || { echo "xcodebuild is required." >&2; exit 1; }
+command -v bun >/dev/null || { echo "Bun is required to build the web extension." >&2; exit 1; }
 
-mkdir -p "build/RightClickRestore.app/Contents/PlugIns"
-if [ -d "build/RightClickRestore Extension.appex" ]; then
-  cp -R "build/RightClickRestore Extension.appex" "build/RightClickRestore.app/Contents/PlugIns/"
+if [[ "${ALLOW_UNSIGNED:-0}" == "1" ]]; then
+  SIGNING_ARGS=(CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO)
+else
+  SIGNING_ARGS=()
 fi
 
-echo "🔏 Clearing extended attributes and applying App Sandbox signatures..."
-find build -name ".DS_Store" -delete 2>/dev/null || true
-find build -type f -exec xattr -c {} + 2>/dev/null || true
-dot_clean build 2>/dev/null || true
-xattr -rc build 2>/dev/null || true
+rm -rf "$BUILD_DIR"
+mkdir -p "$BUILD_DIR"
 
-codesign -s - --force --entitlements entitlements.plist "build/RightClickRestore.app/Contents/PlugIns/RightClickRestore Extension.appex"
+echo "🔧 Building web extension resources..."
+bun install --frozen-lockfile
+bun run build
 
-find build -name ".DS_Store" -delete 2>/dev/null || true
-find build -type f -exec xattr -c {} + 2>/dev/null || true
-dot_clean build 2>/dev/null || true
-xattr -rc build 2>/dev/null || true
+echo "🔨 Building $APP_NAME for macOS..."
+xcodebuild \
+  -project "$ROOT_DIR/SafariExtension/RightClickRestore/RightClickRestore.xcodeproj" \
+  -scheme "$SCHEME" \
+  -configuration "$CONFIGURATION" \
+  -destination 'platform=macOS' \
+  "${SIGNING_ARGS[@]}" \
+  CONFIGURATION_BUILD_DIR="$BUILD_DIR" \
+  build
 
-codesign -s - --force --entitlements entitlements.plist "build/RightClickRestore.app"
+APP_PATH="$BUILD_DIR/$APP_NAME.app"
+APPEX_PATH="$APP_PATH/Contents/PlugIns/$APP_NAME Extension.appex"
 
-echo "🔌 Registering extension with PlugInKit & LaunchServices..."
-pluginkit -a -e use -i com.antigravity.RightClickRestore.Extension "build/RightClickRestore.app/Contents/PlugIns/RightClickRestore Extension.appex"
-/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f -R -trusted build/RightClickRestore.app
+if [[ ! -d "$APP_PATH" ]]; then
+  echo "Build failed: $APP_PATH was not produced." >&2
+  exit 1
+fi
+if [[ ! -d "$APPEX_PATH" ]]; then
+  echo "Build failed: embedded Safari extension is missing." >&2
+  exit 1
+fi
+
+if [[ "${ALLOW_UNSIGNED:-0}" == "1" ]]; then
+  echo "⚠️ Unsigned development build requested. This is not a distribution build."
+  echo "   Enable Safari's unsigned extension development mode to test it."
+else
+  echo "🔏 Validating signed app bundle..."
+  codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+  spctl --assess --type execute --verbose=2 "$APP_PATH"
+fi
 
 echo ""
-echo "✅ Build & Registration Succeeded!"
-echo "📦 App built at: $(pwd)/build/RightClickRestore.app"
+echo "✅ Build succeeded"
+echo "📦 App: $APP_PATH"
+if [[ "${ALLOW_UNSIGNED:-0}" == "1" ]]; then
+  echo "🧪 Install for local development with: open \"$APP_PATH\""
+else
+  echo "🚀 This build is intended for signed/notarized distribution."
+fi

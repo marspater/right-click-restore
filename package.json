@@ -5,6 +5,7 @@
   "scripts": {
     "build": "bun run scripts/build.ts",
     "watch": "bun run scripts/build.ts --watch",
+    "test": "bun test src/**/*.test.ts",
     "check": "biome check --config-path=. .",
     "format": "biome format --write --config-path=. .",
     "fix": "biome check --write --unsafe --config-path=. .",
@@ -14,6 +15,7 @@
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@tailwindcss/postcss": "^4.0.0",
+    "@types/bun": "latest",
     "@types/chrome": "^0.0.308",
     "esbuild": "^0.25.0",
     "esbuild-svelte": "^0.9.0",

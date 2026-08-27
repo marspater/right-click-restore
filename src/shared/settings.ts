@@ -19,10 +19,17 @@ export const DEFAULT_SETTINGS: Settings = {
 };
 
 export function normalizeHostname(hostname: string): string {
-  return hostname.trim().toLowerCase().replace(/^www\./, '').replace(/\.$/, '');
+  return hostname
+    .trim()
+    .toLowerCase()
+    .replace(/^www\./, '')
+    .replace(/\.$/, '');
 }
 
-export function isDomainDisabled(hostname: string, disabledDomains: string[]): boolean {
+export function isDomainDisabled(
+  hostname: string,
+  disabledDomains: string[],
+): boolean {
   const host = normalizeHostname(hostname);
   if (!host) return false;
 
@@ -32,9 +39,14 @@ export function isDomainDisabled(hostname: string, disabledDomains: string[]): b
   });
 }
 
-export function effectiveSettings(settings: Settings, hostname: string): Settings {
+export function effectiveSettings(
+  settings: Settings,
+  hostname: string,
+): Settings {
   return {
     ...settings,
-    enabled: settings.enabled !== false && !isDomainDisabled(hostname, settings.disabledDomains),
+    enabled:
+      settings.enabled !== false &&
+      !isDomainDisabled(hostname, settings.disabledDomains),
   };
 }

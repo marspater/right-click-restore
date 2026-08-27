@@ -46,6 +46,11 @@ xcodebuild \
 APP_PATH="$BUILD_DIR/$APP_NAME.app"
 APPEX_PATH="$APP_PATH/Contents/PlugIns/$APP_NAME Extension.appex"
 
+mkdir -p "$APP_PATH/Contents/PlugIns"
+if [[ -d "$BUILD_DIR/$APP_NAME Extension.appex" ]] && [[ ! -d "$APPEX_PATH" ]]; then
+  cp -R "$BUILD_DIR/$APP_NAME Extension.appex" "$APP_PATH/Contents/PlugIns/"
+fi
+
 if [[ ! -d "$APP_PATH" ]]; then
   echo "Build failed: $APP_PATH was not produced." >&2
   exit 1
@@ -55,8 +60,25 @@ if [[ ! -d "$APPEX_PATH" ]]; then
   exit 1
 fi
 
+# Clean extended attributes
+find "$BUILD_DIR" -name ".DS_Store" -delete 2>/dev/null || true
+find "$BUILD_DIR" -type f -exec xattr -c {} + 2>/dev/null || true
+dot_clean "$BUILD_DIR" 2>/dev/null || true
+xattr -rc "$BUILD_DIR" 2>/dev/null || true
+
 if [[ "${ALLOW_UNSIGNED:-0}" == "1" ]]; then
-  echo "⚠️ Unsigned development build requested. Enable Safari's unsigned extension development mode to test it."
+  echo "🔏 Applying ad-hoc signature for local development..."
+  if [[ -f "$ROOT_DIR/entitlements.plist" ]]; then
+    codesign -s - --force --entitlements "$ROOT_DIR/entitlements.plist" "$APPEX_PATH"
+    codesign -s - --force --entitlements "$ROOT_DIR/entitlements.plist" "$APP_PATH"
+  else
+    codesign -s - --force "$APPEX_PATH"
+    codesign -s - --force "$APP_PATH"
+  fi
+  echo "🔌 Registering extension with PlugInKit & LaunchServices..."
+  pluginkit -a -e use -i com.antigravity.RightClickRestore.Extension "$APPEX_PATH" 2>/dev/null || true
+  /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f -R -trusted "$APP_PATH" 2>/dev/null || true
+  echo "⚠️ Unsigned development build ready. Enable Safari's unsigned extension development mode to test it."
 else
   echo "🔏 Validating signed app bundle..."
   codesign --verify --deep --strict --verbose=2 "$APP_PATH"

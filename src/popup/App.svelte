@@ -1,23 +1,10 @@
 <script lang="ts">
-interface Settings {
-  enabled: boolean;
-  restoreRightClick: boolean;
-  restoreSelection: boolean;
-  antiShield: boolean;
-  absoluteForce: boolean;
-  bypassModifierKey: boolean;
-  disabledDomains: string[];
-}
-
-const DEFAULT_SETTINGS: Settings = {
-  enabled: true,
-  restoreRightClick: true,
-  restoreSelection: true,
-  antiShield: true,
-  absoluteForce: true,
-  bypassModifierKey: true,
-  disabledDomains: [],
-};
+import {
+  DEFAULT_SETTINGS,
+  isDomainDisabled,
+  normalizeHostname,
+  type Settings,
+} from '../shared/settings';
 
 let settings = $state<Settings>({ ...DEFAULT_SETTINGS });
 let currentHostname = $state<string>('');
@@ -26,7 +13,8 @@ let unlockStatus = $state<'idle' | 'unlocking' | 'success' | 'error'>('idle');
 
 const isSiteDisabled = $derived(
   Boolean(
-    currentHostname && settings.disabledDomains.includes(currentHostname),
+    currentHostname &&
+      isDomainDisabled(currentHostname, settings.disabledDomains),
   ),
 );
 
@@ -87,12 +75,19 @@ function toggleGlobal() {
 
 function toggleCurrentSite() {
   if (!currentHostname) return;
-  const list = [...settings.disabledDomains];
+  const host = normalizeHostname(currentHostname);
+  if (!host) return;
+
+  let list = [...settings.disabledDomains];
   if (isSiteDisabled) {
-    const index = list.indexOf(currentHostname);
-    if (index !== -1) list.splice(index, 1);
+    list = list.filter((d) => {
+      const norm = normalizeHostname(d);
+      return norm !== host && !host.endsWith(`.${norm}`);
+    });
   } else {
-    if (!list.includes(currentHostname)) list.push(currentHostname);
+    if (!list.some((d) => normalizeHostname(d) === host)) {
+      list.push(host);
+    }
   }
   saveSettings({ ...settings, disabledDomains: list });
 }

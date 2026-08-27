@@ -9,18 +9,30 @@ import {
 describe('domain matching', () => {
   test('normalizes hostnames consistently', () => {
     expect(normalizeHostname('WWW.Example.COM.')).toBe('example.com');
+    expect(normalizeHostname('   www.github.com   ')).toBe('github.com');
+    expect(normalizeHostname('')).toBe('');
   });
 
   test('matches the exact domain', () => {
     expect(isDomainDisabled('example.com', ['example.com'])).toBe(true);
+    expect(isDomainDisabled('www.example.com', ['example.com'])).toBe(true);
+    expect(isDomainDisabled('example.com', ['www.example.com'])).toBe(true);
   });
 
   test('matches subdomains', () => {
     expect(isDomainDisabled('docs.example.com', ['example.com'])).toBe(true);
+    expect(isDomainDisabled('api.v2.example.com', ['example.com'])).toBe(true);
   });
 
   test('does not match a lookalike suffix', () => {
     expect(isDomainDisabled('notexample.com', ['example.com'])).toBe(false);
+    expect(isDomainDisabled('myexample.com', ['example.com'])).toBe(false);
+  });
+
+  test('handles empty and malformed domain lists safely', () => {
+    expect(isDomainDisabled('', ['example.com'])).toBe(false);
+    expect(isDomainDisabled('example.com', [])).toBe(false);
+    expect(isDomainDisabled('example.com', ['', '   '])).toBe(false);
   });
 
   test('effective settings disable only the matching site', () => {

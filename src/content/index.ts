@@ -32,11 +32,21 @@ import {
     const root = document.documentElement;
     if (root) {
       root.dataset.rcrEnabled = currentSettings.enabled ? 'true' : 'false';
-      root.dataset.rcrRightClick = currentSettings.restoreRightClick ? 'true' : 'false';
-      root.dataset.rcrSelection = currentSettings.restoreSelection ? 'true' : 'false';
-      root.dataset.rcrAntiShield = currentSettings.antiShield ? 'true' : 'false';
-      root.dataset.rcrForceMode = currentSettings.absoluteForce ? 'true' : 'false';
-      root.dataset.rcrModifierBypass = currentSettings.bypassModifierKey ? 'true' : 'false';
+      root.dataset.rcrRightClick = currentSettings.restoreRightClick
+        ? 'true'
+        : 'false';
+      root.dataset.rcrSelection = currentSettings.restoreSelection
+        ? 'true'
+        : 'false';
+      root.dataset.rcrAntiShield = currentSettings.antiShield
+        ? 'true'
+        : 'false';
+      root.dataset.rcrForceMode = currentSettings.absoluteForce
+        ? 'true'
+        : 'false';
+      root.dataset.rcrModifierBypass = currentSettings.bypassModifierKey
+        ? 'true'
+        : 'false';
     }
 
     window.dispatchEvent(
@@ -54,7 +64,9 @@ import {
       script.dataset.rcrPageScript = 'true';
       script.src = chrome.runtime.getURL('page-script.js');
       script.dataset.initialConfig = JSON.stringify(initialConfig);
-      (document.head || document.documentElement || document.body)?.appendChild(script);
+      (document.head || document.documentElement || document.body)?.appendChild(
+        script,
+      );
     };
 
     try {
@@ -143,7 +155,11 @@ import {
 
   function cleanNode(node: Element) {
     if (!(node instanceof Element)) return;
-    if (node.matches(INTERACTIVE_ELEMENTS) || node.closest(INTERACTIVE_CONTAINERS)) return;
+    if (
+      node.matches(INTERACTIVE_ELEMENTS) ||
+      node.closest(INTERACTIVE_CONTAINERS)
+    )
+      return;
 
     if (currentSettings.restoreRightClick) {
       node.removeAttribute('oncontextmenu');
@@ -155,7 +171,8 @@ import {
       }
       if (node instanceof HTMLElement) {
         if (node.style.userSelect === 'none') node.style.userSelect = 'auto';
-        if (node.style.webkitUserSelect === 'none') node.style.webkitUserSelect = 'auto';
+        if (node.style.webkitUserSelect === 'none')
+          node.style.webkitUserSelect = 'auto';
       }
     }
   }
@@ -186,7 +203,10 @@ import {
             cleanAddedNode(node);
             processed++;
           }
-        } else if (mutation.type === 'attributes' && mutation.target instanceof Element) {
+        } else if (
+          mutation.type === 'attributes' &&
+          mutation.target instanceof Element
+        ) {
           cleanNode(mutation.target);
           processed++;
         }
@@ -201,7 +221,10 @@ import {
     });
   }
 
-  function handleMessage(message: { type?: string; config?: Settings }, sendResponse: (response?: unknown) => void) {
+  function handleMessage(
+    message: { type?: string; config?: Settings },
+    sendResponse: (response?: unknown) => void,
+  ) {
     if (message.type === 'RCR_FORCE_UNLOCK') {
       cleanDOMTree();
       window.dispatchEvent(new CustomEvent('__rcr_force_unlock__'));
@@ -225,7 +248,10 @@ import {
       return true;
     });
     chrome.storage.onChanged.addListener((changes, areaName) => {
-      if (areaName === 'local' && (changes.rcr_settings || changes.shieldEnabled)) {
+      if (
+        areaName === 'local' &&
+        (changes.rcr_settings || changes.shieldEnabled)
+      ) {
         loadSettings();
       }
     });

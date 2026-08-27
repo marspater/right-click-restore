@@ -1,24 +1,6 @@
+import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
+
 (() => {
-  interface Settings {
-    enabled: boolean;
-    restoreRightClick: boolean;
-    restoreSelection: boolean;
-    antiShield: boolean;
-    absoluteForce: boolean;
-    bypassModifierKey: boolean;
-    disabledDomains: string[];
-  }
-
-  const DEFAULT_SETTINGS: Settings = {
-    enabled: true,
-    restoreRightClick: true,
-    restoreSelection: true,
-    antiShield: true,
-    absoluteForce: true,
-    bypassModifierKey: true,
-    disabledDomains: [],
-  };
-
   let activeConfig: Settings = { ...DEFAULT_SETTINGS };
 
   // Read initial configuration directly from the injecting script's dataset.
@@ -41,8 +23,6 @@
   } catch (_e) {}
 
   // Accept dynamic updates on a hardcoded un-authenticated event.
-  // (We accept that a hostile page can spoof this to disable the extension *on itself*,
-  // but they can no longer intercept a secure token or steal configuration logic).
   window.addEventListener('__rcr_update_config', (e: Event) => {
     try {
       const customEvent = e as CustomEvent<Settings>;

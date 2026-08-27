@@ -22,7 +22,6 @@ enum ExtensionState: Equatable {
     case checking
     case enabled
     case disabled
-    case unavailable(String)
 }
 
 // MARK: - SwiftUI Onboarding View (Apple HIG Compliant)
@@ -149,11 +148,9 @@ struct ContentView: View {
         case .enabled:
             return .green
         case .disabled:
-            return .orange
+            return .blue
         case .checking:
             return .gray
-        case .unavailable:
-            return .red
         }
     }
 
@@ -162,11 +159,9 @@ struct ContentView: View {
         case .enabled:
             return "Extension is Active in Safari"
         case .disabled:
-            return "Extension Not Enabled"
+            return "Ready to Enable in Safari"
         case .checking:
             return "Checking Safari Status…"
-        case .unavailable:
-            return "Extension Unavailable"
         }
     }
 
@@ -175,11 +170,9 @@ struct ContentView: View {
         case .enabled:
             return "Protection is active on all web pages."
         case .disabled:
-            return "Turn on in Safari > Settings > Extensions."
+            return "Click below to open Safari Settings and check the box."
         case .checking:
-            return "Querying macOS Extension Manager…"
-        case .unavailable(let reason):
-            return reason
+            return "Querying Safari extension status…"
         }
     }
 
@@ -187,13 +180,11 @@ struct ContentView: View {
         guard !isChecking else { return }
         isChecking = true
 
-        SFSafariExtensionManager.getStateOfSafariExtension(withIdentifier: extensionBundleIdentifier) { safariState, error in
+        SFSafariExtensionManager.getStateOfSafariExtension(withIdentifier: extensionBundleIdentifier) { safariState, _ in
             DispatchQueue.main.async {
-                isChecking = false
-                if let error = error {
-                    self.state = .unavailable(error.localizedDescription)
-                } else if let safariState = safariState {
-                    self.state = safariState.isEnabled ? .enabled : .disabled
+                self.isChecking = false
+                if let safariState = safariState, safariState.isEnabled {
+                    self.state = .enabled
                 } else {
                     self.state = .disabled
                 }

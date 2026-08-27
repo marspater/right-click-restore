@@ -1,102 +1,107 @@
-# Right Click & Selection Restorer for Safari 🛡️🖱️
+# RightClickRestore for Safari 🛡️
 
-A powerful native Safari extension for macOS and iOS that restores right-click context menus, text selection, copy/paste, and dragging on websites that attempt to disable or block them.
+A native Safari Web Extension for macOS and iOS that restores context menus, text selection, copy, and drag behavior on pages that deliberately disable them.
 
----
+## What it does
 
-## ✨ Features
+- Restores right-click/context menus blocked by inline handlers and JavaScript event cancellation.
+- Restores text selection, copy, cut, and drag operations where safe.
+- Handles transparent media overlays without continuously rewriting the DOM.
+- Keeps rich editors and controls such as inputs, buttons, ProseMirror, Monaco, and video players usable.
+- Provides global and per-domain controls.
+- Includes a manual **Force Unlock** action for pages that need an extra kick.
+- Uses a bounded DOM observer to avoid unbounded mutation queues and long-lived timer buildup.
 
-- **🔓 Restore Right Click**: Defeats inline `oncontextmenu="return false;"`, event-listener based `preventDefault()`, and script blocks.
-- **📝 Text Selection & Copy**: Re-enables text highlighting, selection, and keyboard copying (`⌘C` / `Ctrl+C`) by overriding `user-select: none !important;`, `onselectstart`, and `oncopy` blockers.
-- **🛡️ Anti-Shield Layer**: Automatically identifies and neutralizes transparent overlay `<div>` blockers placed over web content.
-- **⚡ Absolute Force Mode**: Overrides DOM prototypes (`EventTarget.prototype.addEventListener`, `Event.prototype.preventDefault`, `Window/Document/HTMLElement` property descriptors) so aggressive scripts cannot hijack context menus.
-- **⌨️ Instant Hardware Bypass**: Hold <kbd>Shift</kbd> or <kbd>Option</kbd> while right-clicking anywhere to immediately bypass page scripts and summon the native menu.
-- **🌐 Per-Site Controls & Whitelist**: Toggle protection globally or disable it for specific web apps (such as Figma, Canva, or Google Docs).
-- **🍎 Apple Human Interface Design**: Clean macOS Cupertino popup interface with smooth iOS switches and Dark Mode support.
+## macOS installation
 
----
+### Normal distribution
 
-## 🚀 Quick Start & Enabling in Safari
+For a public release, distribute the signed and notarized `RightClickRestore.app` as a ZIP or through the Mac App Store. Safari requires a containing macOS app for a Safari Web Extension, and Apple recommends signing the extension and containing app for distribution.
 
-### Step 1: Enable Developer Features in Safari
-1. Open **Safari**.
-2. Open Safari Settings: press <kbd>⌘</kbd> + <kbd>,</kbd> (or go to **Safari** → **Settings...** in the menu bar).
-3. Select the **Advanced** tab.
-4. Check **"Show features for web developers"** (or *"Show Develop menu in menu bar"* in older macOS).
+1. Open the distributed `RightClickRestore.app`.
+2. Safari opens the extension preferences when requested by the app.
+3. Enable **RightClickRestore** in Safari → Settings → Extensions.
+4. Grant the extension website access when Safari asks for it.
+5. Open the extension from Safari's toolbar to configure global or per-site behavior.
 
-### Step 2: Allow Unsigned Extensions
-1. In the macOS top menu bar, click on **Develop**.
-2. Check **"Allow Unsigned Extensions"** (Safari may prompt for your Mac password/Touch ID to enable developer mode).
+### Local development
 
-### Step 3: Launch the App & Turn on Extension
-1. Open the companion app in Terminal:
-   ```bash
-   open build/RightClickRestore.app
-   ```
-   *(Or click "Open in Safari Extensions Preferences..." in the app window).*
-2. In Safari, go to **Settings** → **Extensions**.
-3. Check the box next to **Right Click & Selection Restorer**.
-4. Set permissions to **"Always Allow on Every Website"** so the extension can restore context menus on all pages.
-
----
-
-## 🧪 Testing the Extension
-
-We have included a comprehensive interactive test page: [`test_page.html`](file:///Users/marspater/Documents/antigravity/wise-carson/test_page.html).
-
-To test:
-1. Open `test_page.html` in Safari:
-   ```bash
-   open -a Safari test_page.html
-   ```
-2. Try right-clicking and selecting text across all 6 test scenarios:
-   - **Test 1**: Inline `oncontextmenu="return false;"`
-   - **Test 2**: `addEventListener('contextmenu', e => e.preventDefault())`
-   - **Test 3**: Capture-phase event cancellation
-   - **Test 4**: CSS `user-select: none !important`
-   - **Test 5**: `selectstart` & `copy` event blockers
-   - **Test 6**: Transparent overlay click shields
-
----
-
-## 🛠️ Project Structure
-
-```
-wise-carson/
-├── build/                                    # Compiled macOS Application (.app)
-│   └── RightClickRestore.app
-├── extension/                                # Safari Web Extension source files
-│   ├── manifest.json                         # Manifest V3 configuration
-│   ├── content.js                            # Content script (DOM sanitization & overlay removal)
-│   ├── page-script.js                        # MAIN-world script (prototype & event neutralization)
-│   ├── content.css                           # User-select & touch-callout override styles
-│   ├── background.js                         # Service worker for settings & badge updates
-│   ├── popup/                                # Extension popup UI
-│   │   ├── popup.html
-│   │   ├── popup.css
-│   │   └── popup.js
-│   └── icons/                                # App & toolbar icons (16px to 512px)
-├── SafariExtension/                          # Xcode wrapper project
-│   └── RightClickRestore/
-│       ├── RightClickRestore.xcodeproj       # Universal Xcode project (macOS + iOS)
-│       ├── macOS (App)/
-│       └── Shared (Extension)/
-├── build.sh                                  # Build script for macOS
-└── test_page.html                            # Interactive blocker test suite
-```
-
----
-
-## 🔨 Rebuilding the Project
-
-If you make modifications to the extension scripts in `extension/`, recompile the app with:
+Unsigned macOS Safari Web Extensions are supported for development/testing only.
 
 ```bash
-./build.sh
+ALLOW_UNSIGNED=1 ./build.sh
+open build/RightClickRestore.app
 ```
 
-Or open the project in Xcode:
+Then enable Safari's unsigned-extension development mode and turn on RightClickRestore in Safari → Settings → Extensions.
+
+### Developer ID release
+
+Set your Apple Developer Team ID and run:
+
+```bash
+DEVELOPMENT_TEAM=YOUR_TEAM_ID bash scripts/release-macos.sh
+```
+
+The script builds the web-extension resources first, creates a Release app, verifies the signed bundle, and produces `build/RightClickRestore-macOS.zip`.
+
+Before distributing it, notarize and staple the app using Apple's `notarytool`/`stapler` workflow.
+
+## Development
+
+Install dependencies and run the checks:
+
+```bash
+bun install
+bun run check
+bun test src/**/*.test.ts
+```
+
+Build extension resources:
+
+```bash
+bun run build
+```
+
+Build the complete macOS app:
+
+```bash
+ALLOW_UNSIGNED=1 ./build.sh
+```
+
+Open the Xcode project when working on the native wrapper:
 
 ```bash
 open SafariExtension/RightClickRestore/RightClickRestore.xcodeproj
 ```
+
+## Test page
+
+`test_page.html` contains blocker scenarios for inline `contextmenu`, event listeners, capture-phase cancellation, CSS selection blocking, copy/selection handlers, and transparent overlays.
+
+Open it with:
+
+```bash
+open -a Safari test_page.html
+```
+
+## Architecture
+
+```text
+src/
+├── background/       Safari MV3 service worker
+├── content/          Isolated-world DOM cleanup and settings bridge
+├── page-script/      Main-world event/prototype restoration
+├── popup/            Svelte 5 settings UI
+├── shared/           Shared settings/domain logic
+└── manifest.json     Safari Web Extension manifest
+
+SafariExtension/
+└── RightClickRestore/  Native macOS/iOS wrapper and extension targets
+```
+
+The build pipeline compiles the web extension into the Safari extension's `Resources` directory before Xcode embeds it. This prevents the common failure mode where Xcode packages stale JavaScript from a previous build.
+
+## Notes
+
+RightClickRestore intentionally avoids trying to defeat every possible web application abstraction. Sites using isolated browsing contexts, browser-protected UI, cross-origin frames without extension access, or custom rendering can still impose limits that an ordinary Safari Web Extension cannot bypass.

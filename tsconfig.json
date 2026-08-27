@@ -10,5 +10,6 @@
     "isolatedModules": true,
     "types": ["chrome", "svelte"]
   },
-  "include": ["src/**/*.ts", "src/**/*.svelte", "scripts/**/*.ts"]
+  "include": ["src/**/*.ts", "src/**/*.svelte", "scripts/**/*.ts"],
+  "exclude": ["src/**/*.test.ts"]
 }

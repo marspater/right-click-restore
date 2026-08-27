@@ -14,5 +14,5 @@ jobs:
           bun-version: latest
       - run: bun install --frozen-lockfile
       - run: bun run check
-      - run: bun test src/**/*.test.ts
+      - run: bun test
       - run: bun run build

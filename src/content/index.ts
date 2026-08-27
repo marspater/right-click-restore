@@ -1,7 +1,7 @@
 import {
   DEFAULT_SETTINGS,
-  effectiveSettings,
   type Settings,
+  effectiveSettings,
 } from '../shared/settings';
 
 (() => {

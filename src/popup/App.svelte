@@ -1,9 +1,9 @@
 <script lang="ts">
 import {
   DEFAULT_SETTINGS,
+  type Settings,
   isDomainDisabled,
   normalizeHostname,
-  type Settings,
 } from '../shared/settings';
 
 let settings = $state<Settings>({ ...DEFAULT_SETTINGS });

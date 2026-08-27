@@ -7,7 +7,7 @@ cd "$ROOT_DIR"
 APP_NAME="RightClickRestore"
 SCHEME="RightClickRestore (macOS)"
 BUILD_DIR="$ROOT_DIR/build"
-CONFIGURATION="Release"
+CONFIGURATION="${CONFIGURATION:-Release}"
 
 command -v xcodebuild >/dev/null || { echo "xcodebuild is required." >&2; exit 1; }
 command -v bun >/dev/null || { echo "Bun is required to build the web extension." >&2; exit 1; }
@@ -15,7 +15,15 @@ command -v bun >/dev/null || { echo "Bun is required to build the web extension.
 if [[ "${ALLOW_UNSIGNED:-0}" == "1" ]]; then
   SIGNING_ARGS=(CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO)
 else
-  SIGNING_ARGS=()
+  : "${DEVELOPMENT_TEAM:?Set DEVELOPMENT_TEAM for a signed build, or ALLOW_UNSIGNED=1 for development}"
+  CODE_SIGN_IDENTITY="${CODE_SIGN_IDENTITY:-Developer ID Application}"
+  SIGNING_ARGS=(
+    DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM"
+    CODE_SIGN_STYLE=Manual
+    CODE_SIGN_IDENTITY="$CODE_SIGN_IDENTITY"
+    CODE_SIGNING_REQUIRED=YES
+    CODE_SIGNING_ALLOWED=YES
+  )
 fi
 
 rm -rf "$BUILD_DIR"
@@ -48,8 +56,7 @@ if [[ ! -d "$APPEX_PATH" ]]; then
 fi
 
 if [[ "${ALLOW_UNSIGNED:-0}" == "1" ]]; then
-  echo "⚠️ Unsigned development build requested. This is not a distribution build."
-  echo "   Enable Safari's unsigned extension development mode to test it."
+  echo "⚠️ Unsigned development build requested. Enable Safari's unsigned extension development mode to test it."
 else
   echo "🔏 Validating signed app bundle..."
   codesign --verify --deep --strict --verbose=2 "$APP_PATH"
@@ -59,8 +66,3 @@ fi
 echo ""
 echo "✅ Build succeeded"
 echo "📦 App: $APP_PATH"
-if [[ "${ALLOW_UNSIGNED:-0}" == "1" ]]; then
-  echo "🧪 Install for local development with: open \"$APP_PATH\""
-else
-  echo "🚀 This build is intended for signed/notarized distribution."
-fi

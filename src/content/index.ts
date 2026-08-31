@@ -4,8 +4,48 @@ import {
   effectiveSettings,
 } from '../shared/settings';
 
+let currentSettings: Settings = { ...DEFAULT_SETTINGS };
+
+export function applySettings(settings: Settings) {
+  const hostname =
+    typeof window !== 'undefined' && window.location
+      ? window.location.hostname
+      : '';
+  currentSettings = effectiveSettings(settings, hostname);
+
+  const root =
+    typeof document !== 'undefined' ? document.documentElement : null;
+  if (root) {
+    root.dataset.rcrEnabled = currentSettings.enabled ? 'true' : 'false';
+    root.dataset.rcrRightClick = currentSettings.restoreRightClick
+      ? 'true'
+      : 'false';
+    root.dataset.rcrSelection = currentSettings.restoreSelection
+      ? 'true'
+      : 'false';
+    root.dataset.rcrAntiShield = currentSettings.antiShield ? 'true' : 'false';
+    root.dataset.rcrForceMode = currentSettings.absoluteForce
+      ? 'true'
+      : 'false';
+    root.dataset.rcrModifierBypass = currentSettings.bypassModifierKey
+      ? 'true'
+      : 'false';
+  }
+
+  try {
+    if (typeof window !== 'undefined' && window.dispatchEvent) {
+      window.dispatchEvent(
+        new CustomEvent('__rcr_update_config', { detail: currentSettings }),
+      );
+    }
+  } catch (_e) {}
+}
+
+export function getCurrentSettings(): Settings {
+  return currentSettings;
+}
+
 (() => {
-  let currentSettings: Settings = { ...DEFAULT_SETTINGS };
   let mainWorldInjected = false;
   let observer: MutationObserver | null = null;
   let unlockToastTimer: ReturnType<typeof setTimeout> | null = null;
@@ -26,46 +66,19 @@ import {
   ];
   const SCRUB_SELECTOR = SCRUB_ATTRS.map((attr) => `[${attr}]`).join(',');
 
-  function applySettings(settings: Settings) {
-    currentSettings = effectiveSettings(settings, window.location.hostname);
-
-    const root = document.documentElement;
-    if (root) {
-      root.dataset.rcrEnabled = currentSettings.enabled ? 'true' : 'false';
-      root.dataset.rcrRightClick = currentSettings.restoreRightClick
-        ? 'true'
-        : 'false';
-      root.dataset.rcrSelection = currentSettings.restoreSelection
-        ? 'true'
-        : 'false';
-      root.dataset.rcrAntiShield = currentSettings.antiShield
-        ? 'true'
-        : 'false';
-      root.dataset.rcrForceMode = currentSettings.absoluteForce
-        ? 'true'
-        : 'false';
-      root.dataset.rcrModifierBypass = currentSettings.bypassModifierKey
-        ? 'true'
-        : 'false';
-    }
-
-    try {
-      window.dispatchEvent(
-        new CustomEvent('__rcr_update_config', { detail: currentSettings }),
-      );
-    } catch (_e) {}
-  }
-
   function injectMainWorldScript(initialConfig: Settings) {
     if (mainWorldInjected) return;
     mainWorldInjected = true;
 
     const inject = () => {
       try {
+        if (typeof document === 'undefined' || !document) return;
         if (document.querySelector('script[data-rcr-page-script]')) return;
         const script = document.createElement('script');
         script.dataset.rcrPageScript = 'true';
-        script.src = chrome.runtime.getURL('page-script.js');
+        if (typeof chrome !== 'undefined' && chrome.runtime?.getURL) {
+          script.src = chrome.runtime.getURL('page-script.js');
+        }
         script.dataset.initialConfig = JSON.stringify(initialConfig);
         (
           document.head ||
@@ -76,9 +89,12 @@ import {
     };
 
     try {
-      if (document.head || document.documentElement || document.body) {
+      if (
+        typeof document !== 'undefined' &&
+        (document.head || document.documentElement || document.body)
+      ) {
         inject();
-      } else {
+      } else if (typeof document !== 'undefined') {
         document.addEventListener('DOMContentLoaded', inject, { once: true });
       }
     } catch (_error) {
@@ -91,19 +107,29 @@ import {
     configRequestInFlight = true;
 
     try {
-      chrome.storage.local.get(['rcr_settings', 'shieldEnabled'], (result) => {
+      if (typeof chrome !== 'undefined' && chrome.storage?.local?.get) {
+        chrome.storage.local.get(
+          ['rcr_settings', 'shieldEnabled'],
+          (result) => {
+            configRequestInFlight = false;
+            const stored = result?.rcr_settings as
+              | Partial<Settings>
+              | undefined;
+            const settings: Settings = {
+              ...DEFAULT_SETTINGS,
+              ...(stored ?? {}),
+            };
+            if (typeof result?.shieldEnabled === 'boolean') {
+              settings.enabled = result.shieldEnabled;
+            }
+            applySettings(settings);
+            injectMainWorldScript(currentSettings);
+          },
+        );
+      } else {
         configRequestInFlight = false;
-        const stored = result.rcr_settings as Partial<Settings> | undefined;
-        const settings: Settings = {
-          ...DEFAULT_SETTINGS,
-          ...(stored ?? {}),
-        };
-        if (typeof result.shieldEnabled === 'boolean') {
-          settings.enabled = result.shieldEnabled;
-        }
-        applySettings(settings);
-        injectMainWorldScript(currentSettings);
-      });
+        applySettings(DEFAULT_SETTINGS);
+      }
     } catch (_error) {
       configRequestInFlight = false;
       applySettings(DEFAULT_SETTINGS);
@@ -112,8 +138,8 @@ import {
   }
 
   function showUnlockToast() {
+    if (typeof document === 'undefined' || !document.documentElement) return;
     const root = document.documentElement;
-    if (!root) return;
 
     if (unlockToastTimer) clearTimeout(unlockToastTimer);
     if (unlockToastRemoveTimer) clearTimeout(unlockToastRemoveTimer);
@@ -160,7 +186,7 @@ import {
   }
 
   function cleanNode(node: Element) {
-    if (!(node instanceof Element)) return;
+    if (typeof Element === 'undefined' || !(node instanceof Element)) return;
     try {
       if (
         node.matches(INTERACTIVE_ELEMENTS) ||
@@ -186,7 +212,7 @@ import {
           } catch (_e) {}
         }
       }
-      if (node instanceof HTMLElement) {
+      if (typeof HTMLElement !== 'undefined' && node instanceof HTMLElement) {
         try {
           if (node.style.userSelect === 'none') node.style.userSelect = 'auto';
           if (node.style.webkitUserSelect === 'none') {
@@ -198,7 +224,7 @@ import {
   }
 
   function cleanAddedNode(node: Node) {
-    if (!(node instanceof Element)) return;
+    if (typeof Element === 'undefined' || !(node instanceof Element)) return;
     cleanNode(node);
     try {
       for (const child of node.querySelectorAll(SCRUB_SELECTOR)) {
@@ -208,7 +234,8 @@ import {
   }
 
   function cleanDOMTree(root: ParentNode = document) {
-    if (root instanceof Element) cleanNode(root);
+    if (typeof Element !== 'undefined' && root instanceof Element)
+      cleanNode(root);
     try {
       for (const node of root.querySelectorAll(SCRUB_SELECTOR)) {
         cleanNode(node);
@@ -217,7 +244,13 @@ import {
   }
 
   function startObserver() {
-    if (observer || !document.documentElement) return;
+    if (
+      observer ||
+      typeof document === 'undefined' ||
+      !document.documentElement
+    )
+      return;
+    if (typeof MutationObserver === 'undefined') return;
 
     observer = new MutationObserver((mutations) => {
       if (!currentSettings.enabled) return;
@@ -234,6 +267,7 @@ import {
           }
         } else if (
           mutation.type === 'attributes' &&
+          typeof Element !== 'undefined' &&
           mutation.target instanceof Element
         ) {
           cleanNode(mutation.target);
@@ -259,7 +293,9 @@ import {
     if (message.type === 'RCR_FORCE_UNLOCK') {
       cleanDOMTree();
       try {
-        window.dispatchEvent(new CustomEvent('__rcr_force_unlock__'));
+        if (typeof window !== 'undefined' && window.dispatchEvent) {
+          window.dispatchEvent(new CustomEvent('__rcr_force_unlock__'));
+        }
       } catch (_e) {}
       showUnlockToast();
       sendResponse({ status: 'unlocked' });
@@ -276,26 +312,36 @@ import {
   }
 
   try {
-    chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-      handleMessage(message, sendResponse);
-      return true;
-    });
-    chrome.storage.onChanged.addListener((changes, areaName) => {
-      if (
-        areaName === 'local' &&
-        (changes.rcr_settings || changes.shieldEnabled)
-      ) {
-        loadSettings();
-      }
-    });
+    if (
+      typeof chrome !== 'undefined' &&
+      chrome.runtime?.onMessage?.addListener
+    ) {
+      chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+        handleMessage(message, sendResponse);
+        return true;
+      });
+    }
+    if (
+      typeof chrome !== 'undefined' &&
+      chrome.storage?.onChanged?.addListener
+    ) {
+      chrome.storage.onChanged.addListener((changes, areaName) => {
+        if (
+          areaName === 'local' &&
+          (changes.rcr_settings || changes.shieldEnabled)
+        ) {
+          loadSettings();
+        }
+      });
+    }
   } catch (_error) {
     // Extension APIs may be unavailable during Safari teardown.
   }
 
-  if (document.documentElement) {
+  if (typeof document !== 'undefined' && document.documentElement) {
     cleanDOMTree();
     startObserver();
-  } else {
+  } else if (typeof document !== 'undefined') {
     document.addEventListener(
       'DOMContentLoaded',
       () => {
@@ -306,5 +352,7 @@ import {
     );
   }
 
-  loadSettings();
+  if (typeof chrome !== 'undefined' && chrome.storage) {
+    loadSettings();
+  }
 })();

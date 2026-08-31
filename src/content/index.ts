@@ -5,8 +5,14 @@ import {
 } from '../shared/settings';
 
 (() => {
-  const updateEventName = typeof crypto !== 'undefined' && crypto.randomUUID ? `__rcr_update_${crypto.randomUUID()}` : `__rcr_update_${Math.random().toString(36).substring(2)}`;
-  const unlockEventName = typeof crypto !== 'undefined' && crypto.randomUUID ? `__rcr_unlock_${crypto.randomUUID()}` : `__rcr_unlock_${Math.random().toString(36).substring(2)}`;
+  const updateEventName =
+    typeof crypto !== 'undefined' && crypto.randomUUID
+      ? `__rcr_update_${crypto.randomUUID()}`
+      : `__rcr_update_${Math.random().toString(36).substring(2)}`;
+  const unlockEventName =
+    typeof crypto !== 'undefined' && crypto.randomUUID
+      ? `__rcr_unlock_${crypto.randomUUID()}`
+      : `__rcr_unlock_${Math.random().toString(36).substring(2)}`;
 
   let currentSettings: Settings = { ...DEFAULT_SETTINGS };
   let mainWorldInjected = false;

@@ -123,26 +123,24 @@ import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
     'beforecopy',
   ]);
 
-  Event.prototype.preventDefault = function (this: Event): void {
-    if (isShieldActive()) {
-      if (isModifierBypassActive() && isModifierPressed(this)) {
-        return;
-      }
-      if (
-        this.type === 'contextmenu' &&
-        isRightClickActive() &&
-        !isInteractiveEvent(this)
-      ) {
-        return;
-      }
-      if (
-        isSelectionActive() &&
-        SELECTION_EVENTS.has(this.type) &&
-        !isInteractiveEvent(this)
-      ) {
-        return;
-      }
+  function shouldBlockEvent(event: Event): boolean {
+    if (!isShieldActive() || isInteractiveEvent(event)) {
+      return false;
     }
+    if (isModifierBypassActive() && isModifierPressed(event)) {
+      return true;
+    }
+    if (event.type === 'contextmenu' && isRightClickActive()) {
+      return true;
+    }
+    if (SELECTION_EVENTS.has(event.type) && isSelectionActive()) {
+      return true;
+    }
+    return false;
+  }
+
+  Event.prototype.preventDefault = function (this: Event): void {
+    if (shouldBlockEvent(this)) return;
     origPD.apply(this);
   };
 
@@ -153,24 +151,12 @@ import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
     );
     Object.defineProperty(Event.prototype, 'returnValue', {
       get() {
-        if (isShieldActive() && !isInteractiveEvent(this)) {
-          if (isModifierBypassActive() && isModifierPressed(this)) return true;
-          if (this.type === 'contextmenu' && isRightClickActive()) return true;
-          if (SELECTION_EVENTS.has(this.type) && isSelectionActive()) {
-            return true;
-          }
-        }
+        if (shouldBlockEvent(this)) return true;
         if (origDescriptor?.get) return origDescriptor.get.call(this);
         return true;
       },
       set(val) {
-        if (isShieldActive() && !isInteractiveEvent(this)) {
-          if (isModifierBypassActive() && isModifierPressed(this)) return;
-          if (this.type === 'contextmenu' && isRightClickActive()) return;
-          if (SELECTION_EVENTS.has(this.type) && isSelectionActive()) {
-            return;
-          }
-        }
+        if (shouldBlockEvent(this)) return;
         if (origDescriptor?.set) origDescriptor.set.call(this, val);
       },
       configurable: true,
@@ -179,20 +165,12 @@ import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
   } catch (_e) {}
 
   Event.prototype.stopPropagation = function (this: Event): void {
-    if (isShieldActive() && !isInteractiveEvent(this)) {
-      if (isModifierBypassActive() && isModifierPressed(this)) return;
-      if (this.type === 'contextmenu' && isRightClickActive()) return;
-      if (SELECTION_EVENTS.has(this.type) && isSelectionActive()) return;
-    }
+    if (shouldBlockEvent(this)) return;
     origSP.apply(this);
   };
 
   Event.prototype.stopImmediatePropagation = function (this: Event): void {
-    if (isShieldActive() && !isInteractiveEvent(this)) {
-      if (isModifierBypassActive() && isModifierPressed(this)) return;
-      if (this.type === 'contextmenu' && isRightClickActive()) return;
-      if (SELECTION_EVENTS.has(this.type) && isSelectionActive()) return;
-    }
+    if (shouldBlockEvent(this)) return;
     origSIP.apply(this);
   };
 

@@ -5,6 +5,9 @@ import {
 } from '../shared/settings';
 
 (() => {
+  const updateEventName = typeof crypto !== 'undefined' && crypto.randomUUID ? `__rcr_update_${crypto.randomUUID()}` : `__rcr_update_${Math.random().toString(36).substring(2)}`;
+  const unlockEventName = typeof crypto !== 'undefined' && crypto.randomUUID ? `__rcr_unlock_${crypto.randomUUID()}` : `__rcr_unlock_${Math.random().toString(36).substring(2)}`;
+
   let currentSettings: Settings = { ...DEFAULT_SETTINGS };
   let mainWorldInjected = false;
   let observer: MutationObserver | null = null;
@@ -51,7 +54,7 @@ import {
 
     try {
       window.dispatchEvent(
-        new CustomEvent('__rcr_update_config', { detail: currentSettings }),
+        new CustomEvent(updateEventName, { detail: currentSettings }),
       );
     } catch (_e) {}
   }
@@ -67,6 +70,8 @@ import {
         script.dataset.rcrPageScript = 'true';
         script.src = chrome.runtime.getURL('page-script.js');
         script.dataset.initialConfig = JSON.stringify(initialConfig);
+        script.dataset.updateEvent = updateEventName;
+        script.dataset.unlockEvent = unlockEventName;
         (
           document.head ||
           document.documentElement ||
@@ -259,7 +264,7 @@ import {
     if (message.type === 'RCR_FORCE_UNLOCK') {
       cleanDOMTree();
       try {
-        window.dispatchEvent(new CustomEvent('__rcr_force_unlock__'));
+        window.dispatchEvent(new CustomEvent(unlockEventName));
       } catch (_e) {}
       showUnlockToast();
       sendResponse({ status: 'unlocked' });

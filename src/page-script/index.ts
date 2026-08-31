@@ -3,6 +3,9 @@ import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
 (() => {
   let activeConfig: Settings = { ...DEFAULT_SETTINGS };
 
+  let updateEvent: string | undefined;
+  let unlockEvent: string | undefined;
+
   // Read initial configuration directly from the injecting script's dataset.
   // Because this script executes synchronously when injected by content.js,
   // the configuration is read before any hostile page script can mutate it.
@@ -16,21 +19,28 @@ import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
         ...DEFAULT_SETTINGS,
         ...JSON.parse(scriptEl.dataset.initialConfig),
       };
-      // Immediately scrub the sensitive config data from the DOM
+      updateEvent = scriptEl.dataset.updateEvent;
+      unlockEvent = scriptEl.dataset.unlockEvent;
+
+      // Immediately scrub sensitive config & event tokens from DOM
       scriptEl.removeAttribute('data-initial-config');
+      scriptEl.removeAttribute('data-update-event');
+      scriptEl.removeAttribute('data-unlock-event');
       scriptEl.remove();
     }
   } catch (_e) {}
 
-  // Accept dynamic updates on a hardcoded un-authenticated event.
-  window.addEventListener('__rcr_update_config', (e: Event) => {
-    try {
-      const customEvent = e as CustomEvent<Settings>;
-      if (customEvent.detail && typeof customEvent.detail === 'object') {
-        activeConfig = { ...DEFAULT_SETTINGS, ...customEvent.detail };
-      }
-    } catch (_err) {}
-  });
+  // Accept dynamic updates on secret isolated event channel.
+  if (updateEvent) {
+    window.addEventListener(updateEvent, (e: Event) => {
+      try {
+        const customEvent = e as CustomEvent<Settings>;
+        if (customEvent.detail && typeof customEvent.detail === 'object') {
+          activeConfig = { ...DEFAULT_SETTINGS, ...customEvent.detail };
+        }
+      } catch (_err) {}
+    });
+  }
 
   const origPD = Event.prototype.preventDefault;
   const origSP = Event.prototype.stopPropagation;
@@ -284,19 +294,21 @@ import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
 
   document.addEventListener('contextmenu', (e) => unmaskMedia(e), false);
 
-  window.addEventListener('__rcr_force_unlock__', () => {
-    try {
-      window.oncontextmenu = null;
-      document.oncontextmenu = null;
-      if (document.body) document.body.oncontextmenu = null;
-      window.onselectstart = null;
-      document.onselectstart = null;
-      if (document.body) document.body.onselectstart = null;
-      window.ondragstart = null;
-      document.ondragstart = null;
-      window.oncopy = null;
-      document.oncopy = null;
-      if (document.body) document.body.oncopy = null;
-    } catch (_e) {}
-  });
+  if (unlockEvent) {
+    window.addEventListener(unlockEvent, () => {
+      try {
+        window.oncontextmenu = null;
+        document.oncontextmenu = null;
+        if (document.body) document.body.oncontextmenu = null;
+        window.onselectstart = null;
+        document.onselectstart = null;
+        if (document.body) document.body.onselectstart = null;
+        window.ondragstart = null;
+        document.ondragstart = null;
+        window.oncopy = null;
+        document.oncopy = null;
+        if (document.body) document.body.oncopy = null;
+      } catch (_e) {}
+    });
+  }
 })();

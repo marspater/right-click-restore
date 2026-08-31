@@ -34,9 +34,34 @@ import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
   if (updateEvent) {
     window.addEventListener(updateEvent, (e: Event) => {
       try {
-        const customEvent = e as CustomEvent<Settings>;
-        if (customEvent.detail && typeof customEvent.detail === 'object') {
-          activeConfig = { ...DEFAULT_SETTINGS, ...customEvent.detail };
+        const customEvent = e as CustomEvent<Partial<Settings>>;
+        const detail = customEvent.detail;
+        if (detail && typeof detail === 'object' && !Array.isArray(detail)) {
+          const nextConfig: Settings = { ...DEFAULT_SETTINGS };
+          if (typeof detail.enabled === 'boolean') {
+            nextConfig.enabled = detail.enabled;
+          }
+          if (typeof detail.restoreRightClick === 'boolean') {
+            nextConfig.restoreRightClick = detail.restoreRightClick;
+          }
+          if (typeof detail.restoreSelection === 'boolean') {
+            nextConfig.restoreSelection = detail.restoreSelection;
+          }
+          if (typeof detail.antiShield === 'boolean') {
+            nextConfig.antiShield = detail.antiShield;
+          }
+          if (typeof detail.absoluteForce === 'boolean') {
+            nextConfig.absoluteForce = detail.absoluteForce;
+          }
+          if (typeof detail.bypassModifierKey === 'boolean') {
+            nextConfig.bypassModifierKey = detail.bypassModifierKey;
+          }
+          if (Array.isArray(detail.disabledDomains)) {
+            nextConfig.disabledDomains = detail.disabledDomains.filter(
+              (d): d is string => typeof d === 'string',
+            );
+          }
+          activeConfig = nextConfig;
         }
       } catch (_err) {}
     });

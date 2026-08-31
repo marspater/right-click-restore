@@ -2,6 +2,7 @@ import {
   DEFAULT_SETTINGS,
   type Settings,
   effectiveSettings,
+  validateSettings,
 } from '../shared/settings';
 import {
   SCRUB_ATTRS,
@@ -27,12 +28,58 @@ import {
   let unlockToastRemoveTimer: ReturnType<typeof setTimeout> | null = null;
   let configRequestInFlight = false;
 
-  function cleanNode(node: Element) {
-    cleanNodeBase(node, currentSettings);
+  // Diagnostics counters (privacy-safe: strictly integer counters, no URLs/content)
+  const diagnostics = {
+    pageScriptInjected: false,
+    observerBatchesProcessed: 0,
+    elementsCleaned: 0,
+    unlockTriggered: 0,
+    spaRouteChanges: 0,
+  };
+
+  const globalWin = (typeof window !== 'undefined'
+    ? window
+    : {}) as unknown as Record<string, unknown>;
+  globalWin.__RCR_DIAGNOSTICS__ = diagnostics;
+
+  // Coalesced mutation processing queue
+  const pendingNodes = new Set<Node>();
+  let batchScheduled = false;
+  const BATCH_SIZE = 50;
+
+  function processPendingMutations() {
+    batchScheduled = false;
+    if (!currentSettings.enabled || pendingNodes.size === 0) return;
+
+    let processed = 0;
+    for (const node of pendingNodes) {
+      if (processed >= BATCH_SIZE) break;
+      pendingNodes.delete(node);
+      cleanAddedNodeBase(node, currentSettings);
+      processed++;
+    }
+
+    diagnostics.observerBatchesProcessed++;
+    diagnostics.elementsCleaned += processed;
+
+    // Reschedule remainder if mutations remain in queue
+    if (pendingNodes.size > 0) {
+      scheduleBatch();
+    }
   }
 
-  function cleanAddedNode(node: Node) {
-    cleanAddedNodeBase(node, currentSettings);
+  function scheduleBatch() {
+    if (batchScheduled) return;
+    batchScheduled = true;
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(processPendingMutations);
+    } else {
+      setTimeout(processPendingMutations, 16);
+    }
+  }
+
+  function cleanNode(node: Element) {
+    cleanNodeBase(node, currentSettings);
   }
 
   function cleanDOMTree(root: ParentNode = document) {
@@ -40,7 +87,8 @@ import {
   }
 
   function applySettings(settings: Settings) {
-    currentSettings = effectiveSettings(settings, window.location.hostname);
+    const validated = validateSettings(settings);
+    currentSettings = effectiveSettings(validated, window.location.hostname);
 
     const root = document.documentElement;
     if (root) {
@@ -87,6 +135,7 @@ import {
           document.documentElement ||
           document.body
         )?.appendChild(script);
+        diagnostics.pageScriptInjected = true;
       } catch (_e) {}
     };
 
@@ -108,12 +157,12 @@ import {
     try {
       chrome.storage.local.get(['rcr_settings', 'shieldEnabled'], (result) => {
         configRequestInFlight = false;
-        const stored = result.rcr_settings as Partial<Settings> | undefined;
-        const settings: Settings = {
+        const stored = result?.rcr_settings as Partial<Settings> | undefined;
+        const settings: Settings = validateSettings({
           ...DEFAULT_SETTINGS,
           ...(stored ?? {}),
-        };
-        if (typeof result.shieldEnabled === 'boolean') {
+        });
+        if (typeof result?.shieldEnabled === 'boolean') {
           settings.enabled = result.shieldEnabled;
         }
         applySettings(settings);
@@ -160,23 +209,21 @@ import {
     observer = new MutationObserver((mutations) => {
       if (!currentSettings.enabled) return;
 
-      let processed = 0;
       for (const mutation of mutations) {
-        if (processed >= 100) break;
-
         if (mutation.type === 'childList') {
           for (const node of mutation.addedNodes) {
-            if (processed >= 100) break;
-            cleanAddedNode(node);
-            processed++;
+            pendingNodes.add(node);
           }
         } else if (
           mutation.type === 'attributes' &&
           mutation.target instanceof Element
         ) {
           cleanNode(mutation.target);
-          processed++;
         }
+      }
+
+      if (pendingNodes.size > 0) {
+        scheduleBatch();
       }
     });
 
@@ -190,11 +237,46 @@ import {
     } catch (_e) {}
   }
 
+  // SPA Navigation hooks
+  function handleSpaNavigation() {
+    diagnostics.spaRouteChanges++;
+    applySettings(currentSettings);
+    if (currentSettings.enabled) {
+      cleanDOMTree();
+    }
+  }
+
+  try {
+    window.addEventListener('popstate', handleSpaNavigation, { passive: true });
+    window.addEventListener('hashchange', handleSpaNavigation, {
+      passive: true,
+    });
+
+    const origPushState = history.pushState;
+    if (origPushState) {
+      history.pushState = function (...args) {
+        const res = origPushState.apply(this, args);
+        handleSpaNavigation();
+        return res;
+      };
+    }
+
+    const origReplaceState = history.replaceState;
+    if (origReplaceState) {
+      history.replaceState = function (...args) {
+        const res = origReplaceState.apply(this, args);
+        handleSpaNavigation();
+        return res;
+      };
+    }
+  } catch (_e) {}
+
   function handleMessage(
     message: { type?: string; config?: Settings },
     sendResponse: (response?: unknown) => void,
   ) {
     if (message.type === 'RCR_FORCE_UNLOCK') {
+      diagnostics.unlockTriggered++;
       cleanDOMTree();
       try {
         window.dispatchEvent(new CustomEvent(unlockEventName));

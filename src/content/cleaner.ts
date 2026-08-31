@@ -55,6 +55,13 @@ export function cleanNode(
       } catch (_e) {}
     }
   }
+
+  // Traverse open shadow root if accessible
+  try {
+    if (node.shadowRoot) {
+      cleanDOMTree(node.shadowRoot, settings);
+    }
+  } catch (_e) {}
 }
 
 export function cleanAddedNode(

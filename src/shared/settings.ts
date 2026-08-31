@@ -13,15 +13,18 @@ export const DEFAULT_SETTINGS: Settings = {
   restoreRightClick: true,
   restoreSelection: true,
   antiShield: true,
-  absoluteForce: true,
+  absoluteForce: false, // Default to false for reduced blast radius; opt-in escalation
   bypassModifierKey: true,
   disabledDomains: [],
 };
 
 const hostnameCache = new Map<string, string>();
 const MAX_CACHE_SIZE = 5000;
+const MAX_DOMAINS_COUNT = 500;
+const MAX_HOSTNAME_LENGTH = 253;
 
 export function normalizeHostname(hostname: string): string {
+  if (typeof hostname !== 'string') return '';
   const cached = hostnameCache.get(hostname);
   if (cached !== undefined) {
     return cached;
@@ -30,6 +33,7 @@ export function normalizeHostname(hostname: string): string {
   const normalized = hostname
     .trim()
     .toLowerCase()
+    .slice(0, MAX_HOSTNAME_LENGTH)
     .replace(/^www\./, '')
     .replace(/\.$/, '');
 
@@ -39,6 +43,58 @@ export function normalizeHostname(hostname: string): string {
   hostnameCache.set(hostname, normalized);
 
   return normalized;
+}
+
+export function validateSettings(raw: unknown): Settings {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return { ...DEFAULT_SETTINGS };
+  }
+
+  const obj = raw as Record<string, unknown>;
+
+  const sanitizeBool = (val: unknown, fallback: boolean): boolean => {
+    return typeof val === 'boolean' ? val : fallback;
+  };
+
+  const sanitizeDomains = (val: unknown): string[] => {
+    if (!Array.isArray(val)) return [];
+    const validDomains = new Set<string>();
+    for (let i = 0; i < val.length; i++) {
+      if (validDomains.size >= MAX_DOMAINS_COUNT) break;
+      const item = val[i];
+      if (
+        typeof item === 'string' &&
+        item.length > 0 &&
+        item.length <= MAX_HOSTNAME_LENGTH
+      ) {
+        const norm = normalizeHostname(item);
+        if (norm) validDomains.add(norm);
+      }
+    }
+    return Array.from(validDomains);
+  };
+
+  return {
+    enabled: sanitizeBool(obj.enabled, DEFAULT_SETTINGS.enabled),
+    restoreRightClick: sanitizeBool(
+      obj.restoreRightClick,
+      DEFAULT_SETTINGS.restoreRightClick,
+    ),
+    restoreSelection: sanitizeBool(
+      obj.restoreSelection,
+      DEFAULT_SETTINGS.restoreSelection,
+    ),
+    antiShield: sanitizeBool(obj.antiShield, DEFAULT_SETTINGS.antiShield),
+    absoluteForce: sanitizeBool(
+      obj.absoluteForce,
+      DEFAULT_SETTINGS.absoluteForce,
+    ),
+    bypassModifierKey: sanitizeBool(
+      obj.bypassModifierKey,
+      DEFAULT_SETTINGS.bypassModifierKey,
+    ),
+    disabledDomains: sanitizeDomains(obj.disabledDomains),
+  };
 }
 
 export function isDomainDisabled(
@@ -69,10 +125,11 @@ export function effectiveSettings(
   settings: Settings,
   hostname: string,
 ): Settings {
+  const validated = validateSettings(settings);
   return {
-    ...settings,
+    ...validated,
     enabled:
-      settings.enabled !== false &&
-      !isDomainDisabled(hostname, settings.disabledDomains),
+      validated.enabled !== false &&
+      !isDomainDisabled(hostname, validated.disabledDomains),
   };
 }

@@ -16,3 +16,20 @@ jobs:
       - run: bun run check
       - run: bun test
       - run: bun run build
+
+  macos-build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Build macOS App & Safari Extension
+        run: |
+          ALLOW_UNSIGNED=1 ./build.sh
+      - name: Validate App Bundle & Embedded Extension Structure
+        run: |
+          test -d "build/RightClickRestore.app"
+          test -d "build/RightClickRestore.app/Contents/PlugIns/RightClickRestore Extension.appex"
+          test -f "build/RightClickRestore.app/Contents/PlugIns/RightClickRestore Extension.appex/Contents/Resources/manifest.json"
+          codesign --verify --deep --strict --verbose=2 "build/RightClickRestore.app"

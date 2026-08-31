@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { Window } from 'happy-dom';
-import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
+import { DEFAULT_SETTINGS } from '../shared/settings';
 import { cleanAddedNode, cleanDOMTree, cleanNode } from './cleaner';
 
 describe('cleaner module', () => {
@@ -119,6 +119,19 @@ describe('cleaner module', () => {
       };
 
       expect(() => cleanNode(div, DEFAULT_SETTINGS)).not.toThrow();
+    });
+
+    test('cleans inside open shadowRoot when attached', () => {
+      const host = document.createElement('div');
+      if (typeof host.attachShadow === 'function') {
+        const shadow = host.attachShadow({ mode: 'open' });
+        const inner = document.createElement('div');
+        inner.setAttribute('oncontextmenu', 'return false');
+        shadow.appendChild(inner);
+
+        cleanNode(host, DEFAULT_SETTINGS);
+        expect(inner.hasAttribute('oncontextmenu')).toBe(false);
+      }
     });
   });
 

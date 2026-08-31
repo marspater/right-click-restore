@@ -1,6 +1,70 @@
 import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
 
+export const INTERACTIVE_CONTAINERS =
+  '.ProseMirror, .monaco-editor, .html5-video-player, [class*="ytp-"], [class*="player-"], ytd-app, [contenteditable="true"]';
+
+export const INTERACTIVE_ELEMENTS =
+  'input, textarea, select, button, [contenteditable], [contenteditable="true"], [role="textbox"], [role="combobox"], [role="button"], [role="menuitem"], [role="dialog"], canvas';
+
+export function isInteractiveNode(node: Node | null): boolean {
+  if (!node) return false;
+  let curr: Node | null = node;
+  const TEXT_NODE_TYPE = typeof Node !== 'undefined' ? Node.TEXT_NODE : 3;
+  if (curr.nodeType === TEXT_NODE_TYPE) {
+    curr = curr.parentElement;
+  }
+  if (
+    curr &&
+    (typeof Element !== 'undefined'
+      ? curr instanceof Element
+      : 'matches' in curr)
+  ) {
+    const el = curr as Element;
+    try {
+      if (el.matches(INTERACTIVE_ELEMENTS)) return true;
+      if (el.closest(INTERACTIVE_CONTAINERS)) return true;
+    } catch (_e) {}
+  }
+  return false;
+}
+
+export function isInteractiveEvent(event: Event): boolean {
+  try {
+    if (typeof event.composedPath === 'function') {
+      const path = event.composedPath();
+      for (const item of path) {
+        if (
+          item &&
+          (typeof Element !== 'undefined'
+            ? item instanceof Element
+            : 'matches' in item)
+        ) {
+          const el = item as Element;
+          if (
+            el.matches(INTERACTIVE_ELEMENTS) ||
+            el.matches(INTERACTIVE_CONTAINERS)
+          ) {
+            return true;
+          }
+        }
+      }
+    }
+  } catch (_e) {}
+  const targetNode =
+    event.target &&
+    (typeof Node !== 'undefined'
+      ? event.target instanceof Node
+      : typeof (event.target as Record<string, unknown>).nodeType === 'number')
+      ? (event.target as Node)
+      : null;
+  return isInteractiveNode(targetNode);
+}
+
 (() => {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return;
+  }
+
   let activeConfig: Settings = { ...DEFAULT_SETTINGS };
 
   // Read initial configuration directly from the injecting script's dataset.
@@ -58,48 +122,6 @@ import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
 
   function isModifierBypassActive(): boolean {
     return isShieldActive() && activeConfig.bypassModifierKey !== false;
-  }
-
-  const INTERACTIVE_CONTAINERS =
-    '.ProseMirror, .monaco-editor, .html5-video-player, [class*="ytp-"], [class*="player-"], ytd-app, [contenteditable="true"]';
-
-  const INTERACTIVE_ELEMENTS =
-    'input, textarea, select, button, [contenteditable], [contenteditable="true"], [role="textbox"], [role="combobox"], [role="button"], [role="menuitem"], [role="dialog"], canvas';
-
-  function isInteractiveNode(node: Node | null): boolean {
-    if (!node) return false;
-    let curr: Node | null = node;
-    if (curr.nodeType === Node.TEXT_NODE) {
-      curr = curr.parentElement;
-    }
-    if (curr instanceof Element) {
-      try {
-        if (curr.matches(INTERACTIVE_ELEMENTS)) return true;
-        if (curr.closest(INTERACTIVE_CONTAINERS)) return true;
-      } catch (_e) {}
-    }
-    return false;
-  }
-
-  function isInteractiveEvent(event: Event): boolean {
-    try {
-      if (typeof event.composedPath === 'function') {
-        const path = event.composedPath();
-        for (const item of path) {
-          if (item instanceof Element) {
-            if (
-              item.matches(INTERACTIVE_ELEMENTS) ||
-              item.matches(INTERACTIVE_CONTAINERS)
-            ) {
-              return true;
-            }
-          }
-        }
-      }
-    } catch (_e) {}
-    return isInteractiveNode(
-      event.target instanceof Node ? event.target : null,
-    );
   }
 
   function isModifierPressed(event: Event): boolean {

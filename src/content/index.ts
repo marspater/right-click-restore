@@ -179,13 +179,21 @@ import {
     }
 
     if (currentSettings.restoreSelection) {
-      for (const attr of SCRUB_ATTRS) {
-        if (attr !== 'oncontextmenu') {
-          try {
-            node.removeAttribute(attr);
-          } catch (_e) {}
-        }
-      }
+      try {
+        node.removeAttribute('onselectstart');
+      } catch (_e) {}
+      try {
+        node.removeAttribute('ondragstart');
+      } catch (_e) {}
+      try {
+        node.removeAttribute('oncopy');
+      } catch (_e) {}
+      try {
+        node.removeAttribute('oncut');
+      } catch (_e) {}
+      try {
+        node.removeAttribute('onbeforecopy');
+      } catch (_e) {}
       if (node instanceof HTMLElement) {
         try {
           if (node.style.userSelect === 'none') node.style.userSelect = 'auto';

@@ -1,6 +1,27 @@
 import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
 
-(() => {
+export const INTERACTIVE_CONTAINERS =
+  '.ProseMirror, .monaco-editor, .html5-video-player, [class*="ytp-"], [class*="player-"], ytd-app, [contenteditable="true"]';
+
+export const INTERACTIVE_ELEMENTS =
+  'input, textarea, select, button, [contenteditable], [contenteditable="true"], [role="textbox"], [role="combobox"], [role="button"], [role="menuitem"], [role="dialog"], canvas';
+
+export function isInteractiveNode(node: Node | null): boolean {
+  if (!node) return false;
+  let curr: Node | null = node;
+  if (curr.nodeType === Node.TEXT_NODE) {
+    curr = curr.parentElement;
+  }
+  if (curr instanceof Element) {
+    try {
+      if (curr.matches(INTERACTIVE_ELEMENTS)) return true;
+      if (curr.closest(INTERACTIVE_CONTAINERS)) return true;
+    } catch (_e) {}
+  }
+  return false;
+}
+
+if (typeof window !== 'undefined') {
   let activeConfig: Settings = { ...DEFAULT_SETTINGS };
 
   // Read initial configuration directly from the injecting script's dataset.
@@ -58,27 +79,6 @@ import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
 
   function isModifierBypassActive(): boolean {
     return isShieldActive() && activeConfig.bypassModifierKey !== false;
-  }
-
-  const INTERACTIVE_CONTAINERS =
-    '.ProseMirror, .monaco-editor, .html5-video-player, [class*="ytp-"], [class*="player-"], ytd-app, [contenteditable="true"]';
-
-  const INTERACTIVE_ELEMENTS =
-    'input, textarea, select, button, [contenteditable], [contenteditable="true"], [role="textbox"], [role="combobox"], [role="button"], [role="menuitem"], [role="dialog"], canvas';
-
-  function isInteractiveNode(node: Node | null): boolean {
-    if (!node) return false;
-    let curr: Node | null = node;
-    if (curr.nodeType === Node.TEXT_NODE) {
-      curr = curr.parentElement;
-    }
-    if (curr instanceof Element) {
-      try {
-        if (curr.matches(INTERACTIVE_ELEMENTS)) return true;
-        if (curr.closest(INTERACTIVE_CONTAINERS)) return true;
-      } catch (_e) {}
-    }
-    return false;
   }
 
   function isInteractiveEvent(event: Event): boolean {
@@ -299,4 +299,4 @@ import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
       if (document.body) document.body.oncopy = null;
     } catch (_e) {}
   });
-})();
+}

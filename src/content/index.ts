@@ -198,13 +198,9 @@ import {
   }
 
   function cleanAddedNode(node: Node) {
-    if (!(node instanceof Element)) return;
-    cleanNode(node);
-    try {
-      for (const child of node.querySelectorAll(SCRUB_SELECTOR)) {
-        cleanNode(child);
-      }
-    } catch (_e) {}
+    if ('querySelectorAll' in node) {
+      cleanDOMTree(node as ParentNode);
+    }
   }
 
   function cleanDOMTree(root: ParentNode = document) {

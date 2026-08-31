@@ -1,4 +1,4 @@
-function syncBadge(isEnabled: boolean) {
+export function syncBadge(isEnabled: boolean) {
   try {
     chrome.action.setBadgeText({ text: isEnabled ? 'ON' : 'OFF' });
     chrome.action.setBadgeBackgroundColor({
@@ -7,16 +7,21 @@ function syncBadge(isEnabled: boolean) {
   } catch (_e) {}
 }
 
-chrome.runtime.onInstalled.addListener(() => {
+export function handleInstalled() {
   chrome.storage.local.get(['shieldEnabled'], (res) => {
     const isEnabled = res.shieldEnabled !== false;
     chrome.storage.local.set({ shieldEnabled: isEnabled });
     syncBadge(isEnabled);
   });
-});
+}
 
-chrome.runtime.onStartup?.addListener(() => {
+export function handleStartup() {
   chrome.storage.local.get(['shieldEnabled'], (res) => {
     syncBadge(res.shieldEnabled !== false);
   });
-});
+}
+
+if (typeof chrome !== 'undefined' && chrome.runtime) {
+  chrome.runtime.onInstalled?.addListener(handleInstalled);
+  chrome.runtime.onStartup?.addListener(handleStartup);
+}

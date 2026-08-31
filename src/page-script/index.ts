@@ -1,7 +1,69 @@
+import {
+  INTERACTIVE_CONTAINERS,
+  INTERACTIVE_ELEMENTS,
+} from '../shared/constants';
 import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
 
-(() => {
+export function isInteractiveNode(node: Node | null): boolean {
+  if (!node) return false;
+  let curr: Node | null = node;
+  if (curr.nodeType === Node.TEXT_NODE) {
+    curr = curr.parentElement;
+  }
+  if (curr instanceof Element) {
+    try {
+      if (curr.matches(INTERACTIVE_ELEMENTS)) return true;
+      if (curr.closest(INTERACTIVE_CONTAINERS)) return true;
+    } catch (_e) {}
+  }
+  return false;
+}
+
+export function isInteractiveEvent(event: Event): boolean {
+  try {
+    if (typeof event.composedPath === 'function') {
+      const path = event.composedPath();
+      for (const item of path) {
+        if (item instanceof Element) {
+          if (
+            item.matches(INTERACTIVE_ELEMENTS) ||
+            item.matches(INTERACTIVE_CONTAINERS)
+          ) {
+            return true;
+          }
+        }
+      }
+    }
+  } catch (_e) {}
+  return isInteractiveNode(event.target instanceof Node ? event.target : null);
+}
+
+export function isModifierPressed(event: Event): boolean {
+  if (
+    (typeof MouseEvent !== 'undefined' && event instanceof MouseEvent) ||
+    (typeof KeyboardEvent !== 'undefined' && event instanceof KeyboardEvent) ||
+    'shiftKey' in event ||
+    'altKey' in event
+  ) {
+    const e = event as MouseEvent;
+    return Boolean(e.shiftKey || e.altKey);
+  }
+  return false;
+}
+
+export const SELECTION_EVENTS = new Set([
+  'selectstart',
+  'dragstart',
+  'copy',
+  'cut',
+  'beforecopy',
+]);
+
+if (typeof window !== 'undefined') {
   let activeConfig: Settings = { ...DEFAULT_SETTINGS };
+
+  let updateEvent: string | undefined;
+  let unlockEvent: string | undefined;
 
   // Read initial configuration directly from the injecting script's dataset.
   // Because this script executes synchronously when injected by content.js,
@@ -16,21 +78,28 @@ import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
         ...DEFAULT_SETTINGS,
         ...JSON.parse(scriptEl.dataset.initialConfig),
       };
-      // Immediately scrub the sensitive config data from the DOM
+      updateEvent = scriptEl.dataset.updateEvent;
+      unlockEvent = scriptEl.dataset.unlockEvent;
+
+      // Immediately scrub sensitive config & event tokens from DOM
       scriptEl.removeAttribute('data-initial-config');
+      scriptEl.removeAttribute('data-update-event');
+      scriptEl.removeAttribute('data-unlock-event');
       scriptEl.remove();
     }
   } catch (_e) {}
 
-  // Accept dynamic updates on a hardcoded un-authenticated event.
-  window.addEventListener('__rcr_update_config', (e: Event) => {
-    try {
-      const customEvent = e as CustomEvent<Settings>;
-      if (customEvent.detail && typeof customEvent.detail === 'object') {
-        activeConfig = { ...DEFAULT_SETTINGS, ...customEvent.detail };
-      }
-    } catch (_err) {}
-  });
+  // Accept dynamic updates on secret isolated event channel.
+  if (updateEvent) {
+    window.addEventListener(updateEvent, (e: Event) => {
+      try {
+        const customEvent = e as CustomEvent<Settings>;
+        if (customEvent.detail && typeof customEvent.detail === 'object') {
+          activeConfig = { ...DEFAULT_SETTINGS, ...customEvent.detail };
+        }
+      } catch (_err) {}
+    });
+  }
 
   const origPD = Event.prototype.preventDefault;
   const origSP = Event.prototype.stopPropagation;
@@ -60,89 +129,24 @@ import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
     return isShieldActive() && activeConfig.bypassModifierKey !== false;
   }
 
-  const INTERACTIVE_CONTAINERS =
-    '.ProseMirror, .monaco-editor, .html5-video-player, [class*="ytp-"], [class*="player-"], ytd-app, [contenteditable="true"]';
-
-  const INTERACTIVE_ELEMENTS =
-    'input, textarea, select, button, [contenteditable], [contenteditable="true"], [role="textbox"], [role="combobox"], [role="button"], [role="menuitem"], [role="dialog"], canvas';
-
-  function isInteractiveNode(node: Node | null): boolean {
-    if (!node) return false;
-    let curr: Node | null = node;
-    if (curr.nodeType === Node.TEXT_NODE) {
-      curr = curr.parentElement;
+  function shouldBlockEvent(event: Event): boolean {
+    if (!isShieldActive() || isInteractiveEvent(event)) {
+      return false;
     }
-    if (curr instanceof Element) {
-      try {
-        if (curr.matches(INTERACTIVE_ELEMENTS)) return true;
-        if (curr.closest(INTERACTIVE_CONTAINERS)) return true;
-      } catch (_e) {}
+    if (isModifierBypassActive() && isModifierPressed(event)) {
+      return true;
+    }
+    if (event.type === 'contextmenu' && isRightClickActive()) {
+      return true;
+    }
+    if (SELECTION_EVENTS.has(event.type) && isSelectionActive()) {
+      return true;
     }
     return false;
   }
-
-  function isInteractiveEvent(event: Event): boolean {
-    try {
-      if (typeof event.composedPath === 'function') {
-        const path = event.composedPath();
-        for (const item of path) {
-          if (item instanceof Element) {
-            if (
-              item.matches(INTERACTIVE_ELEMENTS) ||
-              item.matches(INTERACTIVE_CONTAINERS)
-            ) {
-              return true;
-            }
-          }
-        }
-      }
-    } catch (_e) {}
-    return isInteractiveNode(
-      event.target instanceof Node ? event.target : null,
-    );
-  }
-
-  function isModifierPressed(event: Event): boolean {
-    if (
-      event instanceof MouseEvent ||
-      event instanceof KeyboardEvent ||
-      'shiftKey' in event ||
-      'altKey' in event
-    ) {
-      const e = event as MouseEvent;
-      return Boolean(e.shiftKey || e.altKey);
-    }
-    return false;
-  }
-
-  const SELECTION_EVENTS = new Set([
-    'selectstart',
-    'dragstart',
-    'copy',
-    'cut',
-    'beforecopy',
-  ]);
 
   Event.prototype.preventDefault = function (this: Event): void {
-    if (isShieldActive()) {
-      if (isModifierBypassActive() && isModifierPressed(this)) {
-        return;
-      }
-      if (
-        this.type === 'contextmenu' &&
-        isRightClickActive() &&
-        !isInteractiveEvent(this)
-      ) {
-        return;
-      }
-      if (
-        isSelectionActive() &&
-        SELECTION_EVENTS.has(this.type) &&
-        !isInteractiveEvent(this)
-      ) {
-        return;
-      }
-    }
+    if (shouldBlockEvent(this)) return;
     origPD.apply(this);
   };
 
@@ -153,24 +157,12 @@ import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
     );
     Object.defineProperty(Event.prototype, 'returnValue', {
       get() {
-        if (isShieldActive() && !isInteractiveEvent(this)) {
-          if (isModifierBypassActive() && isModifierPressed(this)) return true;
-          if (this.type === 'contextmenu' && isRightClickActive()) return true;
-          if (SELECTION_EVENTS.has(this.type) && isSelectionActive()) {
-            return true;
-          }
-        }
+        if (shouldBlockEvent(this)) return true;
         if (origDescriptor?.get) return origDescriptor.get.call(this);
         return true;
       },
       set(val) {
-        if (isShieldActive() && !isInteractiveEvent(this)) {
-          if (isModifierBypassActive() && isModifierPressed(this)) return;
-          if (this.type === 'contextmenu' && isRightClickActive()) return;
-          if (SELECTION_EVENTS.has(this.type) && isSelectionActive()) {
-            return;
-          }
-        }
+        if (shouldBlockEvent(this)) return;
         if (origDescriptor?.set) origDescriptor.set.call(this, val);
       },
       configurable: true,
@@ -179,20 +171,12 @@ import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
   } catch (_e) {}
 
   Event.prototype.stopPropagation = function (this: Event): void {
-    if (isShieldActive() && !isInteractiveEvent(this)) {
-      if (isModifierBypassActive() && isModifierPressed(this)) return;
-      if (this.type === 'contextmenu' && isRightClickActive()) return;
-      if (SELECTION_EVENTS.has(this.type) && isSelectionActive()) return;
-    }
+    if (shouldBlockEvent(this)) return;
     origSP.apply(this);
   };
 
   Event.prototype.stopImmediatePropagation = function (this: Event): void {
-    if (isShieldActive() && !isInteractiveEvent(this)) {
-      if (isModifierBypassActive() && isModifierPressed(this)) return;
-      if (this.type === 'contextmenu' && isRightClickActive()) return;
-      if (SELECTION_EVENTS.has(this.type) && isSelectionActive()) return;
-    }
+    if (shouldBlockEvent(this)) return;
     origSIP.apply(this);
   };
 
@@ -284,19 +268,21 @@ import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
 
   document.addEventListener('contextmenu', (e) => unmaskMedia(e), false);
 
-  window.addEventListener('__rcr_force_unlock__', () => {
-    try {
-      window.oncontextmenu = null;
-      document.oncontextmenu = null;
-      if (document.body) document.body.oncontextmenu = null;
-      window.onselectstart = null;
-      document.onselectstart = null;
-      if (document.body) document.body.onselectstart = null;
-      window.ondragstart = null;
-      document.ondragstart = null;
-      window.oncopy = null;
-      document.oncopy = null;
-      if (document.body) document.body.oncopy = null;
-    } catch (_e) {}
-  });
-})();
+  if (unlockEvent) {
+    window.addEventListener(unlockEvent, () => {
+      try {
+        window.oncontextmenu = null;
+        document.oncontextmenu = null;
+        if (document.body) document.body.oncontextmenu = null;
+        window.onselectstart = null;
+        document.onselectstart = null;
+        if (document.body) document.body.onselectstart = null;
+        window.ondragstart = null;
+        document.ondragstart = null;
+        window.oncopy = null;
+        document.oncopy = null;
+        if (document.body) document.body.oncopy = null;
+      } catch (_e) {}
+    });
+  }
+}

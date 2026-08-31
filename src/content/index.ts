@@ -3,6 +3,12 @@ import {
   type Settings,
   effectiveSettings,
 } from '../shared/settings';
+import {
+  SCRUB_ATTRS,
+  cleanAddedNode as cleanAddedNodeBase,
+  cleanDOMTree as cleanDOMTreeBase,
+  cleanNode as cleanNodeBase,
+} from './cleaner';
 
 (() => {
   let currentSettings: Settings = { ...DEFAULT_SETTINGS };
@@ -12,19 +18,17 @@ import {
   let unlockToastRemoveTimer: ReturnType<typeof setTimeout> | null = null;
   let configRequestInFlight = false;
 
-  const INTERACTIVE_CONTAINERS =
-    '.ProseMirror, .monaco-editor, .html5-video-player, [class*="ytp-"], [class*="player-"], ytd-app, [contenteditable="true"]';
-  const INTERACTIVE_ELEMENTS =
-    'input, textarea, select, button, [contenteditable], [contenteditable="true"]';
-  const SCRUB_ATTRS = [
-    'oncontextmenu',
-    'onselectstart',
-    'ondragstart',
-    'oncopy',
-    'oncut',
-    'onbeforecopy',
-  ];
-  const SCRUB_SELECTOR = SCRUB_ATTRS.map((attr) => `[${attr}]`).join(',');
+  function cleanNode(node: Element) {
+    cleanNodeBase(node, currentSettings);
+  }
+
+  function cleanAddedNode(node: Node) {
+    cleanAddedNodeBase(node, currentSettings);
+  }
+
+  function cleanDOMTree(root: ParentNode = document) {
+    cleanDOMTreeBase(root, currentSettings);
+  }
 
   function applySettings(settings: Settings) {
     currentSettings = effectiveSettings(settings, window.location.hostname);
@@ -157,63 +161,6 @@ import {
       }, 300);
       unlockToastTimer = null;
     }, 1600);
-  }
-
-  function cleanNode(node: Element) {
-    if (!(node instanceof Element)) return;
-    try {
-      if (
-        node.matches(INTERACTIVE_ELEMENTS) ||
-        node.closest(INTERACTIVE_CONTAINERS)
-      ) {
-        return;
-      }
-    } catch (_e) {
-      return;
-    }
-
-    if (currentSettings.restoreRightClick) {
-      try {
-        node.removeAttribute('oncontextmenu');
-      } catch (_e) {}
-    }
-
-    if (currentSettings.restoreSelection) {
-      for (const attr of SCRUB_ATTRS) {
-        if (attr !== 'oncontextmenu') {
-          try {
-            node.removeAttribute(attr);
-          } catch (_e) {}
-        }
-      }
-      if (node instanceof HTMLElement) {
-        try {
-          if (node.style.userSelect === 'none') node.style.userSelect = 'auto';
-          if (node.style.webkitUserSelect === 'none') {
-            node.style.webkitUserSelect = 'auto';
-          }
-        } catch (_e) {}
-      }
-    }
-  }
-
-  function cleanAddedNode(node: Node) {
-    if (!(node instanceof Element)) return;
-    cleanNode(node);
-    try {
-      for (const child of node.querySelectorAll(SCRUB_SELECTOR)) {
-        cleanNode(child);
-      }
-    } catch (_e) {}
-  }
-
-  function cleanDOMTree(root: ParentNode = document) {
-    if (root instanceof Element) cleanNode(root);
-    try {
-      for (const node of root.querySelectorAll(SCRUB_SELECTOR)) {
-        cleanNode(node);
-      }
-    } catch (_e) {}
   }
 
   function startObserver() {

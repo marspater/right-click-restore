@@ -1,4 +1,8 @@
 import {
+  INTERACTIVE_CONTAINERS,
+  INTERACTIVE_ELEMENTS,
+} from '../shared/constants';
+import {
   DEFAULT_SETTINGS,
   type Settings,
   effectiveSettings,
@@ -12,10 +16,6 @@ import {
   let unlockToastRemoveTimer: ReturnType<typeof setTimeout> | null = null;
   let configRequestInFlight = false;
 
-  const INTERACTIVE_CONTAINERS =
-    '.ProseMirror, .monaco-editor, .html5-video-player, [class*="ytp-"], [class*="player-"], ytd-app, [contenteditable="true"]';
-  const INTERACTIVE_ELEMENTS =
-    'input, textarea, select, button, [contenteditable], [contenteditable="true"]';
   const SCRUB_ATTRS = [
     'oncontextmenu',
     'onselectstart',

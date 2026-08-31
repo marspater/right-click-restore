@@ -1,3 +1,7 @@
+import {
+  INTERACTIVE_CONTAINERS,
+  INTERACTIVE_ELEMENTS,
+} from '../shared/constants';
 import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
 
 (() => {
@@ -59,12 +63,6 @@ import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
   function isModifierBypassActive(): boolean {
     return isShieldActive() && activeConfig.bypassModifierKey !== false;
   }
-
-  const INTERACTIVE_CONTAINERS =
-    '.ProseMirror, .monaco-editor, .html5-video-player, [class*="ytp-"], [class*="player-"], ytd-app, [contenteditable="true"]';
-
-  const INTERACTIVE_ELEMENTS =
-    'input, textarea, select, button, [contenteditable], [contenteditable="true"], [role="textbox"], [role="combobox"], [role="button"], [role="menuitem"], [role="dialog"], canvas';
 
   function isInteractiveNode(node: Node | null): boolean {
     if (!node) return false;

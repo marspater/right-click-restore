@@ -111,6 +111,17 @@ body {
   transform: translateX(16px);
 }
 
+/* Accessible Focus States */
+.apple-switch input:focus-visible + .apple-slider {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
 /* Small Variant for List Items */
 .apple-switch-sm {
   width: 32px;

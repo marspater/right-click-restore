@@ -11,6 +11,49 @@ import {
   cleanNode as cleanNodeBase,
 } from './cleaner';
 
+export function handleContentMessage(
+  message: { type?: string; config?: Settings },
+  sender: chrome.runtime.MessageSender | undefined,
+  sendResponse: (response?: unknown) => void,
+  onUnlockTriggered?: () => void,
+  onCleanDOMTree?: () => void,
+  onDispatchEvent?: (name: string) => void,
+  unlockEventName?: string,
+  onShowUnlockToast?: () => void,
+  onApplySettings?: (config: Settings) => void,
+) {
+  // Validate sender origin to prevent message spoofing from untrusted extension contexts or web scripts
+  if (
+    typeof chrome !== 'undefined' &&
+    chrome.runtime?.id &&
+    sender?.id !== chrome.runtime.id
+  ) {
+    sendResponse({ status: 'unauthorized' });
+    return;
+  }
+
+  if (message.type === 'RCR_FORCE_UNLOCK') {
+    onUnlockTriggered?.();
+    onCleanDOMTree?.();
+    if (unlockEventName && onDispatchEvent) {
+      try {
+        onDispatchEvent(unlockEventName);
+      } catch (_e) {}
+    }
+    onShowUnlockToast?.();
+    sendResponse({ status: 'unlocked' });
+    return;
+  }
+
+  if (message.type === 'RCR_CONFIG_CHANGED' && message.config) {
+    onApplySettings?.(message.config);
+    sendResponse({ status: 'ok' });
+    return;
+  }
+
+  sendResponse({ status: 'ignored' });
+}
+
 (() => {
   const updateEventName =
     typeof crypto !== 'undefined' && crypto.randomUUID
@@ -204,7 +247,13 @@ import {
   }
 
   function startObserver() {
-    if (observer || !document.documentElement) return;
+    if (
+      observer ||
+      typeof document === 'undefined' ||
+      !document.documentElement ||
+      typeof MutationObserver === 'undefined'
+    )
+      return;
 
     observer = new MutationObserver((mutations) => {
       if (!currentSettings.enabled) return;
@@ -212,7 +261,10 @@ import {
       for (const mutation of mutations) {
         if (mutation.type === 'childList') {
           for (const node of mutation.addedNodes) {
-            pendingNodes.add(node);
+            // Only queue Element nodes; ignore Text, Comment, etc.
+            if (node.nodeType === 1) {
+              pendingNodes.add(node);
+            }
           }
         } else if (
           mutation.type === 'attributes' &&
@@ -273,31 +325,25 @@ import {
 
   function handleMessage(
     message: { type?: string; config?: Settings },
+    sender: chrome.runtime.MessageSender | undefined,
     sendResponse: (response?: unknown) => void,
   ) {
-    if (message.type === 'RCR_FORCE_UNLOCK') {
-      diagnostics.unlockTriggered++;
-      cleanDOMTree();
-      try {
-        window.dispatchEvent(new CustomEvent(unlockEventName));
-      } catch (_e) {}
-      showUnlockToast();
-      sendResponse({ status: 'unlocked' });
-      return;
-    }
-
-    if (message.type === 'RCR_CONFIG_CHANGED' && message.config) {
-      applySettings(message.config);
-      sendResponse({ status: 'ok' });
-      return;
-    }
-
-    sendResponse({ status: 'ignored' });
+    return handleContentMessage(
+      message,
+      sender,
+      sendResponse,
+      () => diagnostics.unlockTriggered++,
+      cleanDOMTree,
+      (name) => window.dispatchEvent(new CustomEvent(name)),
+      unlockEventName,
+      showUnlockToast,
+      applySettings,
+    );
   }
 
   try {
-    chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-      handleMessage(message, sendResponse);
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      handleMessage(message, sender, sendResponse);
       return true;
     });
     chrome.storage.onChanged.addListener((changes, areaName) => {

@@ -23,19 +23,21 @@ export function isInteractiveNode(node: Node | null): boolean {
   return false;
 }
 
+// Fast-path interactive event check. When composedPath is available and non-empty,
+// iterating over path elements already inspects target and all parent ancestors.
+// Returning false directly avoids a redundant call to isInteractiveNode() which
+// re-traverses the DOM tree using closest().
 export function isInteractiveEvent(event: Event): boolean {
   try {
     if (typeof event.composedPath === 'function') {
       const path = event.composedPath();
-      for (const item of path) {
-        if (item instanceof Element) {
-          if (
-            item.matches(INTERACTIVE_ELEMENTS) ||
-            item.matches(INTERACTIVE_CONTAINERS)
-          ) {
-            return true;
-          }
-        }
+      if (path && path.length > 0) {
+        return path.some(
+          (item) =>
+            item instanceof Element &&
+            (item.matches(INTERACTIVE_ELEMENTS) ||
+              item.matches(INTERACTIVE_CONTAINERS)),
+        );
       }
     }
   } catch (_e) {}

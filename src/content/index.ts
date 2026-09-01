@@ -212,7 +212,10 @@ import {
       for (const mutation of mutations) {
         if (mutation.type === 'childList') {
           for (const node of mutation.addedNodes) {
-            pendingNodes.add(node);
+            // Only queue Element nodes; ignore Text, Comment, etc.
+            if (node.nodeType === 1) {
+              pendingNodes.add(node);
+            }
           }
         } else if (
           mutation.type === 'attributes' &&

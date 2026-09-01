@@ -32,18 +32,12 @@ export function isInteractiveEvent(event: Event): boolean {
     if (typeof event.composedPath === 'function') {
       const path = event.composedPath();
       if (path && path.length > 0) {
-        for (let i = 0; i < path.length; i++) {
-          const item = path[i];
-          if (item instanceof Element) {
-            if (
-              item.matches(INTERACTIVE_ELEMENTS) ||
-              item.matches(INTERACTIVE_CONTAINERS)
-            ) {
-              return true;
-            }
-          }
-        }
-        return false;
+        return path.some(
+          (item) =>
+            item instanceof Element &&
+            (item.matches(INTERACTIVE_ELEMENTS) ||
+              item.matches(INTERACTIVE_CONTAINERS)),
+        );
       }
     }
   } catch (_e) {}

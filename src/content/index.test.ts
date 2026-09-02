@@ -109,4 +109,42 @@ describe('content script message handler', () => {
     expect(domCleaned).toBe(true);
     expect(toastShown).toBe(true);
   });
+
+  test('safely ignores null, undefined, or non-object message payloads', () => {
+    (globalThis as unknown as Record<string, unknown>).chrome = {
+      runtime: {
+        id: 'extension-id-123',
+      },
+    };
+
+    let response: unknown;
+    const sendResponse = (res?: unknown) => {
+      response = res;
+    };
+
+    const authorizedSender = {
+      id: 'extension-id-123',
+    } as chrome.runtime.MessageSender;
+
+    handleContentMessage(
+      null as unknown as { type?: string },
+      authorizedSender,
+      sendResponse,
+    );
+    expect(response).toEqual({ status: 'ignored' });
+
+    handleContentMessage(
+      undefined as unknown as { type?: string },
+      authorizedSender,
+      sendResponse,
+    );
+    expect(response).toEqual({ status: 'ignored' });
+
+    handleContentMessage(
+      'string-message' as unknown as { type?: string },
+      authorizedSender,
+      sendResponse,
+    );
+    expect(response).toEqual({ status: 'ignored' });
+  });
 });

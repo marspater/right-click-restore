@@ -183,7 +183,7 @@ async function forceUnlockPage() {
   <!-- Settings List with Apple Continuous Squircles -->
   <section class={`glass-card p-1.5 mb-2.5 flex flex-col ${settings.enabled ? '' : 'dimmed'}`}>
     <!-- Feature 1: Restore Right Click -->
-    <label class="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer select-none">
+    <label class="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 focus-within:ring-2 focus-within:ring-blue-500/40 transition-all cursor-pointer select-none">
       <div class="flex items-center gap-2.5">
         <div class="w-5 h-5 rounded-md bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 flex items-center justify-center">
           <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -197,7 +197,7 @@ async function forceUnlockPage() {
         </div>
       </div>
       <span class="apple-switch apple-switch-sm">
-        <input type="checkbox" checked={settings.restoreRightClick} onchange={() => toggleFeature('restoreRightClick')} aria-label="Restore Right Click" />
+        <input type="checkbox" checked={settings.restoreRightClick} disabled={!settings.enabled} onchange={() => toggleFeature('restoreRightClick')} aria-label="Restore Right Click" />
         <span class="apple-slider"></span>
       </span>
     </label>
@@ -205,7 +205,7 @@ async function forceUnlockPage() {
     <div class="h-[0.5px] bg-neutral-200 dark:bg-white/10 mx-2"></div>
 
     <!-- Feature 2: Allow Selection & Copy -->
-    <label class="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer select-none">
+    <label class="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 focus-within:ring-2 focus-within:ring-blue-500/40 transition-all cursor-pointer select-none">
       <div class="flex items-center gap-2.5">
         <div class="w-5 h-5 rounded-md bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center">
           <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -219,7 +219,7 @@ async function forceUnlockPage() {
         </div>
       </div>
       <span class="apple-switch apple-switch-sm">
-        <input type="checkbox" checked={settings.restoreSelection} onchange={() => toggleFeature('restoreSelection')} aria-label="Allow Selection & Copy" />
+        <input type="checkbox" checked={settings.restoreSelection} disabled={!settings.enabled} onchange={() => toggleFeature('restoreSelection')} aria-label="Allow Selection & Copy" />
         <span class="apple-slider"></span>
       </span>
     </label>
@@ -227,7 +227,7 @@ async function forceUnlockPage() {
     <div class="h-[0.5px] bg-neutral-200 dark:bg-white/10 mx-2"></div>
 
     <!-- Feature 3: Anti-Shield Overlay -->
-    <label class="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer select-none">
+    <label class="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 focus-within:ring-2 focus-within:ring-blue-500/40 transition-all cursor-pointer select-none">
       <div class="flex items-center gap-2.5">
         <div class="w-5 h-5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
           <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -240,7 +240,7 @@ async function forceUnlockPage() {
         </div>
       </div>
       <span class="apple-switch apple-switch-sm">
-        <input type="checkbox" checked={settings.antiShield} onchange={() => toggleFeature('antiShield')} aria-label="Anti-Shield Overlay" />
+        <input type="checkbox" checked={settings.antiShield} disabled={!settings.enabled} onchange={() => toggleFeature('antiShield')} aria-label="Anti-Shield Overlay" />
         <span class="apple-slider"></span>
       </span>
     </label>
@@ -248,7 +248,7 @@ async function forceUnlockPage() {
     <div class="h-[0.5px] bg-neutral-200 dark:bg-white/10 mx-2"></div>
 
     <!-- Feature 4: Absolute Force Mode -->
-    <label class="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer select-none">
+    <label class="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 focus-within:ring-2 focus-within:ring-blue-500/40 transition-all cursor-pointer select-none">
       <div class="flex items-center gap-2.5">
         <div class="w-5 h-5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center">
           <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -261,7 +261,7 @@ async function forceUnlockPage() {
         </div>
       </div>
       <span class="apple-switch apple-switch-sm">
-        <input type="checkbox" checked={settings.absoluteForce} onchange={() => toggleFeature('absoluteForce')} aria-label="Absolute Force Mode" />
+        <input type="checkbox" checked={settings.absoluteForce} disabled={!settings.enabled} onchange={() => toggleFeature('absoluteForce')} aria-label="Absolute Force Mode" />
         <span class="apple-slider"></span>
       </span>
     </label>
@@ -269,7 +269,7 @@ async function forceUnlockPage() {
     <div class="h-[0.5px] bg-neutral-200 dark:bg-white/10 mx-2"></div>
 
     <!-- Feature 5: Modifier Key Bypass -->
-    <label class="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer select-none">
+    <label class="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 focus-within:ring-2 focus-within:ring-blue-500/40 transition-all cursor-pointer select-none">
       <div class="flex items-center gap-2.5">
         <div class="w-5 h-5 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center">
           <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -285,7 +285,7 @@ async function forceUnlockPage() {
         </div>
       </div>
       <span class="apple-switch apple-switch-sm">
-        <input type="checkbox" checked={settings.bypassModifierKey} onchange={() => toggleFeature('bypassModifierKey')} aria-label="Modifier Key Bypass" />
+        <input type="checkbox" checked={settings.bypassModifierKey} disabled={!settings.enabled} onchange={() => toggleFeature('bypassModifierKey')} aria-label="Modifier Key Bypass" />
         <span class="apple-slider"></span>
       </span>
     </label>
@@ -298,7 +298,7 @@ async function forceUnlockPage() {
       onclick={forceUnlockPage}
       disabled={unlockStatus === 'unlocking'}
       aria-live="polite"
-      class={`w-full py-2 px-3 rounded-xl font-medium text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-[0.99] ${
+      class={`w-full py-2 px-3 rounded-xl font-medium text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed ${
         unlockStatus === 'success'
           ? 'bg-emerald-500 text-white'
           : unlockStatus === 'error'

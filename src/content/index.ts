@@ -32,6 +32,12 @@ export function handleContentMessage(
     return;
   }
 
+  // Security Hardening: Validate message payload to prevent unhandled TypeErrors on null/non-object messages
+  if (!message || typeof message !== 'object') {
+    sendResponse({ status: 'ignored' });
+    return;
+  }
+
   if (message.type === 'RCR_FORCE_UNLOCK') {
     onUnlockTriggered?.();
     onCleanDOMTree?.();

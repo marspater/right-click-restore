@@ -49,7 +49,10 @@ export function cleanNode(
     if (typeof HTMLElement !== 'undefined' && node instanceof HTMLElement) {
       try {
         if (node.style.userSelect === 'none') node.style.userSelect = 'auto';
-        if (node.style.webkitUserSelect === 'none') {
+        if (
+          'webkitUserSelect' in node.style &&
+          node.style.webkitUserSelect === 'none'
+        ) {
           node.style.webkitUserSelect = 'auto';
         }
       } catch (_e) {}

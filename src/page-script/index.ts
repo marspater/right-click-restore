@@ -141,17 +141,32 @@ if (typeof window !== 'undefined') {
       return isShieldActive() && activeConfig.bypassModifierKey !== false;
     }
 
+    // Hot-path optimization: Check event type BEFORE inspecting DOM path or running
+    // CSS selector matches via isInteractiveEvent(). 99.9% of web page events (click,
+    // mousemove, keydown, scroll, etc.) are non-target types and exit immediately in O(1),
+    // eliminating expensive composedPath() and Element.matches() DOM traversals.
     function shouldBlockEvent(event: Event): boolean {
-      if (!isShieldActive() || isInteractiveEvent(event)) {
+      if (!isShieldActive()) {
         return false;
       }
+
+      const isContextMenu = event.type === 'contextmenu';
+      const isSelection = SELECTION_EVENTS.has(event.type);
+      if (!isContextMenu && !isSelection) {
+        return false;
+      }
+
+      if (isInteractiveEvent(event)) {
+        return false;
+      }
+
       if (isModifierBypassActive() && isModifierPressed(event)) {
         return true;
       }
-      if (event.type === 'contextmenu' && isRightClickActive()) {
+      if (isContextMenu && isRightClickActive()) {
         return true;
       }
-      if (SELECTION_EVENTS.has(event.type) && isSelectionActive()) {
+      if (isSelection && isSelectionActive()) {
         return true;
       }
       return false;

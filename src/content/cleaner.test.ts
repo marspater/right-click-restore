@@ -64,12 +64,16 @@ describe('cleaner module', () => {
     test('resets userSelect styles to auto when set to none', () => {
       const el = document.createElement('div');
       el.style.userSelect = 'none';
-      el.style.webkitUserSelect = 'none';
+      if ('webkitUserSelect' in el.style) {
+        el.style.webkitUserSelect = 'none';
+      }
 
       cleanNode(el, { ...DEFAULT_SETTINGS, restoreSelection: true });
 
       expect(el.style.userSelect).toBe('auto');
-      expect(el.style.webkitUserSelect).toBe('auto');
+      if ('webkitUserSelect' in el.style) {
+        expect(el.style.webkitUserSelect).toBe('auto');
+      }
     });
 
     test('bypasses interactive form elements and contenteditable', () => {

@@ -10,6 +10,20 @@ describe('cleaner module', () => {
   beforeEach(() => {
     window = new Window();
     document = window.document as unknown as Document;
+
+    // Polyfill webkitUserSelect on CSSStyleDeclaration for happy-dom test environment
+    if (window.CSSStyleDeclaration) {
+      Object.defineProperty(window.CSSStyleDeclaration.prototype, 'webkitUserSelect', {
+        get() {
+          return this._webkitUserSelect || '';
+        },
+        set(v) {
+          this._webkitUserSelect = v;
+        },
+        configurable: true,
+      });
+    }
+
     Object.assign(globalThis, {
       window,
       document,
@@ -64,10 +78,12 @@ describe('cleaner module', () => {
     test('resets userSelect styles to auto when set to none', () => {
       const el = document.createElement('div');
       el.style.userSelect = 'none';
+      el.style.webkitUserSelect = 'none';
 
       cleanNode(el, { ...DEFAULT_SETTINGS, restoreSelection: true });
 
       expect(el.style.userSelect).toBe('auto');
+      expect(el.style.webkitUserSelect).toBe('auto');
     });
 
     test('bypasses interactive form elements and contenteditable', () => {

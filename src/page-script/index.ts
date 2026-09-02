@@ -10,16 +10,16 @@ import {
 
 export function isInteractiveNode(node: Node | null): boolean {
   if (!node) return false;
-  let curr: Node | null = node;
-  if (curr.nodeType === Node.TEXT_NODE) {
-    curr = curr.parentElement;
-  }
-  if (curr instanceof Element) {
-    try {
+  try {
+    let curr: Node | null = node;
+    if (curr.nodeType === Node.TEXT_NODE) {
+      curr = curr.parentElement;
+    }
+    if (curr instanceof Element) {
       if (curr.matches(INTERACTIVE_ELEMENTS)) return true;
       if (curr.closest(INTERACTIVE_CONTAINERS)) return true;
-    } catch (_e) {}
-  }
+    }
+  } catch (_e) {}
   return false;
 }
 
@@ -28,6 +28,7 @@ export function isInteractiveNode(node: Node | null): boolean {
 // Returning false directly avoids a redundant call to isInteractiveNode() which
 // re-traverses the DOM tree using closest().
 export function isInteractiveEvent(event: Event): boolean {
+  if (!event) return false;
   try {
     if (typeof event.composedPath === 'function') {
       const path = event.composedPath();
@@ -45,15 +46,19 @@ export function isInteractiveEvent(event: Event): boolean {
 }
 
 export function isModifierPressed(event: Event): boolean {
-  if (
-    (typeof MouseEvent !== 'undefined' && event instanceof MouseEvent) ||
-    (typeof KeyboardEvent !== 'undefined' && event instanceof KeyboardEvent) ||
-    'shiftKey' in event ||
-    'altKey' in event
-  ) {
-    const e = event as MouseEvent;
-    return Boolean(e.shiftKey || e.altKey);
-  }
+  if (!event) return false;
+  try {
+    if (
+      (typeof MouseEvent !== 'undefined' && event instanceof MouseEvent) ||
+      (typeof KeyboardEvent !== 'undefined' &&
+        event instanceof KeyboardEvent) ||
+      'shiftKey' in event ||
+      'altKey' in event
+    ) {
+      const e = event as MouseEvent;
+      return Boolean(e.shiftKey || e.altKey);
+    }
+  } catch (_e) {}
   return false;
 }
 
@@ -103,14 +108,16 @@ if (typeof window !== 'undefined') {
 
     // Accept dynamic updates on secret isolated event channel.
     if (updateEvent) {
-      window.addEventListener(updateEvent, (e: Event) => {
-        try {
-          const customEvent = e as CustomEvent<Settings>;
-          if (customEvent.detail && typeof customEvent.detail === 'object') {
-            activeConfig = validateSettings(customEvent.detail);
-          }
-        } catch (_err) {}
-      });
+      try {
+        window.addEventListener(updateEvent, (e: Event) => {
+          try {
+            const customEvent = e as CustomEvent<Settings>;
+            if (customEvent.detail && typeof customEvent.detail === 'object') {
+              activeConfig = validateSettings(customEvent.detail);
+            }
+          } catch (_err) {}
+        });
+      } catch (_e) {}
     }
 
     const origPD = Event.prototype.preventDefault;
@@ -146,7 +153,7 @@ if (typeof window !== 'undefined') {
     // mousemove, keydown, scroll, etc.) are non-target types and exit immediately in O(1),
     // eliminating expensive composedPath() and Element.matches() DOM traversals.
     function shouldBlockEvent(event: Event): boolean {
-      if (!isShieldActive()) {
+      if (!event || !isShieldActive()) {
         return false;
       }
 
@@ -173,8 +180,10 @@ if (typeof window !== 'undefined') {
     }
 
     Event.prototype.preventDefault = function (this: Event): void {
-      if (shouldBlockEvent(this)) return;
-      origPD.apply(this);
+      if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
+      try {
+        origPD.apply(this);
+      } catch (_e) {}
     };
 
     try {
@@ -185,13 +194,18 @@ if (typeof window !== 'undefined') {
       if (!origDescriptor || origDescriptor.configurable !== false) {
         Object.defineProperty(Event.prototype, 'returnValue', {
           get() {
-            if (shouldBlockEvent(this)) return true;
-            if (origDescriptor?.get) return origDescriptor.get.call(this);
+            if (this && this instanceof Event && shouldBlockEvent(this))
+              return true;
+            try {
+              if (origDescriptor?.get) return origDescriptor.get.call(this);
+            } catch (_e) {}
             return true;
           },
           set(val) {
-            if (shouldBlockEvent(this)) return;
-            if (origDescriptor?.set) origDescriptor.set.call(this, val);
+            if (this && this instanceof Event && shouldBlockEvent(this)) return;
+            try {
+              if (origDescriptor?.set) origDescriptor.set.call(this, val);
+            } catch (_e) {}
           },
           configurable: true,
           enumerable: true,
@@ -200,13 +214,17 @@ if (typeof window !== 'undefined') {
     } catch (_e) {}
 
     Event.prototype.stopPropagation = function (this: Event): void {
-      if (shouldBlockEvent(this)) return;
-      origSP.apply(this);
+      if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
+      try {
+        origSP.apply(this);
+      } catch (_e) {}
     };
 
     Event.prototype.stopImmediatePropagation = function (this: Event): void {
-      if (shouldBlockEvent(this)) return;
-      origSIP.apply(this);
+      if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
+      try {
+        origSIP.apply(this);
+      } catch (_e) {}
     };
 
     const targets = [
@@ -235,18 +253,22 @@ if (typeof window !== 'undefined') {
               if (isForceModeActive() && !isInteractiveNode(this as Node)) {
                 return null;
               }
-              if (origDescriptor?.get) {
-                return origDescriptor.get.call(this);
-              }
+              try {
+                if (origDescriptor?.get) {
+                  return origDescriptor.get.call(this);
+                }
+              } catch (_e) {}
               return undefined;
             },
             set(val) {
               if (isForceModeActive() && !isInteractiveNode(this as Node)) {
                 return;
               }
-              if (origDescriptor?.set) {
-                origDescriptor.set.call(this, val);
-              }
+              try {
+                if (origDescriptor?.set) {
+                  origDescriptor.set.call(this, val);
+                }
+              } catch (_e) {}
             },
             configurable: true,
             enumerable: true,
@@ -261,7 +283,11 @@ if (typeof window !== 'undefined') {
         return;
       try {
         if (isInteractiveEvent(e)) return;
-        if (typeof document.elementsFromPoint !== 'function') return;
+        if (
+          typeof document === 'undefined' ||
+          typeof document.elementsFromPoint !== 'function'
+        )
+          return;
 
         const elements = document.elementsFromPoint(e.clientX, e.clientY);
         if (!elements || elements.length <= 1) return;
@@ -273,59 +299,62 @@ if (typeof window !== 'undefined') {
 
         const media = elements.find(
           (el) =>
-            el.tagName === 'IMG' ||
-            el.tagName === 'VIDEO' ||
-            el.tagName === 'CANVAS' ||
-            el.classList.contains('test-box'),
+            el &&
+            (el.tagName === 'IMG' ||
+              el.tagName === 'VIDEO' ||
+              el.tagName === 'CANVAS' ||
+              el.classList?.contains('test-box')),
         );
         if (media && elements[0] !== media) {
           for (const el of elements) {
             if (el === media) break;
-            el.classList.add('rcr-unmasked-overlay');
-            (el as HTMLElement).style.setProperty(
-              'pointer-events',
-              'none',
-              'important',
-            );
+            if (el && el instanceof HTMLElement) {
+              el.classList.add('rcr-unmasked-overlay');
+              el.style.setProperty('pointer-events', 'none', 'important');
 
-            // Centralized element timer management
-            const existingTimer = unmaskTimers.get(el);
-            if (existingTimer) {
-              clearTimeout(existingTimer);
+              // Centralized element timer management
+              const existingTimer = unmaskTimers.get(el);
+              if (existingTimer) {
+                clearTimeout(existingTimer);
+              }
+
+              const timer = setTimeout(() => {
+                try {
+                  el.classList.remove('rcr-unmasked-overlay');
+                  el.style.removeProperty('pointer-events');
+                  unmaskTimers.delete(el);
+                } catch (_err) {}
+              }, 1000) as unknown as number;
+
+              unmaskTimers.set(el, timer);
             }
-
-            const timer = setTimeout(() => {
-              try {
-                el.classList.remove('rcr-unmasked-overlay');
-                (el as HTMLElement).style.removeProperty('pointer-events');
-                unmaskTimers.delete(el);
-              } catch (_err) {}
-            }, 1000) as unknown as number;
-
-            unmaskTimers.set(el, timer);
           }
         }
       } catch (_err) {}
     }
 
-    document.addEventListener('contextmenu', (e) => unmaskMedia(e), false);
+    try {
+      document.addEventListener('contextmenu', (e) => unmaskMedia(e), false);
+    } catch (_e) {}
 
     if (unlockEvent) {
-      window.addEventListener(unlockEvent, () => {
-        try {
-          window.oncontextmenu = null;
-          document.oncontextmenu = null;
-          if (document.body) document.body.oncontextmenu = null;
-          window.onselectstart = null;
-          document.onselectstart = null;
-          if (document.body) document.body.onselectstart = null;
-          window.ondragstart = null;
-          document.ondragstart = null;
-          window.oncopy = null;
-          document.oncopy = null;
-          if (document.body) document.body.oncopy = null;
-        } catch (_e) {}
-      });
+      try {
+        window.addEventListener(unlockEvent, () => {
+          try {
+            window.oncontextmenu = null;
+            document.oncontextmenu = null;
+            if (document.body) document.body.oncontextmenu = null;
+            window.onselectstart = null;
+            document.onselectstart = null;
+            if (document.body) document.body.onselectstart = null;
+            window.ondragstart = null;
+            document.ondragstart = null;
+            window.oncopy = null;
+            document.oncopy = null;
+            if (document.body) document.body.oncopy = null;
+          } catch (_e) {}
+        });
+      } catch (_e) {}
     }
   }
 }

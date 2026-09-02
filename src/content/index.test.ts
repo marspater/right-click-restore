@@ -147,4 +147,42 @@ describe('content script message handler', () => {
     );
     expect(response).toEqual({ status: 'ignored' });
   });
+
+  test('handles exceptions inside onApplySettings gracefully without crashing', () => {
+    (globalThis as unknown as Record<string, unknown>).chrome = {
+      runtime: {
+        id: 'extension-id-123',
+      },
+    };
+
+    let response: unknown;
+    const sendResponse = (res?: unknown) => {
+      response = res;
+    };
+
+    const authorizedSender = {
+      id: 'extension-id-123',
+    } as chrome.runtime.MessageSender;
+
+    handleContentMessage(
+      {
+        type: 'RCR_CONFIG_CHANGED',
+        config: { enabled: true } as unknown as import(
+          '../shared/settings',
+        ).Settings,
+      },
+      authorizedSender,
+      sendResponse,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      () => {
+        throw new Error('Callback failed');
+      },
+    );
+
+    expect(response).toEqual({ status: 'error' });
+  });
 });

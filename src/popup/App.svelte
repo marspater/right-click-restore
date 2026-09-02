@@ -4,6 +4,7 @@ import {
   type Settings,
   isDomainDisabled,
   normalizeHostname,
+  validateSettings,
 } from '../shared/settings';
 
 let settings = $state<Settings>({ ...DEFAULT_SETTINGS });
@@ -22,49 +23,94 @@ const isSiteActive = $derived(settings.enabled && !isSiteDisabled);
 
 // Load state and active tab on mount
 $effect(() => {
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    const tab = tabs[0];
-    if (tab?.id) {
-      activeTabId = tab.id;
-      if (tab.url?.startsWith('http://') || tab.url?.startsWith('https://')) {
-        try {
-          currentHostname = new URL(tab.url).hostname;
-        } catch (_e) {
+  try {
+    if (typeof chrome !== 'undefined' && chrome.tabs?.query) {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (chrome.runtime?.lastError || !tabs || tabs.length === 0) {
           currentHostname = 'Active Page';
+          return;
         }
-      } else if (tab.url?.startsWith('file://')) {
-        currentHostname = 'Local Test Page';
-      } else {
-        currentHostname = 'Safari Page';
-      }
+        const tab = tabs[0];
+        if (tab?.id) {
+          activeTabId = tab.id;
+          if (
+            tab.url?.startsWith('http://') ||
+            tab.url?.startsWith('https://')
+          ) {
+            try {
+              currentHostname = new URL(tab.url).hostname;
+            } catch (_e) {
+              currentHostname = 'Active Page';
+            }
+          } else if (tab.url?.startsWith('file://')) {
+            currentHostname = 'Local Test Page';
+          } else {
+            currentHostname = 'Safari Page';
+          }
+        }
+      });
     }
-  });
+  } catch (_e) {
+    currentHostname = 'Active Page';
+  }
 
-  chrome.storage.local.get(['rcr_settings'], (res) => {
-    if (res.rcr_settings) {
-      settings = { ...DEFAULT_SETTINGS, ...res.rcr_settings };
+  try {
+    if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+      chrome.storage.local.get(['rcr_settings', 'shieldEnabled'], (res) => {
+        if (chrome.runtime?.lastError || !res) return;
+        const loadedSettings = validateSettings({
+          ...DEFAULT_SETTINGS,
+          ...(res.rcr_settings ?? {}),
+        });
+        if (typeof res.shieldEnabled === 'boolean') {
+          loadedSettings.enabled = res.shieldEnabled;
+        }
+        settings = loadedSettings;
+      });
     }
-  });
+  } catch (_e) {}
 });
 
 async function saveSettings(newSettings: Settings) {
-  settings = newSettings;
-  await chrome.storage.local.set({
-    rcr_settings: $state.snapshot(newSettings),
-    shieldEnabled: newSettings.enabled,
-  });
+  const validated = validateSettings(newSettings);
+  settings = validated;
 
-  chrome.action.setBadgeText({ text: newSettings.enabled ? 'ON' : 'OFF' });
-  chrome.action.setBadgeBackgroundColor({
-    color: newSettings.enabled ? '#007AFF' : '#8E8E93',
-  });
-
-  if (activeTabId) {
-    try {
-      chrome.tabs.sendMessage(activeTabId, {
-        type: 'RCR_CONFIG_CHANGED',
-        config: $state.snapshot(newSettings),
+  try {
+    if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+      await chrome.storage.local.set({
+        rcr_settings: $state.snapshot(validated),
+        shieldEnabled: validated.enabled,
       });
+    }
+  } catch (_err) {}
+
+  try {
+    if (typeof chrome !== 'undefined' && chrome.action) {
+      chrome.action.setBadgeText({ text: validated.enabled ? 'ON' : 'OFF' });
+      chrome.action.setBadgeBackgroundColor({
+        color: validated.enabled ? '#007AFF' : '#8E8E93',
+      });
+    }
+  } catch (_err) {}
+
+  if (
+    activeTabId &&
+    typeof chrome !== 'undefined' &&
+    chrome.tabs?.sendMessage
+  ) {
+    try {
+      chrome.tabs.sendMessage(
+        activeTabId,
+        {
+          type: 'RCR_CONFIG_CHANGED',
+          config: $state.snapshot(validated),
+        },
+        () => {
+          if (chrome.runtime?.lastError) {
+            // Tab may not have content script loaded (e.g. settings page)
+          }
+        },
+      );
     } catch (_e) {}
   }
 }
@@ -78,7 +124,11 @@ function toggleCurrentSite() {
   const host = normalizeHostname(currentHostname);
   if (!host) return;
 
-  let list = [...settings.disabledDomains];
+  const currentList = Array.isArray(settings.disabledDomains)
+    ? [...settings.disabledDomains]
+    : [];
+
+  let list = currentList;
   if (isSiteDisabled) {
     list = list.filter((d) => {
       const norm = normalizeHostname(d);
@@ -99,26 +149,44 @@ function toggleFeature(key: keyof Settings) {
 }
 
 async function forceUnlockPage() {
-  if (!activeTabId) return;
+  if (!activeTabId || unlockStatus === 'unlocking') return;
   unlockStatus = 'unlocking';
+
   try {
-    const res = await chrome.tabs.sendMessage(activeTabId, {
-      type: 'RCR_FORCE_UNLOCK',
-    });
-    if (res && res.status === 'unlocked') {
-      unlockStatus = 'success';
+    if (typeof chrome !== 'undefined' && chrome.tabs?.sendMessage) {
+      const res = await new Promise<unknown>((resolve) => {
+        chrome.tabs.sendMessage(
+          activeTabId as number,
+          { type: 'RCR_FORCE_UNLOCK' },
+          (response) => {
+            if (chrome.runtime?.lastError) {
+              resolve(null);
+            } else {
+              resolve(response);
+            }
+          },
+        );
+      });
+
+      if (
+        res &&
+        typeof res === 'object' &&
+        (res as { status?: string }).status === 'unlocked'
+      ) {
+        unlockStatus = 'success';
+      } else {
+        unlockStatus = 'success';
+      }
     } else {
       unlockStatus = 'success';
     }
-    setTimeout(() => {
-      unlockStatus = 'idle';
-    }, 1600);
   } catch (_err) {
     unlockStatus = 'error';
-    setTimeout(() => {
-      unlockStatus = 'idle';
-    }, 1600);
   }
+
+  setTimeout(() => {
+    unlockStatus = 'idle';
+  }, 1600);
 }
 </script>
 

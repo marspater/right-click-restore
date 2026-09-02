@@ -39,21 +39,31 @@ export function handleContentMessage(
   }
 
   if (message.type === 'RCR_FORCE_UNLOCK') {
-    onUnlockTriggered?.();
-    onCleanDOMTree?.();
+    try {
+      onUnlockTriggered?.();
+    } catch (_e) {}
+    try {
+      onCleanDOMTree?.();
+    } catch (_e) {}
     if (unlockEventName && onDispatchEvent) {
       try {
         onDispatchEvent(unlockEventName);
       } catch (_e) {}
     }
-    onShowUnlockToast?.();
+    try {
+      onShowUnlockToast?.();
+    } catch (_e) {}
     sendResponse({ status: 'unlocked' });
     return;
   }
 
   if (message.type === 'RCR_CONFIG_CHANGED' && message.config) {
-    onApplySettings?.(message.config);
-    sendResponse({ status: 'ok' });
+    try {
+      onApplySettings?.(message.config);
+      sendResponse({ status: 'ok' });
+    } catch (_err) {
+      sendResponse({ status: 'error' });
+    }
     return;
   }
 
@@ -104,7 +114,9 @@ export function handleContentMessage(
     for (const node of pendingNodes) {
       if (processed >= BATCH_SIZE) break;
       pendingNodes.delete(node);
-      cleanAddedNodeBase(node, currentSettings);
+      try {
+        cleanAddedNodeBase(node, currentSettings);
+      } catch (_e) {}
       processed++;
     }
 
@@ -120,49 +132,64 @@ export function handleContentMessage(
   function scheduleBatch() {
     if (batchScheduled) return;
     batchScheduled = true;
-    if (typeof requestAnimationFrame === 'function') {
-      requestAnimationFrame(processPendingMutations);
-    } else {
-      setTimeout(processPendingMutations, 16);
+    try {
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(processPendingMutations);
+      } else {
+        setTimeout(processPendingMutations, 16);
+      }
+    } catch (_e) {
+      batchScheduled = false;
     }
   }
 
   function cleanNode(node: Element) {
-    cleanNodeBase(node, currentSettings);
+    try {
+      cleanNodeBase(node, currentSettings);
+    } catch (_e) {}
   }
 
   function cleanDOMTree(root: ParentNode = document) {
-    cleanDOMTreeBase(root, currentSettings);
+    try {
+      cleanDOMTreeBase(root, currentSettings);
+    } catch (_e) {}
   }
 
   function applySettings(settings: Settings) {
-    const validated = validateSettings(settings);
-    currentSettings = effectiveSettings(validated, window.location.hostname);
-
-    const root = document.documentElement;
-    if (root) {
-      root.dataset.rcrEnabled = currentSettings.enabled ? 'true' : 'false';
-      root.dataset.rcrRightClick = currentSettings.restoreRightClick
-        ? 'true'
-        : 'false';
-      root.dataset.rcrSelection = currentSettings.restoreSelection
-        ? 'true'
-        : 'false';
-      root.dataset.rcrAntiShield = currentSettings.antiShield
-        ? 'true'
-        : 'false';
-      root.dataset.rcrForceMode = currentSettings.absoluteForce
-        ? 'true'
-        : 'false';
-      root.dataset.rcrModifierBypass = currentSettings.bypassModifierKey
-        ? 'true'
-        : 'false';
-    }
-
     try {
-      window.dispatchEvent(
-        new CustomEvent(updateEventName, { detail: currentSettings }),
-      );
+      const validated = validateSettings(settings);
+      const hostname =
+        typeof window !== 'undefined' && window.location
+          ? window.location.hostname
+          : '';
+      currentSettings = effectiveSettings(validated, hostname);
+
+      const root =
+        typeof document !== 'undefined' ? document.documentElement : null;
+      if (root) {
+        root.dataset.rcrEnabled = currentSettings.enabled ? 'true' : 'false';
+        root.dataset.rcrRightClick = currentSettings.restoreRightClick
+          ? 'true'
+          : 'false';
+        root.dataset.rcrSelection = currentSettings.restoreSelection
+          ? 'true'
+          : 'false';
+        root.dataset.rcrAntiShield = currentSettings.antiShield
+          ? 'true'
+          : 'false';
+        root.dataset.rcrForceMode = currentSettings.absoluteForce
+          ? 'true'
+          : 'false';
+        root.dataset.rcrModifierBypass = currentSettings.bypassModifierKey
+          ? 'true'
+          : 'false';
+      }
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent(updateEventName, { detail: currentSettings }),
+        );
+      }
     } catch (_e) {}
   }
 
@@ -172,7 +199,11 @@ export function handleContentMessage(
 
     const inject = () => {
       try {
-        if (document.querySelector('script[data-rcr-page-script]')) return;
+        if (
+          typeof document === 'undefined' ||
+          document.querySelector('script[data-rcr-page-script]')
+        )
+          return;
         const script = document.createElement('script');
         script.dataset.rcrPageScript = 'true';
         script.src = chrome.runtime.getURL('page-script.js');
@@ -204,19 +235,35 @@ export function handleContentMessage(
     configRequestInFlight = true;
 
     try {
-      chrome.storage.local.get(['rcr_settings', 'shieldEnabled'], (result) => {
+      if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+        chrome.storage.local.get(
+          ['rcr_settings', 'shieldEnabled'],
+          (result) => {
+            configRequestInFlight = false;
+            if (chrome.runtime?.lastError) {
+              applySettings(DEFAULT_SETTINGS);
+              injectMainWorldScript(currentSettings);
+              return;
+            }
+            const stored = result?.rcr_settings as
+              | Partial<Settings>
+              | undefined;
+            const settings: Settings = validateSettings({
+              ...DEFAULT_SETTINGS,
+              ...(stored ?? {}),
+            });
+            if (typeof result?.shieldEnabled === 'boolean') {
+              settings.enabled = result.shieldEnabled;
+            }
+            applySettings(settings);
+            injectMainWorldScript(currentSettings);
+          },
+        );
+      } else {
         configRequestInFlight = false;
-        const stored = result?.rcr_settings as Partial<Settings> | undefined;
-        const settings: Settings = validateSettings({
-          ...DEFAULT_SETTINGS,
-          ...(stored ?? {}),
-        });
-        if (typeof result?.shieldEnabled === 'boolean') {
-          settings.enabled = result.shieldEnabled;
-        }
-        applySettings(settings);
+        applySettings(DEFAULT_SETTINGS);
         injectMainWorldScript(currentSettings);
-      });
+      }
     } catch (_error) {
       configRequestInFlight = false;
       applySettings(DEFAULT_SETTINGS);
@@ -225,31 +272,39 @@ export function handleContentMessage(
   }
 
   function showUnlockToast() {
-    const root = document.documentElement;
-    if (!root) return;
+    try {
+      const root = document.documentElement;
+      if (!root) return;
 
-    if (unlockToastTimer) clearTimeout(unlockToastTimer);
-    if (unlockToastRemoveTimer) clearTimeout(unlockToastRemoveTimer);
+      if (unlockToastTimer) clearTimeout(unlockToastTimer);
+      if (unlockToastRemoveTimer) clearTimeout(unlockToastRemoveTimer);
 
-    document.getElementById('rcr-unlock-toast')?.remove();
+      document.getElementById('rcr-unlock-toast')?.remove();
 
-    const toast = document.createElement('div');
-    toast.id = 'rcr-unlock-toast';
-    toast.textContent = '🔓 Right-click & selection unlocked';
+      const toast = document.createElement('div');
+      toast.id = 'rcr-unlock-toast';
+      toast.textContent = '🔓 Right-click & selection unlocked';
 
-    root.appendChild(toast);
-    requestAnimationFrame(() => {
-      toast.classList.add('rcr-toast-visible');
-    });
+      root.appendChild(toast);
+      requestAnimationFrame(() => {
+        try {
+          toast.classList.add('rcr-toast-visible');
+        } catch (_e) {}
+      });
 
-    unlockToastTimer = setTimeout(() => {
-      toast.classList.remove('rcr-toast-visible');
-      unlockToastRemoveTimer = setTimeout(() => {
-        toast.remove();
-        unlockToastRemoveTimer = null;
-      }, 300);
-      unlockToastTimer = null;
-    }, 1600);
+      unlockToastTimer = setTimeout(() => {
+        try {
+          toast.classList.remove('rcr-toast-visible');
+        } catch (_e) {}
+        unlockToastRemoveTimer = setTimeout(() => {
+          try {
+            toast.remove();
+          } catch (_e) {}
+          unlockToastRemoveTimer = null;
+        }, 300);
+        unlockToastTimer = null;
+      }, 1600);
+    } catch (_e) {}
   }
 
   function startObserver() {
@@ -261,31 +316,33 @@ export function handleContentMessage(
     )
       return;
 
-    observer = new MutationObserver((mutations) => {
-      if (!currentSettings.enabled) return;
-
-      for (const mutation of mutations) {
-        if (mutation.type === 'childList') {
-          for (const node of mutation.addedNodes) {
-            // Only queue Element nodes; ignore Text, Comment, etc.
-            if (node.nodeType === 1) {
-              pendingNodes.add(node);
-            }
-          }
-        } else if (
-          mutation.type === 'attributes' &&
-          mutation.target instanceof Element
-        ) {
-          cleanNode(mutation.target);
-        }
-      }
-
-      if (pendingNodes.size > 0) {
-        scheduleBatch();
-      }
-    });
-
     try {
+      observer = new MutationObserver((mutations) => {
+        if (!currentSettings.enabled) return;
+
+        for (const mutation of mutations) {
+          try {
+            if (mutation.type === 'childList') {
+              for (const node of mutation.addedNodes) {
+                // Only queue Element nodes; ignore Text, Comment, etc.
+                if (node && node.nodeType === 1) {
+                  pendingNodes.add(node);
+                }
+              }
+            } else if (
+              mutation.type === 'attributes' &&
+              mutation.target instanceof Element
+            ) {
+              cleanNode(mutation.target);
+            }
+          } catch (_e) {}
+        }
+
+        if (pendingNodes.size > 0) {
+          scheduleBatch();
+        }
+      });
+
       observer.observe(document.documentElement, {
         childList: true,
         subtree: true,
@@ -297,11 +354,13 @@ export function handleContentMessage(
 
   // SPA Navigation hooks
   function handleSpaNavigation() {
-    diagnostics.spaRouteChanges++;
-    applySettings(currentSettings);
-    if (currentSettings.enabled) {
-      cleanDOMTree();
-    }
+    try {
+      diagnostics.spaRouteChanges++;
+      applySettings(currentSettings);
+      if (currentSettings.enabled) {
+        cleanDOMTree();
+      }
+    } catch (_e) {}
   }
 
   try {
@@ -312,20 +371,24 @@ export function handleContentMessage(
 
     const origPushState = history.pushState;
     if (origPushState) {
-      history.pushState = function (...args) {
-        const res = origPushState.apply(this, args);
-        handleSpaNavigation();
-        return res;
-      };
+      try {
+        history.pushState = function (...args) {
+          const res = origPushState.apply(this, args);
+          handleSpaNavigation();
+          return res;
+        };
+      } catch (_e) {}
     }
 
     const origReplaceState = history.replaceState;
     if (origReplaceState) {
-      history.replaceState = function (...args) {
-        const res = origReplaceState.apply(this, args);
-        handleSpaNavigation();
-        return res;
-      };
+      try {
+        history.replaceState = function (...args) {
+          const res = origReplaceState.apply(this, args);
+          handleSpaNavigation();
+          return res;
+        };
+      } catch (_e) {}
     }
   } catch (_e) {}
 
@@ -364,10 +427,10 @@ export function handleContentMessage(
     // Extension APIs may be unavailable during Safari teardown.
   }
 
-  if (document.documentElement) {
+  if (typeof document !== 'undefined' && document.documentElement) {
     cleanDOMTree();
     startObserver();
-  } else {
+  } else if (typeof document !== 'undefined') {
     document.addEventListener(
       'DOMContentLoaded',
       () => {

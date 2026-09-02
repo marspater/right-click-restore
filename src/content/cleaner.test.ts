@@ -13,15 +13,19 @@ describe('cleaner module', () => {
 
     // Polyfill webkitUserSelect on CSSStyleDeclaration for happy-dom test environment
     if (window.CSSStyleDeclaration) {
-      Object.defineProperty(window.CSSStyleDeclaration.prototype, 'webkitUserSelect', {
-        get() {
-          return this._webkitUserSelect || '';
+      Object.defineProperty(
+        window.CSSStyleDeclaration.prototype,
+        'webkitUserSelect',
+        {
+          get() {
+            return this._webkitUserSelect || '';
+          },
+          set(v) {
+            this._webkitUserSelect = v;
+          },
+          configurable: true,
         },
-        set(v) {
-          this._webkitUserSelect = v;
-        },
-        configurable: true,
-      });
+      );
     }
 
     Object.assign(globalThis, {

@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { Window } from 'happy-dom';
 import { DEFAULT_SETTINGS } from '../shared/settings';
-import { cleanAddedNode, cleanDOMTree, cleanNode } from './cleaner';
+import {
+  cleanAddedNode,
+  cleanDOMTree,
+  cleanNode,
+  hasScrubbableContent,
+} from './cleaner';
 
 describe('cleaner module', () => {
   let window: Window;
@@ -16,6 +21,34 @@ describe('cleaner module', () => {
       Node: window.Node,
       Element: window.Element,
       HTMLElement: window.HTMLElement,
+    });
+  });
+
+  describe('hasScrubbableContent', () => {
+    test('returns true for elements with scrubbable event attributes', () => {
+      const el = document.createElement('div');
+      el.setAttribute('oncontextmenu', 'return false');
+      expect(hasScrubbableContent(el)).toBe(true);
+    });
+
+    test('returns true for elements with user-select: none', () => {
+      const el = document.createElement('div');
+      el.style.userSelect = 'none';
+      expect(hasScrubbableContent(el)).toBe(true);
+    });
+
+    test('returns true for elements with shadowRoot', () => {
+      const el = document.createElement('div');
+      if (typeof el.attachShadow === 'function') {
+        el.attachShadow({ mode: 'open' });
+        expect(hasScrubbableContent(el)).toBe(true);
+      }
+    });
+
+    test('returns false for ordinary clean elements', () => {
+      const el = document.createElement('p');
+      el.className = 'clean-class';
+      expect(hasScrubbableContent(el)).toBe(false);
     });
   });
 

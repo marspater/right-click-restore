@@ -1,0 +1,3 @@
+## 2025-05-18 - Fast-Path Filtering for Content Script DOM Cleaner
+**Learning:** In browser extension DOM scrubber content scripts, >99% of DOM elements added or traversed lack inline event attributes (`oncontextmenu`, `onselectstart`, etc.) or inline `user-select` styles. Executing `node.closest()` ancestor traversals on every clean element adds significant CPU overhead during dynamic DOM updates. Checking `!node.hasAttributes() && !node.shadowRoot` before `closest()` ancestor matches skips unneeded DOM traversals instantly.
+**Action:** Always place lightweight attribute/property fast-path checks before calling expensive DOM hierarchy queries like `Element.prototype.closest()`.

@@ -6,9 +6,11 @@ import {
 } from '../shared/settings';
 import {
   SCRUB_ATTRS,
+  SCRUB_SELECTOR,
   cleanAddedNode as cleanAddedNodeBase,
   cleanDOMTree as cleanDOMTreeBase,
   cleanNode as cleanNodeBase,
+  hasScrubbableContent,
 } from './cleaner';
 
 export function handleContentMessage(
@@ -324,9 +326,16 @@ export function handleContentMessage(
           try {
             if (mutation.type === 'childList') {
               for (const node of mutation.addedNodes) {
-                // Only queue Element nodes; ignore Text, Comment, etc.
+                // Queue Element nodes that have attributes, shadowRoots, or child elements
                 if (node && node.nodeType === 1) {
-                  pendingNodes.add(node);
+                  const el = node as Element;
+                  if (
+                    el.hasAttributes() ||
+                    el.shadowRoot ||
+                    el.firstElementChild !== null
+                  ) {
+                    pendingNodes.add(node);
+                  }
                 }
               }
             } else if (

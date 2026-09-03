@@ -44,6 +44,34 @@ describe('content script message handler', () => {
     expect(response).toEqual({ status: 'unauthorized' });
   });
 
+  test('rejects messages when sender origin or url is non-extension', () => {
+    (globalThis as unknown as Record<string, unknown>).chrome = {
+      runtime: {
+        id: 'extension-id-123',
+        getURL: (path: string) => `chrome-extension://extension-id-123/${path}`,
+      },
+    };
+
+    let response: unknown;
+    const sendResponse = (res?: unknown) => {
+      response = res;
+    };
+
+    const spoofedSender = {
+      id: 'extension-id-123',
+      origin: 'https://evil.com',
+      url: 'https://evil.com/page',
+    } as chrome.runtime.MessageSender;
+
+    handleContentMessage(
+      { type: 'RCR_FORCE_UNLOCK' },
+      spoofedSender,
+      sendResponse,
+    );
+
+    expect(response).toEqual({ status: 'unauthorized' });
+  });
+
   test('rejects messages when sender has no id', () => {
     (globalThis as unknown as Record<string, unknown>).chrome = {
       runtime: {
@@ -164,12 +192,20 @@ describe('content script message handler', () => {
       id: 'extension-id-123',
     } as chrome.runtime.MessageSender;
 
+    const dummyConfig = {
+      enabled: true,
+      restoreRightClick: true,
+      restoreSelection: true,
+      antiShield: true,
+      absoluteForce: false,
+      bypassModifierKey: true,
+      disabledDomains: [],
+    };
+
     handleContentMessage(
       {
         type: 'RCR_CONFIG_CHANGED',
-        config: { enabled: true } as unknown as import(
-          '../shared/settings',
-        ).Settings,
+        config: dummyConfig,
       },
       authorizedSender,
       sendResponse,

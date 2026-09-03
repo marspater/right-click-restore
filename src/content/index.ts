@@ -23,13 +23,33 @@ export function handleContentMessage(
   onApplySettings?: (config: Settings) => void,
 ) {
   // Validate sender origin to prevent message spoofing from untrusted extension contexts or web scripts
-  if (
-    typeof chrome !== 'undefined' &&
-    chrome.runtime?.id &&
-    sender?.id !== chrome.runtime.id
-  ) {
-    sendResponse({ status: 'unauthorized' });
-    return;
+  if (typeof chrome !== 'undefined' && chrome.runtime?.id) {
+    if (!sender || sender.id !== chrome.runtime.id) {
+      sendResponse({ status: 'unauthorized' });
+      return;
+    }
+
+    const extPrefix =
+      typeof chrome.runtime.getURL === 'function'
+        ? chrome.runtime.getURL('')
+        : '';
+    const isExtensionUri = (uri?: string) =>
+      Boolean(
+        uri &&
+          (uri.startsWith('chrome-extension://') ||
+            uri.startsWith('safari-web-extension://') ||
+            uri.startsWith('moz-extension://') ||
+            (extPrefix && uri.startsWith(extPrefix))),
+      );
+
+    if (sender.origin && !isExtensionUri(sender.origin)) {
+      sendResponse({ status: 'unauthorized' });
+      return;
+    }
+    if (sender.url && !isExtensionUri(sender.url)) {
+      sendResponse({ status: 'unauthorized' });
+      return;
+    }
   }
 
   // Security Hardening: Validate message payload to prevent unhandled TypeErrors on null/non-object messages

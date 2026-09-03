@@ -211,8 +211,15 @@ async function forceUnlockPage() {
     </div>
 
     <!-- Master Apple Switch -->
-    <label class="apple-switch" title="Global Toggle">
-      <input type="checkbox" checked={settings.enabled} onchange={toggleGlobal} aria-label="Toggle Extension Globally" />
+    <label class="apple-switch" title="Toggle Extension Globally">
+      <input
+        type="checkbox"
+        role="switch"
+        checked={settings.enabled}
+        aria-checked={settings.enabled}
+        onchange={toggleGlobal}
+        aria-label="Toggle Extension Globally"
+      />
       <span class="apple-slider"></span>
     </label>
   </header>
@@ -241,119 +248,171 @@ async function forceUnlockPage() {
     </div>
 
     {#if currentHostname && !currentHostname.includes('Safari Page')}
-      <label class="apple-switch apple-switch-sm" title="Toggle protection on this domain">
-        <input type="checkbox" checked={!isSiteDisabled} onchange={toggleCurrentSite} aria-label="Toggle domain protection" />
+      <label class="apple-switch apple-switch-sm" title={`Toggle protection on ${currentHostname}`}>
+        <input
+          type="checkbox"
+          role="switch"
+          checked={!isSiteDisabled}
+          aria-checked={!isSiteDisabled}
+          onchange={toggleCurrentSite}
+          aria-label={`Toggle protection on ${currentHostname}`}
+        />
         <span class="apple-slider"></span>
       </label>
     {/if}
   </section>
 
   <!-- Settings List with Apple Continuous Squircles -->
-  <section class={`glass-card p-1.5 mb-2.5 flex flex-col ${settings.enabled ? '' : 'dimmed'}`}>
+  <section class={`glass-card p-1.5 mb-2.5 flex flex-col ${settings.enabled ? '' : 'dimmed'}`} aria-label="Extension Features">
     <!-- Feature 1: Restore Right Click -->
-    <label class="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 focus-within:ring-2 focus-within:ring-blue-500/40 transition-all cursor-pointer select-none">
+    <label class="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 focus-within:bg-black/5 dark:focus-within:bg-white/5 focus-within:ring-2 focus-within:ring-blue-500/50 transition-all cursor-pointer select-none">
       <div class="flex items-center gap-2.5">
-        <div class="w-5 h-5 rounded-md bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 flex items-center justify-center">
+        <div class="w-5 h-5 rounded-md bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 flex items-center justify-center flex-shrink-0" aria-hidden="true">
           <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
             <path d="M7 11V7a5 5 0 0 1 9.9-1" />
           </svg>
         </div>
         <div>
-          <div class="text-xs font-medium">Restore Right Click</div>
-          <div class="text-[9.5px] text-neutral-500 dark:text-neutral-400">Unlocks native context menu</div>
+          <div id="title-restoreRightClick" class="text-xs font-medium">Restore Right Click</div>
+          <div id="desc-restoreRightClick" class="text-[9.5px] text-neutral-500 dark:text-neutral-400">Unlocks native context menu</div>
         </div>
       </div>
       <span class="apple-switch apple-switch-sm">
-        <input type="checkbox" checked={settings.restoreRightClick} disabled={!settings.enabled} onchange={() => toggleFeature('restoreRightClick')} aria-label="Restore Right Click" />
+        <input
+          type="checkbox"
+          role="switch"
+          checked={settings.restoreRightClick}
+          aria-checked={settings.restoreRightClick}
+          disabled={!settings.enabled}
+          onchange={() => toggleFeature('restoreRightClick')}
+          aria-labelledby="title-restoreRightClick"
+          aria-describedby="desc-restoreRightClick"
+        />
         <span class="apple-slider"></span>
       </span>
     </label>
 
-    <div class="h-[0.5px] bg-neutral-200 dark:bg-white/10 mx-2"></div>
+    <div class="h-[0.5px] bg-neutral-200 dark:bg-white/10 mx-2" aria-hidden="true"></div>
 
     <!-- Feature 2: Allow Selection & Copy -->
-    <label class="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 focus-within:ring-2 focus-within:ring-blue-500/40 transition-all cursor-pointer select-none">
+    <label class="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 focus-within:bg-black/5 dark:focus-within:bg-white/5 focus-within:ring-2 focus-within:ring-blue-500/50 transition-all cursor-pointer select-none">
       <div class="flex items-center gap-2.5">
-        <div class="w-5 h-5 rounded-md bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+        <div class="w-5 h-5 rounded-md bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center flex-shrink-0" aria-hidden="true">
           <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 20h9" />
             <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
           </svg>
         </div>
         <div>
-          <div class="text-xs font-medium">Allow Selection & Copy</div>
-          <div class="text-[9.5px] text-neutral-500 dark:text-neutral-400">Enables text highlight & ⌘C</div>
+          <div id="title-restoreSelection" class="text-xs font-medium">Allow Selection & Copy</div>
+          <div id="desc-restoreSelection" class="text-[9.5px] text-neutral-500 dark:text-neutral-400">Enables text highlight & ⌘C</div>
         </div>
       </div>
       <span class="apple-switch apple-switch-sm">
-        <input type="checkbox" checked={settings.restoreSelection} disabled={!settings.enabled} onchange={() => toggleFeature('restoreSelection')} aria-label="Allow Selection & Copy" />
+        <input
+          type="checkbox"
+          role="switch"
+          checked={settings.restoreSelection}
+          aria-checked={settings.restoreSelection}
+          disabled={!settings.enabled}
+          onchange={() => toggleFeature('restoreSelection')}
+          aria-labelledby="title-restoreSelection"
+          aria-describedby="desc-restoreSelection"
+        />
         <span class="apple-slider"></span>
       </span>
     </label>
 
-    <div class="h-[0.5px] bg-neutral-200 dark:bg-white/10 mx-2"></div>
+    <div class="h-[0.5px] bg-neutral-200 dark:bg-white/10 mx-2" aria-hidden="true"></div>
 
     <!-- Feature 3: Anti-Shield Overlay -->
-    <label class="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 focus-within:ring-2 focus-within:ring-blue-500/40 transition-all cursor-pointer select-none">
+    <label class="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 focus-within:bg-black/5 dark:focus-within:bg-white/5 focus-within:ring-2 focus-within:ring-blue-500/50 transition-all cursor-pointer select-none">
       <div class="flex items-center gap-2.5">
-        <div class="w-5 h-5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+        <div class="w-5 h-5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0" aria-hidden="true">
           <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           </svg>
         </div>
         <div>
-          <div class="text-xs font-medium">Anti-Shield Overlay</div>
-          <div class="text-[9.5px] text-neutral-500 dark:text-neutral-400">Pierces transparent click covers</div>
+          <div id="title-antiShield" class="text-xs font-medium">Anti-Shield Overlay</div>
+          <div id="desc-antiShield" class="text-[9.5px] text-neutral-500 dark:text-neutral-400">Pierces transparent click covers</div>
         </div>
       </div>
       <span class="apple-switch apple-switch-sm">
-        <input type="checkbox" checked={settings.antiShield} disabled={!settings.enabled} onchange={() => toggleFeature('antiShield')} aria-label="Anti-Shield Overlay" />
+        <input
+          type="checkbox"
+          role="switch"
+          checked={settings.antiShield}
+          aria-checked={settings.antiShield}
+          disabled={!settings.enabled}
+          onchange={() => toggleFeature('antiShield')}
+          aria-labelledby="title-antiShield"
+          aria-describedby="desc-antiShield"
+        />
         <span class="apple-slider"></span>
       </span>
     </label>
 
-    <div class="h-[0.5px] bg-neutral-200 dark:bg-white/10 mx-2"></div>
+    <div class="h-[0.5px] bg-neutral-200 dark:bg-white/10 mx-2" aria-hidden="true"></div>
 
     <!-- Feature 4: Absolute Force Mode -->
-    <label class="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 focus-within:ring-2 focus-within:ring-blue-500/40 transition-all cursor-pointer select-none">
+    <label class="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 focus-within:bg-black/5 dark:focus-within:bg-white/5 focus-within:ring-2 focus-within:ring-blue-500/50 transition-all cursor-pointer select-none">
       <div class="flex items-center gap-2.5">
-        <div class="w-5 h-5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+        <div class="w-5 h-5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center flex-shrink-0" aria-hidden="true">
           <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
           </svg>
         </div>
         <div>
-          <div class="text-xs font-medium">Absolute Force Mode</div>
-          <div class="text-[9.5px] text-neutral-500 dark:text-neutral-400">Deep prototype event override</div>
+          <div id="title-absoluteForce" class="text-xs font-medium">Absolute Force Mode</div>
+          <div id="desc-absoluteForce" class="text-[9.5px] text-neutral-500 dark:text-neutral-400">Deep prototype event override</div>
         </div>
       </div>
       <span class="apple-switch apple-switch-sm">
-        <input type="checkbox" checked={settings.absoluteForce} disabled={!settings.enabled} onchange={() => toggleFeature('absoluteForce')} aria-label="Absolute Force Mode" />
+        <input
+          type="checkbox"
+          role="switch"
+          checked={settings.absoluteForce}
+          aria-checked={settings.absoluteForce}
+          disabled={!settings.enabled}
+          onchange={() => toggleFeature('absoluteForce')}
+          aria-labelledby="title-absoluteForce"
+          aria-describedby="desc-absoluteForce"
+        />
         <span class="apple-slider"></span>
       </span>
     </label>
 
-    <div class="h-[0.5px] bg-neutral-200 dark:bg-white/10 mx-2"></div>
+    <div class="h-[0.5px] bg-neutral-200 dark:bg-white/10 mx-2" aria-hidden="true"></div>
 
     <!-- Feature 5: Modifier Key Bypass -->
-    <label class="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 focus-within:ring-2 focus-within:ring-blue-500/40 transition-all cursor-pointer select-none">
+    <label class="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 focus-within:bg-black/5 dark:focus-within:bg-white/5 focus-within:ring-2 focus-within:ring-blue-500/50 transition-all cursor-pointer select-none">
       <div class="flex items-center gap-2.5">
-        <div class="w-5 h-5 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+        <div class="w-5 h-5 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0" aria-hidden="true">
           <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="2" y="4" width="20" height="16" rx="2" />
             <path d="M6 8h.001M10 8h.001M14 8h.001M18 8h.001M8 12h.001M12 12h.001M16 12h.001M7 16h10" />
           </svg>
         </div>
         <div>
-          <div class="text-xs font-medium">Modifier Key Bypass</div>
-          <div class="text-[10px] text-neutral-500 dark:text-neutral-400 mt-0.5 leading-tight">
+          <div id="title-bypassModifierKey" class="text-xs font-medium">Modifier Key Bypass</div>
+          <div id="desc-bypassModifierKey" class="text-[10px] text-neutral-500 dark:text-neutral-400 mt-0.5 leading-tight">
             Hold <kbd>⇧ Shift</kbd> or <kbd>⌥ Option</kbd> + Click
           </div>
         </div>
       </div>
       <span class="apple-switch apple-switch-sm">
-        <input type="checkbox" checked={settings.bypassModifierKey} disabled={!settings.enabled} onchange={() => toggleFeature('bypassModifierKey')} aria-label="Modifier Key Bypass" />
+        <input
+          type="checkbox"
+          role="switch"
+          checked={settings.bypassModifierKey}
+          aria-checked={settings.bypassModifierKey}
+          disabled={!settings.enabled}
+          onchange={() => toggleFeature('bypassModifierKey')}
+          aria-labelledby="title-bypassModifierKey"
+          aria-describedby="desc-bypassModifierKey"
+        />
         <span class="apple-slider"></span>
       </span>
     </label>

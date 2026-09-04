@@ -92,4 +92,17 @@ describe('settings & domain matching', () => {
     expect(result.bypassModifierKey).toBe(false);
     expect(result.disabledDomains).toEqual(['valid.com', 'other.com']);
   });
+
+  test('validateSettings resists prototype pollution and prototype key properties', () => {
+    const payload = JSON.parse(
+      '{"__proto__": {"polluted": true, "enabled": false}, "constructor": {"prototype": {"polluted": true}}}',
+    );
+
+    const validated = validateSettings(payload);
+
+    expect(
+      (Object.prototype as unknown as Record<string, unknown>).polluted,
+    ).toBeUndefined();
+    expect(validated.enabled).toBe(DEFAULT_SETTINGS.enabled);
+  });
 });

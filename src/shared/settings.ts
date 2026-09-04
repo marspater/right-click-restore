@@ -52,7 +52,18 @@ export function validateSettings(raw: unknown): Settings {
 
   const obj = raw as Record<string, unknown>;
 
-  const sanitizeBool = (val: unknown, fallback: boolean): boolean => {
+  // Security Hardening: Ensure own properties only and block dangerous prototype keys
+  const getOwnProperty = (key: string): unknown => {
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+      return undefined;
+    }
+    return Object.prototype.hasOwnProperty.call(obj, key)
+      ? obj[key]
+      : undefined;
+  };
+
+  const sanitizeBool = (key: string, fallback: boolean): boolean => {
+    const val = getOwnProperty(key);
     return typeof val === 'boolean' ? val : fallback;
   };
 
@@ -75,25 +86,25 @@ export function validateSettings(raw: unknown): Settings {
   };
 
   return {
-    enabled: sanitizeBool(obj.enabled, DEFAULT_SETTINGS.enabled),
+    enabled: sanitizeBool('enabled', DEFAULT_SETTINGS.enabled),
     restoreRightClick: sanitizeBool(
-      obj.restoreRightClick,
+      'restoreRightClick',
       DEFAULT_SETTINGS.restoreRightClick,
     ),
     restoreSelection: sanitizeBool(
-      obj.restoreSelection,
+      'restoreSelection',
       DEFAULT_SETTINGS.restoreSelection,
     ),
-    antiShield: sanitizeBool(obj.antiShield, DEFAULT_SETTINGS.antiShield),
+    antiShield: sanitizeBool('antiShield', DEFAULT_SETTINGS.antiShield),
     absoluteForce: sanitizeBool(
-      obj.absoluteForce,
+      'absoluteForce',
       DEFAULT_SETTINGS.absoluteForce,
     ),
     bypassModifierKey: sanitizeBool(
-      obj.bypassModifierKey,
+      'bypassModifierKey',
       DEFAULT_SETTINGS.bypassModifierKey,
     ),
-    disabledDomains: sanitizeDomains(obj.disabledDomains),
+    disabledDomains: sanitizeDomains(getOwnProperty('disabledDomains')),
   };
 }
 

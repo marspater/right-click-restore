@@ -1,4 +1,5 @@
 import {
+  ALL_INTERACTIVE_SELECTORS,
   INTERACTIVE_CONTAINERS,
   INTERACTIVE_ELEMENTS,
 } from '../shared/constants';
@@ -35,9 +36,7 @@ export function isInteractiveEvent(event: Event): boolean {
       if (path && path.length > 0) {
         return path.some(
           (item) =>
-            item instanceof Element &&
-            (item.matches(INTERACTIVE_ELEMENTS) ||
-              item.matches(INTERACTIVE_CONTAINERS)),
+            item instanceof Element && item.matches(ALL_INTERACTIVE_SELECTORS),
         );
       }
     }

@@ -33,7 +33,11 @@ export function cleanNode(
 
   if (settings.restoreRightClick) {
     try {
-      node.removeAttribute('oncontextmenu');
+      // Performance optimization: Avoid calling removeAttribute if attribute is not present,
+      // preventing unnecessary DOM attribute mutation algorithms in the browser.
+      if (node.hasAttribute('oncontextmenu')) {
+        node.removeAttribute('oncontextmenu');
+      }
     } catch (_e) {}
   }
 
@@ -42,7 +46,11 @@ export function cleanNode(
       const attr = SCRUB_ATTRS[i];
       if (attr !== 'oncontextmenu') {
         try {
-          node.removeAttribute(attr);
+          // Performance optimization: Check hasAttribute before removeAttribute to avoid
+          // redundant DOM mutations when attributes are missing (e.g. 5 calls saved per node).
+          if (node.hasAttribute(attr)) {
+            node.removeAttribute(attr);
+          }
         } catch (_e) {}
       }
     }

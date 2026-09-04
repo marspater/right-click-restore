@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { Window } from 'happy-dom';
+import type { Settings } from '../shared/settings';
 import { handleContentMessage } from './index';
 
 describe('content script message handler', () => {
@@ -167,9 +168,7 @@ describe('content script message handler', () => {
     handleContentMessage(
       {
         type: 'RCR_CONFIG_CHANGED',
-        config: { enabled: true } as unknown as import(
-          '../shared/settings',
-        ).Settings,
+        config: { enabled: true } as unknown as Settings,
       },
       authorizedSender,
       sendResponse,

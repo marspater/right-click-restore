@@ -223,16 +223,18 @@ async function forceUnlockPage() {
       <!-- Status Beacon -->
       <div class="flex items-center justify-center flex-shrink-0">
         <span class={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-          isSiteActive
-            ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] ring-2 ring-emerald-500/20'
-            : 'bg-neutral-400 dark:bg-neutral-500 shadow-none'
+          !settings.enabled
+            ? 'bg-neutral-400 dark:bg-neutral-500 shadow-none opacity-60'
+            : isSiteDisabled
+            ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)] ring-2 ring-amber-500/20'
+            : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] ring-2 ring-emerald-500/20'
         }`}></span>
       </div>
 
       <!-- Domain Labels Stack -->
       <div class="min-w-0 flex flex-col justify-center">
         <span class="text-[9.5px] uppercase font-semibold tracking-wider text-neutral-500 dark:text-neutral-400 leading-none">
-          {isSiteActive ? 'Active on Domain' : 'Disabled on Domain'}
+          {!settings.enabled ? 'Extension Paused' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
         </span>
         <span class="text-[12.5px] font-semibold text-neutral-900 dark:text-neutral-100 truncate leading-snug mt-1" title={currentHostname}>
           {currentHostname || 'Loading…'}
@@ -241,8 +243,14 @@ async function forceUnlockPage() {
     </div>
 
     {#if currentHostname && !currentHostname.includes('Safari Page')}
-      <label class="apple-switch apple-switch-sm" title="Toggle protection on this domain">
-        <input type="checkbox" checked={!isSiteDisabled} onchange={toggleCurrentSite} aria-label="Toggle domain protection" />
+      <label class="apple-switch apple-switch-sm" title={!settings.enabled ? 'Extension is globally paused' : 'Toggle protection on this domain'}>
+        <input
+          type="checkbox"
+          checked={!isSiteDisabled}
+          disabled={!settings.enabled}
+          onchange={toggleCurrentSite}
+          aria-label={`Toggle domain protection for ${currentHostname}`}
+        />
         <span class="apple-slider"></span>
       </label>
     {/if}
@@ -251,7 +259,11 @@ async function forceUnlockPage() {
   <!-- Settings List with Apple Continuous Squircles -->
   <section class={`glass-card p-1.5 mb-2.5 flex flex-col ${settings.enabled ? '' : 'dimmed'}`}>
     <!-- Feature 1: Restore Right Click -->
-    <label class="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 focus-within:ring-2 focus-within:ring-blue-500/40 transition-all cursor-pointer select-none">
+    <label class={`flex items-center justify-between p-1.5 rounded-lg transition-all select-none ${
+      settings.enabled
+        ? 'hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer focus-within:ring-2 focus-within:ring-blue-500/40'
+        : 'cursor-not-allowed'
+    }`}>
       <div class="flex items-center gap-2.5">
         <div class="w-5 h-5 rounded-md bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 flex items-center justify-center">
           <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -273,7 +285,11 @@ async function forceUnlockPage() {
     <div class="h-[0.5px] bg-neutral-200 dark:bg-white/10 mx-2"></div>
 
     <!-- Feature 2: Allow Selection & Copy -->
-    <label class="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 focus-within:ring-2 focus-within:ring-blue-500/40 transition-all cursor-pointer select-none">
+    <label class={`flex items-center justify-between p-1.5 rounded-lg transition-all select-none ${
+      settings.enabled
+        ? 'hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer focus-within:ring-2 focus-within:ring-blue-500/40'
+        : 'cursor-not-allowed'
+    }`}>
       <div class="flex items-center gap-2.5">
         <div class="w-5 h-5 rounded-md bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center">
           <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -295,7 +311,11 @@ async function forceUnlockPage() {
     <div class="h-[0.5px] bg-neutral-200 dark:bg-white/10 mx-2"></div>
 
     <!-- Feature 3: Anti-Shield Overlay -->
-    <label class="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 focus-within:ring-2 focus-within:ring-blue-500/40 transition-all cursor-pointer select-none">
+    <label class={`flex items-center justify-between p-1.5 rounded-lg transition-all select-none ${
+      settings.enabled
+        ? 'hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer focus-within:ring-2 focus-within:ring-blue-500/40'
+        : 'cursor-not-allowed'
+    }`}>
       <div class="flex items-center gap-2.5">
         <div class="w-5 h-5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
           <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -316,7 +336,11 @@ async function forceUnlockPage() {
     <div class="h-[0.5px] bg-neutral-200 dark:bg-white/10 mx-2"></div>
 
     <!-- Feature 4: Absolute Force Mode -->
-    <label class="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 focus-within:ring-2 focus-within:ring-blue-500/40 transition-all cursor-pointer select-none">
+    <label class={`flex items-center justify-between p-1.5 rounded-lg transition-all select-none ${
+      settings.enabled
+        ? 'hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer focus-within:ring-2 focus-within:ring-blue-500/40'
+        : 'cursor-not-allowed'
+    }`}>
       <div class="flex items-center gap-2.5">
         <div class="w-5 h-5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center">
           <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -337,7 +361,11 @@ async function forceUnlockPage() {
     <div class="h-[0.5px] bg-neutral-200 dark:bg-white/10 mx-2"></div>
 
     <!-- Feature 5: Modifier Key Bypass -->
-    <label class="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 focus-within:ring-2 focus-within:ring-blue-500/40 transition-all cursor-pointer select-none">
+    <label class={`flex items-center justify-between p-1.5 rounded-lg transition-all select-none ${
+      settings.enabled
+        ? 'hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer focus-within:ring-2 focus-within:ring-blue-500/40'
+        : 'cursor-not-allowed'
+    }`}>
       <div class="flex items-center gap-2.5">
         <div class="w-5 h-5 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center">
           <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -364,9 +392,10 @@ async function forceUnlockPage() {
     <button
       type="button"
       onclick={forceUnlockPage}
-      disabled={unlockStatus === 'unlocking'}
+      disabled={!settings.enabled || unlockStatus === 'unlocking'}
       aria-live="polite"
-      class={`w-full py-2 px-3 rounded-xl font-medium text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed ${
+      title={!settings.enabled ? 'Enable extension to unlock page' : 'Force unlock context menus on this tab'}
+      class={`w-full py-2 px-3 rounded-xl font-medium text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed ${
         unlockStatus === 'success'
           ? 'bg-emerald-500 text-white'
           : unlockStatus === 'error'

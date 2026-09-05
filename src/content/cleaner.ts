@@ -15,6 +15,45 @@ export const SCRUB_ATTRS = [
 
 export const SCRUB_SELECTOR = SCRUB_ATTRS.map((attr) => `[${attr}]`).join(',');
 
+function hasScrubAttribute(node: Element, settings: Settings): boolean {
+  try {
+    if (!node.hasAttributes()) return false;
+
+    if (settings.restoreRightClick && node.hasAttribute('oncontextmenu')) {
+      return true;
+    }
+
+    if (settings.restoreSelection) {
+      for (let i = 0; i < SCRUB_ATTRS.length; i++) {
+        const attr = SCRUB_ATTRS[i];
+        if (attr !== 'oncontextmenu' && node.hasAttribute(attr)) {
+          return true;
+        }
+      }
+    }
+  } catch (_e) {}
+
+  return false;
+}
+
+function checkNeedsUserSelectReset(node: Element, settings: Settings): boolean {
+  if (
+    !settings.restoreSelection ||
+    typeof HTMLElement === 'undefined' ||
+    !(node instanceof HTMLElement)
+  ) {
+    return false;
+  }
+  try {
+    const style = node.style;
+    return (
+      style.userSelect === 'none' ||
+      ('webkitUserSelect' in style && style.webkitUserSelect === 'none')
+    );
+  } catch (_e) {}
+  return false;
+}
+
 export function cleanNode(
   node: unknown,
   settings: Settings = DEFAULT_SETTINGS,
@@ -28,47 +67,12 @@ export function cleanNode(
   // By checking for target attributes/styles BEFORE evaluating node.matches() or node.closest(),
   // we avoid walking up the entire DOM tree to document root matching complex CSS container selectors
   // (.ProseMirror, .monaco-editor, .html5-video-player, ytd-app, etc.) for non-target elements.
-  const isHtml =
-    typeof HTMLElement !== 'undefined' && node instanceof HTMLElement;
-
-  let needsUserSelectReset = false;
-  if (settings.restoreSelection && isHtml) {
-    try {
-      const style = node.style;
-      needsUserSelectReset =
-        style.userSelect === 'none' ||
-        ('webkitUserSelect' in style && style.webkitUserSelect === 'none');
-    } catch (_e) {}
-  }
-
-  let hasScrubAttr = false;
-  if (node.hasAttributes()) {
-    if (settings.restoreRightClick) {
-      try {
-        if (node.hasAttribute('oncontextmenu')) {
-          hasScrubAttr = true;
-        }
-      } catch (_e) {}
-    }
-
-    if (!hasScrubAttr && settings.restoreSelection) {
-      for (let i = 0; i < SCRUB_ATTRS.length; i++) {
-        const attr = SCRUB_ATTRS[i];
-        if (attr !== 'oncontextmenu') {
-          try {
-            if (node.hasAttribute(attr)) {
-              hasScrubAttr = true;
-              break;
-            }
-          } catch (_e) {}
-        }
-      }
-    }
-  }
+  const hasScrub = hasScrubAttribute(node, settings);
+  const needsStyleReset = checkNeedsUserSelectReset(node, settings);
 
   // Fast-path early return: If there are no scrub attributes, no userSelect overrides, and no shadowRoot,
   // there is nothing to clean on this element.
-  if (!hasScrubAttr && !needsUserSelectReset && !node.shadowRoot) {
+  if (!hasScrub && !needsStyleReset && !node.shadowRoot) {
     return;
   }
 
@@ -83,11 +87,9 @@ export function cleanNode(
     return;
   }
 
-  if (settings.restoreRightClick) {
+  if (settings.restoreRightClick && node.hasAttribute('oncontextmenu')) {
     try {
-      if (node.hasAttribute('oncontextmenu')) {
-        node.removeAttribute('oncontextmenu');
-      }
+      node.removeAttribute('oncontextmenu');
     } catch (_e) {}
   }
 
@@ -102,7 +104,7 @@ export function cleanNode(
         } catch (_e) {}
       }
     }
-    if (isHtml) {
+    if (typeof HTMLElement !== 'undefined' && node instanceof HTMLElement) {
       try {
         const style = node.style;
         if (style.userSelect === 'none') style.userSelect = 'auto';

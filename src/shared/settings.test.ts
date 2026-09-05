@@ -17,12 +17,20 @@ describe('settings & domain matching', () => {
     expect(normalizeHostname('   blog.example.org   ')).toBe(
       'blog.example.org',
     );
+    expect(normalizeHostname('.example.com')).toBe('example.com');
+    expect(normalizeHostname('https://sub.example.com:8080/page')).toBe(
+      'sub.example.com',
+    );
     expect(normalizeHostname(123 as unknown as string)).toBe('');
   });
 
   test('matches the exact domain', () => {
     expect(isDomainDisabled('example.com', ['example.com'])).toBe(true);
     expect(isDomainDisabled('www.example.com', ['example.com'])).toBe(true);
+    expect(isDomainDisabled('example.com', ['.example.com'])).toBe(true);
+    expect(isDomainDisabled('https://example.com/path', ['example.com'])).toBe(
+      true,
+    );
     expect(isDomainDisabled('other.com', ['example.com'])).toBe(false);
   });
 

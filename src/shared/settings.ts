@@ -34,6 +34,10 @@ export function normalizeHostname(hostname: string): string {
     .trim()
     .toLowerCase()
     .slice(0, MAX_HOSTNAME_LENGTH)
+    .replace(/^(?:https?:\/\/)?/, '')
+    .split('/')[0]
+    .split(':')[0]
+    .replace(/^\.+/, '')
     .replace(/^www\./, '')
     .replace(/\.$/, '');
 

@@ -20,6 +20,19 @@ describe('settings & domain matching', () => {
     expect(normalizeHostname(123 as unknown as string)).toBe('');
   });
 
+  test('normalizes full URLs, ports, credentials, and malformed inputs to clean hostnames', () => {
+    expect(normalizeHostname('https://example.com/path?query=1#hash')).toBe(
+      'example.com',
+    );
+    expect(
+      normalizeHostname('http://user:pass@sub.example.com:8080/page'),
+    ).toBe('sub.example.com');
+    expect(normalizeHostname('https://www.example.com/')).toBe('example.com');
+    expect(normalizeHostname('example.com:8443')).toBe('example.com');
+    expect(normalizeHostname('..sub.example.com..')).toBe('sub.example.com');
+    expect(normalizeHostname('example.com/some/path')).toBe('example.com');
+  });
+
   test('matches the exact domain', () => {
     expect(isDomainDisabled('example.com', ['example.com'])).toBe(true);
     expect(isDomainDisabled('www.example.com', ['example.com'])).toBe(true);

@@ -30,19 +30,48 @@ export function normalizeHostname(hostname: string): string {
     return cached;
   }
 
-  const normalized = hostname
-    .trim()
-    .toLowerCase()
-    .slice(0, MAX_HOSTNAME_LENGTH)
-    .replace(/^www\./, '')
-    .replace(/\.$/, '');
+  let str = hostname.trim().toLowerCase().slice(0, MAX_HOSTNAME_LENGTH);
+
+  if (str) {
+    let extractedHost = str;
+
+    if (extractedHost.includes('://')) {
+      try {
+        extractedHost = new URL(extractedHost).hostname;
+      } catch (_e) {
+        extractedHost = extractedHost.replace(/^[a-z][a-z0-9+.-]*:\/\//, '');
+      }
+    } else if (
+      extractedHost.includes('/') ||
+      extractedHost.includes('?') ||
+      extractedHost.includes('#') ||
+      extractedHost.includes('@') ||
+      extractedHost.includes(':')
+    ) {
+      try {
+        extractedHost = new URL(`http://${extractedHost}`).hostname;
+      } catch (_e) {
+        // Fallback manual parsing if URL constructor throws
+      }
+    }
+
+    // Manual fallback cleanup for malformed inputs or URL parsing failures
+    extractedHost = extractedHost.split('/')[0].split('?')[0].split('#')[0];
+    extractedHost = extractedHost.split('@').pop() ?? extractedHost;
+    extractedHost = extractedHost.split(':')[0];
+
+    str = extractedHost
+      .replace(/^\.+/, '')
+      .replace(/\.+$/, '')
+      .replace(/^www\./, '');
+  }
 
   if (hostnameCache.size >= MAX_CACHE_SIZE) {
     hostnameCache.clear();
   }
-  hostnameCache.set(hostname, normalized);
+  hostnameCache.set(hostname, str);
 
-  return normalized;
+  return str;
 }
 
 export function validateSettings(raw: unknown): Settings {

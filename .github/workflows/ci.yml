@@ -4,26 +4,35 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   web-extension:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: oven-sh/setup-bun@4bc047ad259df6fc24a6c9b0f9a0cb08cf17fbe5 # v2.0.1
         with:
-          bun-version: latest
-      - run: bun install --frozen-lockfile || bun install
+          bun-version: "1.4.2"
+      - run: bun install --frozen-lockfile --ignore-scripts || bun install --ignore-scripts
       - run: bun run check
       - run: bun test
       - run: bun run build
 
   macos-build:
     runs-on: macos-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: oven-sh/setup-bun@4bc047ad259df6fc24a6c9b0f9a0cb08cf17fbe5 # v2.0.1
         with:
-          bun-version: latest
+          bun-version: "1.4.2"
       - name: Link Bun to standard paths
         run: |
           BUN_PATH=$(which bun)

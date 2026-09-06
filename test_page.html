@@ -276,8 +276,19 @@
       position: absolute;
       inset: 0;
       z-index: 10;
-      background: transparent;
       cursor: default;
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
 
     .input-test {
@@ -463,7 +474,8 @@
           <h2 class="card-title"><span class="badge">TEST 08</span> Rich Input & Single Paste</h2>
           <p class="card-desc">Tests that pasting into form inputs never duplicates or corrupts text.</p>
         </div>
-        <input class="input-test" placeholder="Paste (⌘V) text here to verify clean single paste" />
+        <label for="input-test-paste" class="visually-hidden">Paste test input</label>
+        <input id="input-test-paste" class="input-test" placeholder="Paste (⌘V) text here to verify clean single paste" />
       </div>
 
       <!-- Test 9 -->

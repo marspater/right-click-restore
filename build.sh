@@ -30,7 +30,7 @@ rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
 
 echo "🔧 Building web extension resources..."
-bun install --frozen-lockfile || bun install
+bun install --frozen-lockfile --ignore-scripts || bun install --ignore-scripts
 bun run build
 
 echo "🔨 Building $APP_NAME for macOS..."

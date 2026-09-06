@@ -8,7 +8,7 @@
     "noEmit": true,
     "skipLibCheck": true,
     "isolatedModules": true,
-    "types": ["chrome", "svelte"]
+    "types": ["chrome", "svelte", "bun"]
   },
   "include": ["src/**/*.ts", "src/**/*.svelte", "scripts/**/*.ts"],
   "exclude": ["src/**/*.test.ts"]

@@ -20,7 +20,7 @@ describe('settings & domain matching', () => {
     expect(normalizeHostname(123 as unknown as string)).toBe('');
   });
 
-  test('normalizes full URLs, ports, credentials, and malformed inputs to clean hostnames', () => {
+  test('normalizes full URLs, ports, credentials, IPv6, and malformed inputs to clean hostnames', () => {
     expect(normalizeHostname('https://example.com/path?query=1#hash')).toBe(
       'example.com',
     );
@@ -31,6 +31,9 @@ describe('settings & domain matching', () => {
     expect(normalizeHostname('example.com:8443')).toBe('example.com');
     expect(normalizeHostname('..sub.example.com..')).toBe('sub.example.com');
     expect(normalizeHostname('example.com/some/path')).toBe('example.com');
+    expect(normalizeHostname('http://[2001:db8::1]:8080/index.html')).toBe(
+      '2001:db8::1',
+    );
   });
 
   test('matches the exact domain', () => {

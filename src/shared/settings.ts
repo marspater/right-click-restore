@@ -33,34 +33,39 @@ export function normalizeHostname(hostname: string): string {
   let str = hostname.trim().toLowerCase().slice(0, MAX_HOSTNAME_LENGTH);
 
   if (str) {
-    let extractedHost = str;
+    let extractedHost: string | null = null;
 
-    if (extractedHost.includes('://')) {
+    if (str.includes('://')) {
       try {
-        extractedHost = new URL(extractedHost).hostname;
+        extractedHost = new URL(str).hostname;
       } catch (_e) {
-        extractedHost = extractedHost.replace(/^[a-z][a-z0-9+.-]*:\/\//, '');
+        // Fallback if URL constructor failed with scheme
       }
     } else if (
-      extractedHost.includes('/') ||
-      extractedHost.includes('?') ||
-      extractedHost.includes('#') ||
-      extractedHost.includes('@') ||
-      extractedHost.includes(':')
+      str.includes('/') ||
+      str.includes('?') ||
+      str.includes('#') ||
+      str.includes('@') ||
+      str.includes(':')
     ) {
       try {
-        extractedHost = new URL(`http://${extractedHost}`).hostname;
+        extractedHost = new URL(`http://${str}`).hostname;
       } catch (_e) {
-        // Fallback manual parsing if URL constructor throws
+        // Fallback if URL constructor failed with dummy scheme
       }
     }
 
-    // Manual fallback cleanup for malformed inputs or URL parsing failures
-    extractedHost = extractedHost.split('/')[0].split('?')[0].split('#')[0];
-    extractedHost = extractedHost.split('@').pop() ?? extractedHost;
-    extractedHost = extractedHost.split(':')[0];
+    if (!extractedHost) {
+      // Manual fallback cleanup for malformed inputs or URL parsing failures
+      let fallback = str.replace(/^[a-z][a-z0-9+.-]*:\/\//, '');
+      fallback = fallback.split('/')[0].split('?')[0].split('#')[0];
+      fallback = fallback.split('@').pop() ?? fallback;
+      fallback = fallback.split(':')[0];
+      extractedHost = fallback;
+    }
 
     str = extractedHost
+      .replace(/^\[|\]$/g, '') // Un-bracket IPv6 hostnames if present
       .replace(/^\.+/, '')
       .replace(/\.+$/, '')
       .replace(/^www\./, '');

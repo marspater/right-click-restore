@@ -8,6 +8,7 @@ import {
   type Settings,
   validateSettings,
 } from '../shared/settings';
+import { generateSecureToken } from '../shared/utils';
 
 function getUnshadowedMethod(
   obj: object,
@@ -173,11 +174,7 @@ if (typeof window !== 'undefined') {
     let activeConfig: Settings = { ...DEFAULT_SETTINGS };
 
     // 128-bit cryptographically secure session nonce
-    const sessionNonce =
-      typeof crypto !== 'undefined' && crypto.randomUUID
-        ? crypto.randomUUID()
-        : Math.random().toString(36).slice(2) +
-          Math.random().toString(36).slice(2);
+    const sessionNonce = generateSecureToken();
 
     const channelName = `__rcr_bridge_${sessionNonce}`;
 
@@ -239,6 +236,8 @@ if (typeof window !== 'undefined') {
     // Announce presence immediately in case content script is already listening
     sendHandshake();
 
+    let legacyUnlockEvent: string | undefined;
+
     // Fallback support for legacy injected script element
     try {
       const scriptEl = document.currentScript;
@@ -250,7 +249,7 @@ if (typeof window !== 'undefined') {
           JSON.parse(scriptEl.dataset.initialConfig),
         );
         const legacyUpdate = scriptEl.dataset.updateEvent;
-        const legacyUnlock = scriptEl.dataset.unlockEvent;
+        legacyUnlockEvent = scriptEl.dataset.unlockEvent;
 
         scriptEl.removeAttribute('data-initial-config');
         scriptEl.removeAttribute('data-update-event');
@@ -270,8 +269,8 @@ if (typeof window !== 'undefined') {
             } catch (_err) {}
           });
         }
-        if (legacyUnlock) {
-          window.addEventListener(legacyUnlock, unlockPage);
+        if (legacyUnlockEvent) {
+          window.addEventListener(legacyUnlockEvent, unlockPage);
         }
       }
     } catch (_e) {}
@@ -509,9 +508,9 @@ if (typeof window !== 'undefined') {
       document.addEventListener('contextmenu', (e) => unmaskMedia(e), false);
     } catch (_e) {}
 
-    if (unlockEvent) {
+    if (legacyUnlockEvent) {
       try {
-        window.addEventListener(unlockEvent, () => {
+        window.addEventListener(legacyUnlockEvent, () => {
           try {
             window.oncontextmenu = null;
             document.oncontextmenu = null;

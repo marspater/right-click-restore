@@ -4,6 +4,7 @@ import {
   effectiveSettings,
   validateSettings,
 } from '../shared/settings';
+import { generateSecureToken } from '../shared/utils';
 import {
   SCRUB_ATTRS,
   cleanAddedNode as cleanAddedNodeBase,
@@ -91,14 +92,8 @@ export function handleContentMessage(
 }
 
 (() => {
-  const updateEventName =
-    typeof crypto !== 'undefined' && crypto.randomUUID
-      ? `__rcr_update_${crypto.randomUUID()}`
-      : `__rcr_update_${Math.random().toString(36).substring(2)}`;
-  const unlockEventName =
-    typeof crypto !== 'undefined' && crypto.randomUUID
-      ? `__rcr_unlock_${crypto.randomUUID()}`
-      : `__rcr_unlock_${Math.random().toString(36).substring(2)}`;
+  const updateEventName = `__rcr_update_${generateSecureToken()}`;
+  const unlockEventName = `__rcr_unlock_${generateSecureToken()}`;
 
   let currentSettings: Settings = { ...DEFAULT_SETTINGS };
   let observer: MutationObserver | null = null;

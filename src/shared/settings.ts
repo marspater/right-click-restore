@@ -24,6 +24,8 @@ const MAX_DOMAINS_COUNT = 500;
 const MAX_HOSTNAME_LENGTH = 253;
 
 const HOSTNAME_VALID_CHARS = /^[a-z0-9.-]+$/;
+// biome-ignore lint/suspicious/noControlCharactersInRegex: Intended control character stripping for hostname normalization
+const CONTROL_CHARS_REGEX = /[\u0000-\u001F\u007F]/g;
 
 export function normalizeHostname(hostname: string): string {
   if (typeof hostname !== 'string') return '';
@@ -32,15 +34,8 @@ export function normalizeHostname(hostname: string): string {
     return cached;
   }
 
-  // 1. Strip control characters and null bytes without regex control chars
-  let clean = '';
-  for (let i = 0; i < hostname.length; i++) {
-    const code = hostname.charCodeAt(i);
-    if (code > 31 && code !== 127) {
-      clean += hostname[i];
-    }
-  }
-  clean = clean.trim().toLowerCase();
+  // 1. Strip control characters and null bytes
+  let clean = hostname.replace(CONTROL_CHARS_REGEX, '').trim().toLowerCase();
 
   // 2. If a full URL or protocol-relative string is passed, extract hostname
   if (clean.includes('://') || clean.startsWith('//')) {

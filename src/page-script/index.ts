@@ -3,60 +3,14 @@ import {
   INTERACTIVE_CONTAINERS,
   INTERACTIVE_ELEMENTS,
 } from '../shared/constants';
+import { getUnshadowedMethod, safeClosest, safeMatches } from '../shared/dom';
 import {
   DEFAULT_SETTINGS,
   type Settings,
   validateSettings,
 } from '../shared/settings';
 
-function getUnshadowedMethod(
-  obj: object,
-  methodName: string,
-): ((...args: unknown[]) => unknown) | null {
-  try {
-    let proto = Object.getPrototypeOf(obj);
-    while (proto && proto !== Object.prototype) {
-      const desc = Object.getOwnPropertyDescriptor(proto, methodName);
-      if (desc && typeof desc.value === 'function') {
-        return desc.value;
-      }
-      proto = Object.getPrototypeOf(proto);
-    }
-    // Fallback if defined on mock/plain object in tests
-    const own = Object.getOwnPropertyDescriptor(obj, methodName);
-    if (own && typeof own.value === 'function') {
-      return own.value;
-    }
-  } catch (_e) {}
-  return null;
-}
-
-export function safeMatches(element: Element, selector: string): boolean {
-  try {
-    const fn = getUnshadowedMethod(element, 'matches');
-    if (fn) {
-      return Boolean(fn.call(element, selector));
-    }
-    return element.matches(selector);
-  } catch (_e) {
-    return false;
-  }
-}
-
-export function safeClosest(
-  element: Element,
-  selector: string,
-): Element | null {
-  try {
-    const fn = getUnshadowedMethod(element, 'closest');
-    if (fn) {
-      return fn.call(element, selector) as Element | null;
-    }
-    return element.closest(selector);
-  } catch (_e) {
-    return null;
-  }
-}
+export { safeMatches, safeClosest };
 
 export function isInteractiveNode(node: Node | null): boolean {
   if (!node) return false;

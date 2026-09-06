@@ -2,6 +2,7 @@ import {
   INTERACTIVE_CONTAINERS,
   INTERACTIVE_ELEMENTS,
 } from '../shared/constants';
+import { getUnshadowedGetter, getUnshadowedMethod } from '../shared/dom';
 import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
 
 export const SCRUB_ATTRS = [
@@ -18,48 +19,6 @@ export const SCRUB_SELECTOR = [
   '[style*="user-select"]',
   '[style*="UserSelect"]',
 ].join(',');
-
-function getUnshadowedMethod(
-  obj: object,
-  methodName: string,
-): ((...args: unknown[]) => unknown) | null {
-  try {
-    let proto = Object.getPrototypeOf(obj);
-    while (proto && proto !== Object.prototype) {
-      const desc = Object.getOwnPropertyDescriptor(proto, methodName);
-      if (desc && typeof desc.value === 'function') {
-        return desc.value;
-      }
-      proto = Object.getPrototypeOf(proto);
-    }
-    const own = Object.getOwnPropertyDescriptor(obj, methodName);
-    if (own && typeof own.value === 'function') {
-      return own.value;
-    }
-  } catch (_e) {}
-  return null;
-}
-
-function getUnshadowedGetter(
-  obj: object,
-  propName: string,
-): ((this: unknown) => unknown) | null {
-  try {
-    let proto = Object.getPrototypeOf(obj);
-    while (proto && proto !== Object.prototype) {
-      const desc = Object.getOwnPropertyDescriptor(proto, propName);
-      if (desc && typeof desc.get === 'function') {
-        return desc.get;
-      }
-      proto = Object.getPrototypeOf(proto);
-    }
-    const own = Object.getOwnPropertyDescriptor(obj, propName);
-    if (own && typeof own.get === 'function') {
-      return own.get;
-    }
-  } catch (_e) {}
-  return null;
-}
 
 export function safeMatches(element: Element, selector: string): boolean {
   try {

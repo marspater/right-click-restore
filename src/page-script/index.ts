@@ -3,33 +3,12 @@ import {
   INTERACTIVE_CONTAINERS,
   INTERACTIVE_ELEMENTS,
 } from '../shared/constants';
+import { getUnshadowedMethod } from '../shared/dom';
 import {
   DEFAULT_SETTINGS,
   type Settings,
   validateSettings,
 } from '../shared/settings';
-
-function getUnshadowedMethod(
-  obj: object,
-  methodName: string,
-): ((...args: unknown[]) => unknown) | null {
-  try {
-    let proto = Object.getPrototypeOf(obj);
-    while (proto && proto !== Object.prototype) {
-      const desc = Object.getOwnPropertyDescriptor(proto, methodName);
-      if (desc && typeof desc.value === 'function') {
-        return desc.value;
-      }
-      proto = Object.getPrototypeOf(proto);
-    }
-    // Fallback if defined on mock/plain object in tests
-    const own = Object.getOwnPropertyDescriptor(obj, methodName);
-    if (own && typeof own.value === 'function') {
-      return own.value;
-    }
-  } catch (_e) {}
-  return null;
-}
 
 export function safeMatches(element: Element, selector: string): boolean {
   try {

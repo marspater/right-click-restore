@@ -3,3 +3,5 @@ export const INTERACTIVE_CONTAINERS =
 
 export const INTERACTIVE_ELEMENTS =
   'input, textarea, select, button, [contenteditable], [contenteditable="true"], [role="textbox"], [role="combobox"], [role="button"], [role="menuitem"], [role="dialog"], canvas';
+
+export const ALL_INTERACTIVE_SELECTORS = `${INTERACTIVE_ELEMENTS}, ${INTERACTIVE_CONTAINERS}`;

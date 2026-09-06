@@ -23,6 +23,8 @@ const MAX_CACHE_SIZE = 5000;
 const MAX_DOMAINS_COUNT = 500;
 const MAX_HOSTNAME_LENGTH = 253;
 
+const HOSTNAME_VALID_CHARS = /^[a-z0-9.-]+$/;
+
 export function normalizeHostname(hostname: string): string {
   if (typeof hostname !== 'string') return '';
   const cached = hostnameCache.get(hostname);
@@ -30,19 +32,53 @@ export function normalizeHostname(hostname: string): string {
     return cached;
   }
 
-  const normalized = hostname
-    .trim()
-    .toLowerCase()
+  // 1. Strip control characters and null bytes without regex control chars
+  let clean = '';
+  for (let i = 0; i < hostname.length; i++) {
+    const code = hostname.charCodeAt(i);
+    if (code > 31 && code !== 127) {
+      clean += hostname[i];
+    }
+  }
+  clean = clean.trim().toLowerCase();
+
+  // 2. If a full URL or protocol-relative string is passed, extract hostname
+  if (clean.includes('://') || clean.startsWith('//')) {
+    try {
+      const url = new URL(clean.startsWith('//') ? `http:${clean}` : clean);
+      clean = url.hostname;
+    } catch (_e) {
+      clean = clean.replace(/^[a-z]+:\/\//, '').split('/')[0];
+    }
+  } else {
+    clean = clean.split('/')[0].split('?')[0].split('#')[0];
+  }
+
+  // 3. Strip port if present (e.g. host:8080)
+  clean = clean.replace(/:\d+$/, '');
+
+  // 4. Strip www. prefix and trailing dots
+  clean = clean
     .slice(0, MAX_HOSTNAME_LENGTH)
     .replace(/^www\./, '')
-    .replace(/\.$/, '');
+    .replace(/\.+$/, '');
+
+  // 5. Validate DNS characters (RFC 1123 compliant: a-z, 0-9, hyphens, dots)
+  if (
+    !clean ||
+    !HOSTNAME_VALID_CHARS.test(clean) ||
+    clean.startsWith('.') ||
+    clean.includes('..')
+  ) {
+    clean = '';
+  }
 
   if (hostnameCache.size >= MAX_CACHE_SIZE) {
     hostnameCache.clear();
   }
-  hostnameCache.set(hostname, normalized);
+  hostnameCache.set(hostname, clean);
 
-  return normalized;
+  return clean;
 }
 
 export function validateSettings(raw: unknown): Settings {
@@ -52,7 +88,17 @@ export function validateSettings(raw: unknown): Settings {
 
   const obj = raw as Record<string, unknown>;
 
-  const sanitizeBool = (val: unknown, fallback: boolean): boolean => {
+  const getOwnProperty = (key: string): unknown => {
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+      return undefined;
+    }
+    return Object.prototype.hasOwnProperty.call(obj, key)
+      ? obj[key]
+      : undefined;
+  };
+
+  const sanitizeBool = (key: string, fallback: boolean): boolean => {
+    const val = getOwnProperty(key);
     return typeof val === 'boolean' ? val : fallback;
   };
 
@@ -75,25 +121,25 @@ export function validateSettings(raw: unknown): Settings {
   };
 
   return {
-    enabled: sanitizeBool(obj.enabled, DEFAULT_SETTINGS.enabled),
+    enabled: sanitizeBool('enabled', DEFAULT_SETTINGS.enabled),
     restoreRightClick: sanitizeBool(
-      obj.restoreRightClick,
+      'restoreRightClick',
       DEFAULT_SETTINGS.restoreRightClick,
     ),
     restoreSelection: sanitizeBool(
-      obj.restoreSelection,
+      'restoreSelection',
       DEFAULT_SETTINGS.restoreSelection,
     ),
-    antiShield: sanitizeBool(obj.antiShield, DEFAULT_SETTINGS.antiShield),
+    antiShield: sanitizeBool('antiShield', DEFAULT_SETTINGS.antiShield),
     absoluteForce: sanitizeBool(
-      obj.absoluteForce,
+      'absoluteForce',
       DEFAULT_SETTINGS.absoluteForce,
     ),
     bypassModifierKey: sanitizeBool(
-      obj.bypassModifierKey,
+      'bypassModifierKey',
       DEFAULT_SETTINGS.bypassModifierKey,
     ),
-    disabledDomains: sanitizeDomains(obj.disabledDomains),
+    disabledDomains: sanitizeDomains(getOwnProperty('disabledDomains')),
   };
 }
 

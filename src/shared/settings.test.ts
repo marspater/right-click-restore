@@ -20,6 +20,13 @@ describe('settings & domain matching', () => {
     expect(normalizeHostname(123 as unknown as string)).toBe('');
   });
 
+  test('sanitizes hostnames containing schemes, ports, and invalid characters', () => {
+    expect(normalizeHostname('https://evil.com/path')).toBe('evil.com');
+    expect(normalizeHostname('http://sub.evil.com:8080')).toBe('sub.evil.com');
+    expect(normalizeHostname('evil.com\0extra')).toBe('evil.comextra');
+    expect(normalizeHostname('bad_domain!@#$')).toBe('');
+  });
+
   test('matches the exact domain', () => {
     expect(isDomainDisabled('example.com', ['example.com'])).toBe(true);
     expect(isDomainDisabled('www.example.com', ['example.com'])).toBe(true);
@@ -91,5 +98,25 @@ describe('settings & domain matching', () => {
     expect(result.absoluteForce).toBe(DEFAULT_SETTINGS.absoluteForce);
     expect(result.bypassModifierKey).toBe(false);
     expect(result.disabledDomains).toEqual(['valid.com', 'other.com']);
+  });
+
+  test('validateSettings resists prototype pollution and prototype key properties', () => {
+    const protoObj = { enabled: false };
+    const inherited = Object.create(protoObj);
+
+    const validatedInherited = validateSettings(inherited);
+    // Should ignore inherited properties and use default
+    expect(validatedInherited.enabled).toBe(DEFAULT_SETTINGS.enabled);
+
+    const payload = JSON.parse(
+      '{"__proto__": {"polluted": true, "enabled": false}, "constructor": {"prototype": {"polluted": true}}}',
+    );
+
+    const validated = validateSettings(payload);
+
+    expect(
+      (Object.prototype as unknown as Record<string, unknown>).polluted,
+    ).toBeUndefined();
+    expect(validated.enabled).toBe(DEFAULT_SETTINGS.enabled);
   });
 });

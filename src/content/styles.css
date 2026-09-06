@@ -1,49 +1,9 @@
 /*
- * RightClickRestore Scoped CSS
- * Driven by HTML dataset attributes synchronized live from popup settings.
+ * RightClickRestore Core Protection Styles
+ * Hardened: No public HTML dataset selectors to eliminate DOM fingerprinting.
  */
 
-/* 1. Dynamic Text Selection Restoration (Active only when both Global & Selection toggles are ON) */
-html[data-rcr-enabled="true"][data-rcr-selection="true"] body,
-html[data-rcr-enabled="true"][data-rcr-selection="true"] p,
-html[data-rcr-enabled="true"][data-rcr-selection="true"]
-  div:not([class*="ytp-"]):not(.html5-video-player):not(.ProseMirror):not(
-    .monaco-editor
-  ),
-html[data-rcr-enabled="true"][data-rcr-selection="true"]
-  span:not([class*="ytp-"]):not(.html5-video-player *),
-html[data-rcr-enabled="true"][data-rcr-selection="true"] h1,
-html[data-rcr-enabled="true"][data-rcr-selection="true"] h2,
-html[data-rcr-enabled="true"][data-rcr-selection="true"] h3,
-html[data-rcr-enabled="true"][data-rcr-selection="true"] h4,
-html[data-rcr-enabled="true"][data-rcr-selection="true"] h5,
-html[data-rcr-enabled="true"][data-rcr-selection="true"] h6,
-html[data-rcr-enabled="true"][data-rcr-selection="true"] article,
-html[data-rcr-enabled="true"][data-rcr-selection="true"] section,
-html[data-rcr-enabled="true"][data-rcr-selection="true"] aside,
-html[data-rcr-enabled="true"][data-rcr-selection="true"] main,
-html[data-rcr-enabled="true"][data-rcr-selection="true"] header,
-html[data-rcr-enabled="true"][data-rcr-selection="true"] footer,
-html[data-rcr-enabled="true"][data-rcr-selection="true"] li,
-html[data-rcr-enabled="true"][data-rcr-selection="true"] td,
-html[data-rcr-enabled="true"][data-rcr-selection="true"] th,
-html[data-rcr-enabled="true"][data-rcr-selection="true"] dt,
-html[data-rcr-enabled="true"][data-rcr-selection="true"] dd,
-html[data-rcr-enabled="true"][data-rcr-selection="true"] blockquote,
-html[data-rcr-enabled="true"][data-rcr-selection="true"] pre,
-html[data-rcr-enabled="true"][data-rcr-selection="true"] code,
-html[data-rcr-enabled="true"][data-rcr-selection="true"] figcaption {
-  -webkit-user-select: text !important;
-  user-select: text !important;
-}
-
-/* 2. Media Clickability (Active only when Anti-Shield toggle is ON) */
-html[data-rcr-enabled="true"][data-rcr-anti-shield="true"] img,
-html[data-rcr-enabled="true"][data-rcr-anti-shield="true"] video {
-  pointer-events: auto !important;
-}
-
-/* 3. Input & Rich Text Editor Protection (Always preserved) */
+/* 1. Input & Rich Text Editor Protection (Always preserved) */
 [contenteditable],
 [contenteditable="true"],
 [contenteditable="true"] *,
@@ -63,28 +23,7 @@ button,
   user-select: auto !important;
 }
 
-/* 4. Force Unlock Toast */
-#rcr-unlock-toast {
-  position: fixed;
-  top: 18px;
-  left: 50%;
-  transform: translateX(-50%) translateY(-10px);
-  z-index: 2147483647;
-  background: rgba(20, 24, 35, 0.94);
-  color: #ffffff;
-  padding: 8px 18px;
-  border-radius: 9999px;
-  font: 600 12.5px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-  border: 0.5px solid rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  pointer-events: none;
-  transition: opacity 0.25s ease, transform 0.25s ease;
-  opacity: 0;
-}
-
-#rcr-unlock-toast.rcr-toast-visible {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
+/* 2. Unmasked overlay helper */
+.rcr-unmasked-overlay {
+  pointer-events: none !important;
 }

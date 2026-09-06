@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 110;
+	objectVersion = 56;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -327,20 +327,20 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2700;
-				LastUpgradeCheck = 2700;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
 				TargetAttributes = {
 					44B0238F303771BB001C20BE = {
-						CreatedOnToolsVersion = 27.0;
+						CreatedOnToolsVersion = 15.0;
 					};
 					44B023A1303771BB001C20BE = {
-						CreatedOnToolsVersion = 27.0;
+						CreatedOnToolsVersion = 15.0;
 					};
 					44B023AD303771BB001C20BE = {
-						CreatedOnToolsVersion = 27.0;
+						CreatedOnToolsVersion = 15.0;
 					};
 					44B023B7303771BB001C20BE = {
-						CreatedOnToolsVersion = 27.0;
+						CreatedOnToolsVersion = 15.0;
 					};
 				};
 			};
@@ -353,7 +353,7 @@
 			);
 			mainGroup = 44B0237C303771BB001C20BE;
 			minimizedProjectReferenceProxies = 1;
-			preferredProjectObjectVersion = 77;
+			preferredProjectObjectVersion = 56;
 			productRefGroup = 44B02391303771BB001C20BE /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -433,7 +433,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "export PATH=\"/opt/homebrew/bin:$HOME/.bun/bin:$PATH\"\ncd \"${SRCROOT}/../..\"\nbun run build";
+			shellScript = "export PATH=\"/opt/homebrew/bin:/usr/local/bin:$HOME/.bun/bin:$PATH\"\nif command -v bun >/dev/null 2>&1; then\n  cd \"${SRCROOT}/../..\" && bun run build\nelif [ -d \"${SRCROOT}/Shared (Extension)/Resources\" ]; then\n  echo \"note: bun not found in PATH, using pre-built resources\"\nelse\n  echo \"error: bun is required to build extension resources\" >&2\n  exit 1\nfi";
 		};
 		FF05D1EF3FC49822EE67FD42 /* Bun esbuild */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -451,7 +451,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "export PATH=\"/opt/homebrew/bin:$HOME/.bun/bin:$PATH\"\ncd \"${SRCROOT}/../..\"\nbun run build";
+			shellScript = "export PATH=\"/opt/homebrew/bin:/usr/local/bin:$HOME/.bun/bin:$PATH\"\nif command -v bun >/dev/null 2>&1; then\n  cd \"${SRCROOT}/../..\" && bun run build\nelif [ -d \"${SRCROOT}/Shared (Extension)/Resources\" ]; then\n  echo \"note: bun not found in PATH, using pre-built resources\"\nelse\n  echo \"error: bun is required to build extension resources\" >&2\n  exit 1\nfi";
 		};
 /* End PBXShellScriptBuildPhase section */
 

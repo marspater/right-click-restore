@@ -1,7 +1,16 @@
 import { describe, expect, test } from 'bun:test';
-import { INTERACTIVE_CONTAINERS, INTERACTIVE_ELEMENTS } from './constants';
+import {
+  ALL_INTERACTIVE_SELECTORS,
+  INTERACTIVE_CONTAINERS,
+  INTERACTIVE_ELEMENTS,
+} from './constants';
 
 describe('interactive element selectors', () => {
+  test('ALL_INTERACTIVE_SELECTORS combines containers and elements', () => {
+    expect(ALL_INTERACTIVE_SELECTORS).toContain(INTERACTIVE_ELEMENTS);
+    expect(ALL_INTERACTIVE_SELECTORS).toContain(INTERACTIVE_CONTAINERS);
+  });
+
   test('INTERACTIVE_CONTAINERS contains expected selectors', () => {
     expect(INTERACTIVE_CONTAINERS).toContain('.ProseMirror');
     expect(INTERACTIVE_CONTAINERS).toContain('.monaco-editor');

@@ -137,6 +137,45 @@ describe('cleaner module', () => {
         expect(inner.hasAttribute('oncontextmenu')).toBe(false);
       }
     });
+
+    test('resists DOM clobbering when element properties are shadowed by child inputs', () => {
+      const form = document.createElement('form');
+      form.setAttribute('oncontextmenu', 'return false');
+
+      // DOM clobbering: input with name="matches" clobbers form.matches!
+      const inputMatches = document.createElement('input');
+      inputMatches.setAttribute('name', 'matches');
+      form.appendChild(inputMatches);
+
+      // DOM clobbering: input with name="closest" clobbers form.closest!
+      const inputClosest = document.createElement('input');
+      inputClosest.setAttribute('name', 'closest');
+      form.appendChild(inputClosest);
+
+      // DOM clobbering: input with name="removeAttribute" clobbers form.removeAttribute!
+      const inputRemoveAttr = document.createElement('input');
+      inputRemoveAttr.setAttribute('name', 'removeAttribute');
+      form.appendChild(inputRemoveAttr);
+
+      // Explicitly define own properties to simulate WebKit named-property DOM clobbering
+      Object.defineProperty(form, 'matches', {
+        value: inputMatches,
+        configurable: true,
+      });
+      Object.defineProperty(form, 'closest', {
+        value: inputClosest,
+        configurable: true,
+      });
+      Object.defineProperty(form, 'removeAttribute', {
+        value: inputRemoveAttr,
+        configurable: true,
+      });
+
+      expect(() => cleanNode(form, DEFAULT_SETTINGS)).not.toThrow();
+      expect(Element.prototype.hasAttribute.call(form, 'oncontextmenu')).toBe(
+        false,
+      );
+    });
   });
 
   describe('cleanAddedNode', () => {
@@ -199,6 +238,19 @@ describe('cleaner module', () => {
 
       expect(container.hasAttribute('oncontextmenu')).toBe(false);
       expect(child.hasAttribute('oncut')).toBe(false);
+    });
+
+    test('cleans nodes that only have inline user-select style without event attributes', () => {
+      const container = document.createElement('div');
+      const paragraph = document.createElement('p');
+      paragraph.style.userSelect = 'none';
+      container.appendChild(paragraph);
+      document.body.appendChild(container);
+
+      cleanDOMTree(container, DEFAULT_SETTINGS);
+
+      expect(paragraph.style.userSelect).toBe('auto');
+      container.remove();
     });
   });
 });

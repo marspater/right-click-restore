@@ -23,13 +23,33 @@ export function handleContentMessage(
   onApplySettings?: (config: Settings) => void,
 ) {
   // Validate sender origin to prevent message spoofing from untrusted extension contexts or web scripts
-  if (
-    typeof chrome !== 'undefined' &&
-    chrome.runtime?.id &&
-    sender?.id !== chrome.runtime.id
-  ) {
-    sendResponse({ status: 'unauthorized' });
-    return;
+  if (typeof chrome !== 'undefined' && chrome.runtime?.id) {
+    if (!sender || sender.id !== chrome.runtime.id) {
+      sendResponse({ status: 'unauthorized' });
+      return;
+    }
+
+    const extPrefix =
+      typeof chrome.runtime.getURL === 'function'
+        ? chrome.runtime.getURL('')
+        : '';
+    const isExtensionUri = (uri?: string) =>
+      Boolean(
+        uri &&
+          (uri.startsWith('chrome-extension://') ||
+            uri.startsWith('safari-web-extension://') ||
+            uri.startsWith('moz-extension://') ||
+            (extPrefix && uri.startsWith(extPrefix))),
+      );
+
+    if (sender.origin && !isExtensionUri(sender.origin)) {
+      sendResponse({ status: 'unauthorized' });
+      return;
+    }
+    if (sender.url && !isExtensionUri(sender.url)) {
+      sendResponse({ status: 'unauthorized' });
+      return;
+    }
   }
 
   // Security Hardening: Validate message payload to prevent unhandled TypeErrors on null/non-object messages
@@ -81,30 +101,24 @@ export function handleContentMessage(
       : `__rcr_unlock_${Math.random().toString(36).substring(2)}`;
 
   let currentSettings: Settings = { ...DEFAULT_SETTINGS };
-  let mainWorldInjected = false;
   let observer: MutationObserver | null = null;
   let unlockToastTimer: ReturnType<typeof setTimeout> | null = null;
   let unlockToastRemoveTimer: ReturnType<typeof setTimeout> | null = null;
   let configRequestInFlight = false;
 
-  // Diagnostics counters (privacy-safe: strictly integer counters, no URLs/content)
+  // Internal diagnostics counters (lexical scope only, zero global window footprint)
   const diagnostics = {
-    pageScriptInjected: false,
     observerBatchesProcessed: 0,
     elementsCleaned: 0,
     unlockTriggered: 0,
     spaRouteChanges: 0,
   };
 
-  const globalWin = (typeof window !== 'undefined'
-    ? window
-    : {}) as unknown as Record<string, unknown>;
-  globalWin.__RCR_DIAGNOSTICS__ = diagnostics;
-
-  // Coalesced mutation processing queue
+  // Coalesced mutation processing queue with DoS protection
   const pendingNodes = new Set<Node>();
   let batchScheduled = false;
   const BATCH_SIZE = 50;
+  const MAX_PENDING_NODES = 1000;
 
   function processPendingMutations() {
     batchScheduled = false;
@@ -155,6 +169,84 @@ export function handleContentMessage(
     } catch (_e) {}
   }
 
+  let bridgeChannel: string | null = null;
+  let bridgeNonce: string | null = null;
+
+  function notifyPageScript(type: 'UPDATE' | 'UNLOCK', config?: Settings) {
+    if (bridgeChannel && bridgeNonce && typeof window !== 'undefined') {
+      try {
+        window.dispatchEvent(
+          new CustomEvent(bridgeChannel, {
+            detail: {
+              nonce: bridgeNonce,
+              type,
+              config,
+            },
+          }),
+        );
+      } catch (_e) {}
+    }
+  }
+
+  try {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('__rcr_handshake__', (e: Event) => {
+        try {
+          const detail = (e as CustomEvent)?.detail;
+          if (
+            detail &&
+            typeof detail.channel === 'string' &&
+            typeof detail.nonce === 'string'
+          ) {
+            bridgeChannel = detail.channel;
+            bridgeNonce = detail.nonce;
+            notifyPageScript('UPDATE', currentSettings);
+          }
+        } catch (_err) {}
+      });
+
+      // Request handshake from page-script if it already ran at document_start
+      window.dispatchEvent(new CustomEvent('__rcr_handshake_req__'));
+    }
+  } catch (_e) {}
+
+  const STYLE_ID = '__rcr_selection_style__';
+
+  function updateInjectedStyles() {
+    try {
+      if (typeof document === 'undefined') return;
+      let styleEl = document.getElementById(
+        STYLE_ID,
+      ) as HTMLStyleElement | null;
+      if (currentSettings.enabled && currentSettings.restoreSelection) {
+        if (!styleEl) {
+          styleEl = document.createElement('style');
+          styleEl.id = STYLE_ID;
+          styleEl.textContent = `
+            body, p, div:not([class*="ytp-"]):not(.html5-video-player):not(.ProseMirror):not(.monaco-editor),
+            span:not([class*="ytp-"]):not(.html5-video-player *),
+            h1, h2, h3, h4, h5, h6, article, section, aside, main, header, footer,
+            li, td, th, dt, dd, blockquote, pre, code, figcaption {
+              -webkit-user-select: text !important;
+              user-select: text !important;
+            }
+            [contenteditable], [contenteditable="true"], [contenteditable="true"] *,
+            .ProseMirror, .ProseMirror *, .monaco-editor, .monaco-editor *,
+            input, textarea, select, button,
+            .html5-video-player, .html5-video-player *,
+            [class*="ytp-"], [class*="ytp-"] * {
+              -webkit-user-select: auto !important;
+              user-select: auto !important;
+            }
+          `;
+          (document.head || document.documentElement)?.appendChild(styleEl);
+        }
+      } else {
+        styleEl?.remove();
+      }
+    } catch (_e) {}
+  }
+
   function applySettings(settings: Settings) {
     try {
       const validated = validateSettings(settings);
@@ -164,70 +256,19 @@ export function handleContentMessage(
           : '';
       currentSettings = effectiveSettings(validated, hostname);
 
-      const root =
-        typeof document !== 'undefined' ? document.documentElement : null;
-      if (root) {
-        root.dataset.rcrEnabled = currentSettings.enabled ? 'true' : 'false';
-        root.dataset.rcrRightClick = currentSettings.restoreRightClick
-          ? 'true'
-          : 'false';
-        root.dataset.rcrSelection = currentSettings.restoreSelection
-          ? 'true'
-          : 'false';
-        root.dataset.rcrAntiShield = currentSettings.antiShield
-          ? 'true'
-          : 'false';
-        root.dataset.rcrForceMode = currentSettings.absoluteForce
-          ? 'true'
-          : 'false';
-        root.dataset.rcrModifierBypass = currentSettings.bypassModifierKey
-          ? 'true'
-          : 'false';
-      }
+      // Dynamically apply selection styles without polluting root DOM dataset
+      updateInjectedStyles();
 
+      // Secure cryptographic bridge notification
+      notifyPageScript('UPDATE', currentSettings);
+
+      // Legacy fallback event dispatch
       if (typeof window !== 'undefined') {
         window.dispatchEvent(
           new CustomEvent(updateEventName, { detail: currentSettings }),
         );
       }
     } catch (_e) {}
-  }
-
-  function injectMainWorldScript(initialConfig: Settings) {
-    if (mainWorldInjected) return;
-    mainWorldInjected = true;
-
-    const inject = () => {
-      try {
-        if (
-          typeof document === 'undefined' ||
-          document.querySelector('script[data-rcr-page-script]')
-        )
-          return;
-        const script = document.createElement('script');
-        script.dataset.rcrPageScript = 'true';
-        script.src = chrome.runtime.getURL('page-script.js');
-        script.dataset.initialConfig = JSON.stringify(initialConfig);
-        script.dataset.updateEvent = updateEventName;
-        script.dataset.unlockEvent = unlockEventName;
-        (
-          document.head ||
-          document.documentElement ||
-          document.body
-        )?.appendChild(script);
-        diagnostics.pageScriptInjected = true;
-      } catch (_e) {}
-    };
-
-    try {
-      if (document.head || document.documentElement || document.body) {
-        inject();
-      } else {
-        document.addEventListener('DOMContentLoaded', inject, { once: true });
-      }
-    } catch (_error) {
-      mainWorldInjected = false;
-    }
   }
 
   function loadSettings() {
@@ -242,7 +283,6 @@ export function handleContentMessage(
             configRequestInFlight = false;
             if (chrome.runtime?.lastError) {
               applySettings(DEFAULT_SETTINGS);
-              injectMainWorldScript(currentSettings);
               return;
             }
             const stored = result?.rcr_settings as
@@ -256,18 +296,15 @@ export function handleContentMessage(
               settings.enabled = result.shieldEnabled;
             }
             applySettings(settings);
-            injectMainWorldScript(currentSettings);
           },
         );
       } else {
         configRequestInFlight = false;
         applySettings(DEFAULT_SETTINGS);
-        injectMainWorldScript(currentSettings);
       }
     } catch (_error) {
       configRequestInFlight = false;
       applySettings(DEFAULT_SETTINGS);
-      injectMainWorldScript(currentSettings);
     }
   }
 
@@ -279,26 +316,64 @@ export function handleContentMessage(
       if (unlockToastTimer) clearTimeout(unlockToastTimer);
       if (unlockToastRemoveTimer) clearTimeout(unlockToastRemoveTimer);
 
-      document.getElementById('rcr-unlock-toast')?.remove();
+      document.getElementById('__rcr_toast_host__')?.remove();
+
+      const host = document.createElement('div');
+      host.id = '__rcr_toast_host__';
+      host.style.cssText =
+        'position:fixed;top:0;left:0;width:100%;pointer-events:none;z-index:2147483647;';
+
+      const shadow = host.attachShadow
+        ? host.attachShadow({ mode: 'closed' })
+        : host;
+
+      const style = document.createElement('style');
+      style.textContent = `
+        .toast {
+          position: fixed;
+          top: 18px;
+          left: 50%;
+          transform: translateX(-50%) translateY(-10px);
+          background: rgba(20, 24, 35, 0.94);
+          color: #ffffff;
+          padding: 8px 18px;
+          border-radius: 9999px;
+          font: 600 12.5px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+          border: 0.5px solid rgba(255, 255, 255, 0.25);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          pointer-events: none;
+          transition: opacity 0.25s ease, transform 0.25s ease;
+          opacity: 0;
+        }
+        .toast.visible {
+          opacity: 1;
+          transform: translateX(-50%) translateY(0);
+        }
+      `;
 
       const toast = document.createElement('div');
-      toast.id = 'rcr-unlock-toast';
+      toast.className = 'toast';
       toast.textContent = '🔓 Right-click & selection unlocked';
 
-      root.appendChild(toast);
+      shadow.appendChild(style);
+      shadow.appendChild(toast);
+      root.appendChild(host);
+
       requestAnimationFrame(() => {
         try {
-          toast.classList.add('rcr-toast-visible');
+          toast.classList.add('visible');
         } catch (_e) {}
       });
 
       unlockToastTimer = setTimeout(() => {
         try {
-          toast.classList.remove('rcr-toast-visible');
+          toast.classList.remove('visible');
         } catch (_e) {}
         unlockToastRemoveTimer = setTimeout(() => {
           try {
-            toast.remove();
+            host.remove();
           } catch (_e) {}
           unlockToastRemoveTimer = null;
         }, 300);
@@ -338,7 +413,11 @@ export function handleContentMessage(
           } catch (_e) {}
         }
 
-        if (pendingNodes.size > 0) {
+        // Bounded queue protection: prevent memory bloat on heavy churn
+        if (pendingNodes.size >= MAX_PENDING_NODES) {
+          pendingNodes.clear();
+          cleanDOMTree();
+        } else if (pendingNodes.size > 0) {
           scheduleBatch();
         }
       });
@@ -368,28 +447,6 @@ export function handleContentMessage(
     window.addEventListener('hashchange', handleSpaNavigation, {
       passive: true,
     });
-
-    const origPushState = history.pushState;
-    if (origPushState) {
-      try {
-        history.pushState = function (...args) {
-          const res = origPushState.apply(this, args);
-          handleSpaNavigation();
-          return res;
-        };
-      } catch (_e) {}
-    }
-
-    const origReplaceState = history.replaceState;
-    if (origReplaceState) {
-      try {
-        history.replaceState = function (...args) {
-          const res = origReplaceState.apply(this, args);
-          handleSpaNavigation();
-          return res;
-        };
-      } catch (_e) {}
-    }
   } catch (_e) {}
 
   function handleMessage(
@@ -401,7 +458,10 @@ export function handleContentMessage(
       message,
       sender,
       sendResponse,
-      () => diagnostics.unlockTriggered++,
+      () => {
+        diagnostics.unlockTriggered++;
+        notifyPageScript('UNLOCK');
+      },
       cleanDOMTree,
       (name) => window.dispatchEvent(new CustomEvent(name)),
       unlockEventName,

@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { Window } from 'happy-dom';
+import type { Settings } from '../shared/settings';
 import {
+  handlePageScriptMessage,
   isInteractiveEvent,
   isInteractiveNode,
   isModifierPressed,
@@ -53,6 +55,20 @@ describe('page-script helpers', () => {
       expect(isInteractiveNode(select)).toBe(true);
       expect(isInteractiveNode(button)).toBe(true);
       expect(isInteractiveNode(canvas)).toBe(true);
+    });
+
+    test('returns true for child elements nested inside buttons or interactive elements', () => {
+      const button = document.createElement('button');
+      const span = document.createElement('span');
+      span.textContent = 'Click me';
+      button.appendChild(span);
+      expect(isInteractiveNode(span)).toBe(true);
+
+      const customBtn = document.createElement('div');
+      customBtn.setAttribute('role', 'button');
+      const icon = document.createElement('i');
+      customBtn.appendChild(icon);
+      expect(isInteractiveNode(icon)).toBe(true);
     });
 
     test('returns true for elements with contenteditable attribute', () => {
@@ -168,20 +184,71 @@ describe('page-script helpers', () => {
     });
   });
 
-  describe('isModifierPressed', () => {
-    test('returns true when shiftKey or altKey is pressed', () => {
-      expect(isModifierPressed({ shiftKey: true } as unknown as Event)).toBe(
-        true,
+  describe('isInteractiveNode DOM clobbering resistance', () => {
+    test('resists DOM clobbering when child inputs shadow matches or closest', () => {
+      const form = document.createElement('form');
+      const inputMatches = document.createElement('input');
+      inputMatches.setAttribute('name', 'matches');
+      form.appendChild(inputMatches);
+
+      Object.defineProperty(form, 'matches', {
+        value: inputMatches,
+        configurable: true,
+      });
+
+      expect(() => isInteractiveNode(form)).not.toThrow();
+      expect(isInteractiveNode(form)).toBe(false);
+    });
+  });
+
+  describe('handlePageScriptMessage', () => {
+    test('rejects messages with missing or invalid nonce', () => {
+      let updated = false;
+      const accepted = handlePageScriptMessage(
+        { nonce: 'wrong-nonce', type: 'UPDATE', config: { enabled: false } },
+        'secret-nonce',
+        () => {
+          updated = true;
+        },
       );
-      expect(isModifierPressed({ altKey: true } as unknown as Event)).toBe(
-        true,
+
+      expect(accepted).toBe(false);
+      expect(updated).toBe(false);
+    });
+
+    test('accepts valid UPDATE message with matching nonce', () => {
+      let newConfig: Settings | null = null;
+      const accepted = handlePageScriptMessage(
+        {
+          nonce: 'valid-nonce-123',
+          type: 'UPDATE',
+          config: { enabled: false, restoreRightClick: false },
+        },
+        'valid-nonce-123',
+        (config) => {
+          newConfig = config;
+        },
       );
-      expect(
-        isModifierPressed({
-          shiftKey: false,
-          altKey: false,
-        } as unknown as Event),
-      ).toBe(false);
+
+      expect(accepted).toBe(true);
+      expect(newConfig).not.toBeNull();
+      expect(newConfig.enabled).toBe(false);
+      expect(newConfig.restoreRightClick).toBe(false);
+    });
+
+    test('accepts valid UNLOCK message with matching nonce', () => {
+      let unlocked = false;
+      const accepted = handlePageScriptMessage(
+        { nonce: 'valid-nonce-123', type: 'UNLOCK' },
+        'valid-nonce-123',
+        undefined,
+        () => {
+          unlocked = true;
+        },
+      );
+
+      expect(accepted).toBe(true);
+      expect(unlocked).toBe(true);
     });
   });
 });

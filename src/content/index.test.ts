@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { Window } from 'happy-dom';
+import type { Settings } from '../shared/settings';
 import { handleContentMessage } from './index';
 
 describe('content script message handler', () => {
@@ -38,6 +39,34 @@ describe('content script message handler', () => {
     handleContentMessage(
       { type: 'RCR_FORCE_UNLOCK' },
       unauthorizedSender,
+      sendResponse,
+    );
+
+    expect(response).toEqual({ status: 'unauthorized' });
+  });
+
+  test('rejects messages when sender origin or url is non-extension', () => {
+    (globalThis as unknown as Record<string, unknown>).chrome = {
+      runtime: {
+        id: 'extension-id-123',
+        getURL: (path: string) => `chrome-extension://extension-id-123/${path}`,
+      },
+    };
+
+    let response: unknown;
+    const sendResponse = (res?: unknown) => {
+      response = res;
+    };
+
+    const spoofedSender = {
+      id: 'extension-id-123',
+      origin: 'https://evil.com',
+      url: 'https://evil.com/page',
+    } as chrome.runtime.MessageSender;
+
+    handleContentMessage(
+      { type: 'RCR_FORCE_UNLOCK' },
+      spoofedSender,
       sendResponse,
     );
 
@@ -167,9 +196,7 @@ describe('content script message handler', () => {
     handleContentMessage(
       {
         type: 'RCR_CONFIG_CHANGED',
-        config: { enabled: true } as unknown as import(
-          '../shared/settings',
-        ).Settings,
+        config: { enabled: true } as unknown as Settings,
       },
       authorizedSender,
       sendResponse,

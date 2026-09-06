@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
-import { handleInstalled, handleStartup, syncBadge } from './index';
+import {
+  handleInstalled,
+  handleStartup,
+  handleStorageChange,
+  syncBadge,
+} from './index';
 
 describe('background script', () => {
   let storageState: Record<string, unknown> = {};
@@ -118,6 +123,18 @@ describe('background script', () => {
     expect(badgeText).toBe('ON');
 
     expect(() => handleStartup()).not.toThrow();
+    expect(badgeText).toBe('ON');
+  });
+
+  test('handleStorageChange syncs badge on shieldEnabled storage changes', () => {
+    handleStorageChange({ shieldEnabled: { newValue: false } }, 'local');
+    expect(badgeText).toBe('OFF');
+
+    handleStorageChange({ shieldEnabled: { newValue: true } }, 'local');
+    expect(badgeText).toBe('ON');
+
+    // Ignores other storage areas
+    handleStorageChange({ shieldEnabled: { newValue: false } }, 'sync');
     expect(badgeText).toBe('ON');
   });
 });

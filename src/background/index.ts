@@ -64,9 +64,19 @@ export function handleStartup() {
   }
 }
 
-if (typeof chrome !== 'undefined' && chrome.runtime) {
+export function handleStorageChange(
+  changes: Record<string, { newValue?: unknown }>,
+  areaName: string,
+) {
+  if (areaName === 'local' && changes.shieldEnabled) {
+    syncBadge(changes.shieldEnabled.newValue !== false);
+  }
+}
+
+if (typeof chrome !== 'undefined') {
   try {
-    chrome.runtime.onInstalled?.addListener(handleInstalled);
-    chrome.runtime.onStartup?.addListener(handleStartup);
+    chrome.runtime?.onInstalled?.addListener(handleInstalled);
+    chrome.runtime?.onStartup?.addListener(handleStartup);
+    chrome.storage?.onChanged?.addListener(handleStorageChange);
   } catch (_err) {}
 }

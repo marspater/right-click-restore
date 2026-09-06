@@ -31,49 +31,47 @@ struct ContentView: View {
     @State private var isChecking = false
 
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 18) {
             // Header: App Icon & Title
-            ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color.blue, Color.cyan],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
+            VStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color(red: 0.0, green: 0.48, blue: 1.0),
+                                    Color(red: 0.0, green: 0.38, blue: 0.8)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
                         )
-                    )
-                    .frame(width: 64, height: 64)
-                    .shadow(color: Color.blue.opacity(0.35), radius: 10, x: 0, y: 5)
+                        .frame(width: 64, height: 64)
+                        .shadow(color: Color.blue.opacity(0.28), radius: 8, x: 0, y: 4)
 
-                Image(systemName: "shield.lefthalf.filled.badge.checkmark")
-                    .font(.system(size: 32, weight: .semibold))
-                    .foregroundStyle(.white)
-            }
+                    Image(systemName: "checkmark.shield.fill")
+                        .font(.system(size: 32, weight: .medium))
+                        .foregroundStyle(.white)
+                }
 
-            VStack(spacing: 6) {
-                Text("RightClickRestore")
-                    .font(.title2.weight(.bold))
+                VStack(spacing: 4) {
+                    Text("RightClickRestore")
+                        .font(.system(size: 19, weight: .bold))
+                        .tracking(-0.2)
 
-                Text("Restores right-click context menus, text selection, and copy operations across hostile websites.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: 300)
+                    Text("Restores right-click menus, text selection, and copy operations across hostile websites.")
+                        .font(.system(size: 12.5))
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: 300)
+                }
             }
 
             // Live Extension Status Card
             HStack(spacing: 12) {
-                ZStack {
-                    Circle()
-                        .fill(statusColor)
-                        .frame(width: 10, height: 10)
-
-                    if state == .enabled {
-                        Circle()
-                            .stroke(statusColor.opacity(0.4), lineWidth: 3)
-                            .frame(width: 18, height: 18)
-                    }
-                }
+                Circle()
+                    .fill(statusColor)
+                    .frame(width: 9, height: 9)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(statusTitle)
@@ -88,9 +86,11 @@ struct ContentView: View {
 
                 Button(action: checkExtensionState) {
                     Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 12, weight: .semibold))
                         .rotationEffect(.degrees(isChecking ? 360 : 0))
                         .animation(isChecking ? .linear(duration: 0.8).repeatForever(autoreverses: false) : .default, value: isChecking)
+                        .padding(4)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
@@ -104,30 +104,31 @@ struct ContentView: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+                    .stroke(Color.primary.opacity(0.08), lineWidth: 0.5)
             )
-            .frame(maxWidth: 330)
+            .frame(maxWidth: 320)
 
             // Primary Action Button
             Button(action: openSafariPreferences) {
-                HStack(spacing: 8) {
-                    Text("Manage Extension in Safari…")
-                        .fontWeight(.semibold)
+                HStack(spacing: 6) {
+                    Text("Manage in Safari Extensions…")
+                        .font(.system(size: 13, weight: .semibold))
                     Image(systemName: "arrow.up.right.square")
+                        .font(.system(size: 12, weight: .medium))
                 }
                 .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .frame(maxWidth: 330)
+            .controlSize(.regular)
+            .frame(maxWidth: 320)
 
-            // HIG Calm Tip
-            Text("💡 Tip: Hold Shift while right-clicking anywhere to force native menus.")
-                .font(.caption2)
+            // Calm Shortcut Tip
+            Text("Tip: Hold ⇧ Shift while clicking to summon native menu anywhere")
+                .font(.system(size: 11))
                 .foregroundStyle(.secondary)
         }
-        .padding(28)
-        .frame(width: 380, height: 380)
+        .padding(24)
+        .frame(width: 360, height: 360)
         .background(.ultraThinMaterial)
         .onAppear {
             checkExtensionState()
@@ -179,6 +180,16 @@ struct ContentView: View {
     private func checkExtensionState() {
         guard !isChecking else { return }
         isChecking = true
+
+        // Timeout safeguard to prevent indefinite hang if extension query stalls
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+            if self.isChecking {
+                self.isChecking = false
+                if self.state == .checking {
+                    self.state = .disabled
+                }
+            }
+        }
 
         SFSafariExtensionManager.getStateOfSafariExtension(withIdentifier: extensionBundleIdentifier) { safariState, _ in
             DispatchQueue.main.async {
@@ -242,9 +253,9 @@ class ViewController: NSViewController {
             window.titleVisibility = .hidden
             window.styleMask.insert(.fullSizeContentView)
             window.isMovableByWindowBackground = true
-            window.setContentSize(NSSize(width: 380, height: 380))
-            window.minSize = NSSize(width: 380, height: 380)
-            window.maxSize = NSSize(width: 380, height: 380)
+            window.setContentSize(NSSize(width: 360, height: 360))
+            window.minSize = NSSize(width: 360, height: 360)
+            window.maxSize = NSSize(width: 360, height: 360)
             window.center()
         }
     }

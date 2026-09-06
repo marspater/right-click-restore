@@ -18,19 +18,28 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
     func beginRequest(with context: NSExtensionContext) {
         let request = context.inputItems.first as? NSExtensionItem
 
-        var payload: [String: Any] = ["status": "ok"]
+        var status = "ok"
 
+        // Safely validate input message payload without echoing unvalidated arbitrary data
         if let userInfo = request?.userInfo {
+            let rawMessage: Any?
             if #available(iOS 15.0, macOS 11.0, *) {
-                if let message = userInfo[SFExtensionMessageKey] {
-                    payload["message"] = message
+                rawMessage = userInfo[SFExtensionMessageKey]
+            } else {
+                rawMessage = userInfo["message"]
+            }
+
+            if let dict = rawMessage as? [String: Any] {
+                // Ensure request action is recognized or safe
+                if let action = dict["action"] as? String {
+                    if action.count > 64 {
+                        status = "invalid_action"
+                    }
                 }
-            } else if let message = userInfo["message"] {
-                payload["message"] = message
             }
         }
 
-        // Return clean acknowledgement without logging sensitive payload content to system logs
+        let payload: [String: Any] = ["status": status]
         let response = NSExtensionItem()
         if #available(iOS 15.0, macOS 11.0, *) {
             response.userInfo = [SFExtensionMessageKey: payload]

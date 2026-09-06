@@ -2,9 +2,76 @@
 
 :root {
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Icons",
-    "Helvetica Neue", Helvetica, Arial, sans-serif;
+    system-ui, sans-serif;
+
+  /* Semantic Tokens - Light Mode */
+  --bg-popover: rgba(246, 246, 248, 0.92);
+  --bg-card: rgba(255, 255, 255, 0.76);
+  --bg-card-hover: rgba(255, 255, 255, 0.92);
+  --bg-row-hover: rgba(0, 0, 0, 0.035);
+  --bg-badge: rgba(0, 0, 0, 0.04);
+  --bg-kbd: rgba(0, 0, 0, 0.06);
+
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-divider: rgba(60, 60, 67, 0.1);
+  --border-kbd: rgba(0, 0, 0, 0.12);
+
+  --text-primary: #1c1c1e;
+  --text-secondary: #636366;
+  --text-tertiary: #8e8e93;
+
   --accent-blue: #007aff;
+  --accent-blue-hover: #0066d6;
   --accent-green: #34c759;
+  --accent-green-hover: #2db84f;
+  --accent-orange: #ff9500;
+  --accent-red: #ff3b30;
+  --accent-red-hover: #e03228;
+
+  --switch-track-off: rgba(120, 120, 128, 0.22);
+  --switch-knob-shadow: 0 1px 3px rgba(0, 0, 0, 0.18), 0 0.5px 1px
+    rgba(0, 0, 0, 0.1);
+
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 0.5px 1px rgba(0, 0, 0, 0.02);
+  --shadow-btn: 0 1px 2px rgba(0, 0, 0, 0.08);
+
+  --radius-card: 12px;
+  --radius-btn: 10px;
+  --radius-icon: 8px;
+  --radius-kbd: 5px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-popover: rgba(30, 30, 32, 0.9);
+    --bg-card: rgba(45, 45, 48, 0.65);
+    --bg-card-hover: rgba(55, 55, 60, 0.8);
+    --bg-row-hover: rgba(255, 255, 255, 0.06);
+    --bg-badge: rgba(255, 255, 255, 0.06);
+    --bg-kbd: rgba(255, 255, 255, 0.12);
+
+    --border-subtle: rgba(255, 255, 255, 0.09);
+    --border-divider: rgba(255, 255, 255, 0.08);
+    --border-kbd: rgba(255, 255, 255, 0.18);
+
+    --text-primary: #ffffff;
+    --text-secondary: rgba(235, 235, 245, 0.72);
+    --text-tertiary: rgba(235, 235, 245, 0.45);
+
+    --accent-blue: #0a84ff;
+    --accent-blue-hover: #2693ff;
+    --accent-green: #30d158;
+    --accent-green-hover: #3ce065;
+    --accent-orange: #ff9f0a;
+    --accent-red: #ff453a;
+    --accent-red-hover: #ff5c52;
+
+    --switch-track-off: rgba(120, 120, 128, 0.32);
+    --switch-knob-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+
+    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.28);
+    --shadow-btn: 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
 }
 
 body {
@@ -12,54 +79,41 @@ body {
   padding: 0;
   font-family: var(--font-sans);
   background-color: transparent;
-  color: #1d1d1f;
+  color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 .popover-root {
-  width: 310px;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(28px) saturate(190%);
-  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  width: 324px;
+  padding: 14px 14px 12px;
+  background: var(--bg-popover);
+  backdrop-filter: blur(32px) saturate(190%);
+  -webkit-backdrop-filter: blur(32px) saturate(190%);
   box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  body {
-    color: #f5f5f7;
-  }
-  .popover-root {
-    background: rgba(30, 30, 30, 0.8);
-  }
-}
-
-/* Translucent Glass Cards */
+/* Apple Inset Grouped Glass Cards */
 .glass-card {
-  background: rgba(255, 255, 255, 0.65);
-  border: 0.5px solid rgba(0, 0, 0, 0.08);
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03), 0 4px 12px rgba(0, 0, 0, 0.02);
+  background: var(--bg-card);
+  border: 0.5px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  transition: background 0.18s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.18s
+    cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
 }
 
-@media (prefers-color-scheme: dark) {
-  .glass-card {
-    background: rgba(255, 255, 255, 0.06);
-    border: 0.5px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-  }
-}
-
-/* Apple Standard Toggle Switch */
+/* Master Apple Toggle Switch */
 .apple-switch {
   position: relative;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   width: 38px;
   height: 22px;
   flex-shrink: 0;
+  cursor: pointer;
 }
 
 .apple-switch input {
@@ -67,18 +121,19 @@ body {
   width: 0;
   height: 0;
   position: absolute;
+  pointer-events: none;
 }
 
 .apple-slider {
   position: absolute;
-  cursor: pointer;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(120, 120, 128, 0.2);
-  transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: var(--switch-track-off);
+  transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   border-radius: 9999px;
+  box-sizing: border-box;
 }
 
 .apple-slider:before {
@@ -88,10 +143,10 @@ body {
   width: 18px;
   left: 2px;
   bottom: 2px;
-  background-color: white;
-  transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: #ffffff;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--switch-knob-shadow);
 }
 
 .apple-switch input:checked + .apple-slider {
@@ -100,17 +155,6 @@ body {
 
 .apple-switch input:checked + .apple-slider:before {
   transform: translateX(16px);
-}
-
-/* Accessible Focus States */
-.apple-switch input:focus-visible + .apple-slider {
-  outline: 2px solid var(--accent-blue);
-  outline-offset: 2px;
-}
-
-button:focus-visible {
-  outline: 2px solid var(--accent-blue);
-  outline-offset: 2px;
 }
 
 /* Small Variant for List Items */
@@ -130,25 +174,77 @@ button:focus-visible {
   transform: translateX(14px);
 }
 
+/* Accessible Focus States */
+.apple-switch input:focus-visible + .apple-slider {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+/* Inset Settings Row */
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.12s ease;
+}
+
+.settings-row:hover {
+  background-color: var(--bg-row-hover);
+}
+
+.settings-row:focus-within {
+  background-color: var(--bg-row-hover);
+}
+
+.settings-divider {
+  height: 0.5px;
+  background-color: var(--border-divider);
+  margin: 0 8px;
+}
+
+/* Dimmed Inactive State */
 .dimmed {
-  opacity: 0.45;
+  opacity: 0.42;
+  filter: grayscale(0.65);
   pointer-events: none;
-  filter: grayscale(0.5);
-  transition: all 0.2s ease;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s
+    cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Styled Keycap Badge */
 kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-family: var(--font-sans);
-  background: rgba(0, 0, 0, 0.06);
-  border: 0.5px solid rgba(0, 0, 0, 0.12);
-  border-radius: 4px;
-  padding: 1px 4px;
-  font-size: 9.5px;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1;
+  background: var(--bg-kbd);
+  color: var(--text-secondary);
+  border: 0.5px solid var(--border-kbd);
+  border-radius: var(--radius-kbd);
+  padding: 2px 4px;
+  vertical-align: baseline;
 }
 
-@media (prefers-color-scheme: dark) {
-  kbd {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.2);
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

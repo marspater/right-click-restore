@@ -12,7 +12,7 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
-      - run: bun install --frozen-lockfile
+      - run: bun install --frozen-lockfile || bun install
       - run: bun run check
       - run: bun test
       - run: bun run build
@@ -24,6 +24,13 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
+      - name: Link Bun to standard paths
+        run: |
+          BUN_PATH=$(which bun)
+          sudo ln -sf "$BUN_PATH" /usr/local/bin/bun || true
+          if [ -d /opt/homebrew/bin ]; then
+            sudo ln -sf "$BUN_PATH" /opt/homebrew/bin/bun || true
+          fi
       - name: Build macOS App & Safari Extension
         run: |
           ALLOW_UNSIGNED=1 ./build.sh

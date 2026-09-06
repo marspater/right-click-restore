@@ -1,4 +1,5 @@
 import {
+  ALL_INTERACTIVE_SELECTORS,
   INTERACTIVE_CONTAINERS,
   INTERACTIVE_ELEMENTS,
 } from '../shared/constants';
@@ -8,6 +9,55 @@ import {
   validateSettings,
 } from '../shared/settings';
 
+function getUnshadowedMethod(
+  obj: object,
+  methodName: string,
+): ((...args: unknown[]) => unknown) | null {
+  try {
+    let proto = Object.getPrototypeOf(obj);
+    while (proto && proto !== Object.prototype) {
+      const desc = Object.getOwnPropertyDescriptor(proto, methodName);
+      if (desc && typeof desc.value === 'function') {
+        return desc.value;
+      }
+      proto = Object.getPrototypeOf(proto);
+    }
+    // Fallback if defined on mock/plain object in tests
+    const own = Object.getOwnPropertyDescriptor(obj, methodName);
+    if (own && typeof own.value === 'function') {
+      return own.value;
+    }
+  } catch (_e) {}
+  return null;
+}
+
+export function safeMatches(element: Element, selector: string): boolean {
+  try {
+    const fn = getUnshadowedMethod(element, 'matches');
+    if (fn) {
+      return Boolean(fn.call(element, selector));
+    }
+    return element.matches(selector);
+  } catch (_e) {
+    return false;
+  }
+}
+
+export function safeClosest(
+  element: Element,
+  selector: string,
+): Element | null {
+  try {
+    const fn = getUnshadowedMethod(element, 'closest');
+    if (fn) {
+      return fn.call(element, selector) as Element | null;
+    }
+    return element.closest(selector);
+  } catch (_e) {
+    return null;
+  }
+}
+
 export function isInteractiveNode(node: Node | null): boolean {
   if (!node) return false;
   try {
@@ -16,8 +66,9 @@ export function isInteractiveNode(node: Node | null): boolean {
       curr = curr.parentElement;
     }
     if (curr instanceof Element) {
-      if (curr.matches(INTERACTIVE_ELEMENTS)) return true;
-      if (curr.closest(INTERACTIVE_CONTAINERS)) return true;
+      if (safeMatches(curr, INTERACTIVE_ELEMENTS)) return true;
+      if (safeClosest(curr, INTERACTIVE_CONTAINERS)) return true;
+      if (safeClosest(curr, INTERACTIVE_ELEMENTS)) return true;
     }
   } catch (_e) {}
   return false;
@@ -30,14 +81,14 @@ export function isInteractiveNode(node: Node | null): boolean {
 export function isInteractiveEvent(event: Event): boolean {
   if (!event) return false;
   try {
-    if (typeof event.composedPath === 'function') {
-      const path = event.composedPath();
-      if (path && path.length > 0) {
+    const composedPathFn = getUnshadowedMethod(event, 'composedPath');
+    if (composedPathFn) {
+      const path = composedPathFn.call(event) as unknown[];
+      if (Array.isArray(path) && path.length > 0) {
         return path.some(
           (item) =>
             item instanceof Element &&
-            (item.matches(INTERACTIVE_ELEMENTS) ||
-              item.matches(INTERACTIVE_CONTAINERS)),
+            safeMatches(item, ALL_INTERACTIVE_SELECTORS),
         );
       }
     }
@@ -72,20 +123,123 @@ export const SELECTION_EVENTS = new Set([
 
 const unmaskTimers = new WeakMap<Element, number>();
 
+export function handlePageScriptMessage(
+  detail: unknown,
+  expectedNonce: string,
+  onConfigUpdated?: (config: Settings) => void,
+  onUnlock?: () => void,
+): boolean {
+  if (!detail || typeof detail !== 'object') return false;
+  const payload = detail as {
+    nonce?: unknown;
+    type?: unknown;
+    config?: unknown;
+  };
+
+  // Cryptographic nonce validation
+  if (
+    typeof expectedNonce !== 'string' ||
+    expectedNonce.length === 0 ||
+    payload.nonce !== expectedNonce
+  ) {
+    return false;
+  }
+
+  if (payload.type === 'UPDATE' && payload.config) {
+    const validated = validateSettings(payload.config);
+    onConfigUpdated?.(validated);
+    return true;
+  }
+
+  if (payload.type === 'UNLOCK') {
+    onUnlock?.();
+    return true;
+  }
+
+  return false;
+}
+
 if (typeof window !== 'undefined') {
-  const globalWin = window as unknown as Record<string, unknown>;
+  const INIT_SYMBOL = Symbol.for('__rcr_active__');
+  const isAlreadyInitialized =
+    typeof Event !== 'undefined' &&
+    Boolean(
+      (Event.prototype.preventDefault as unknown as Record<symbol, boolean>)?.[
+        INIT_SYMBOL
+      ],
+    );
 
-  // Prevent double-initialization in complex multi-frame setups
-  if (!globalWin.__RCR_PAGE_SCRIPT_INITIALIZED__) {
-    globalWin.__RCR_PAGE_SCRIPT_INITIALIZED__ = true;
-
+  if (!isAlreadyInitialized) {
     let activeConfig: Settings = { ...DEFAULT_SETTINGS };
-    let updateEvent: string | undefined;
-    let unlockEvent: string | undefined;
 
-    // Read initial configuration directly from the injecting script's dataset.
-    // Because this script executes synchronously when injected by content.js,
-    // the configuration is read before any hostile page script can mutate it.
+    // 128-bit cryptographically secure session nonce
+    const sessionNonce =
+      typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : Math.random().toString(36).slice(2) +
+          Math.random().toString(36).slice(2);
+
+    const channelName = `__rcr_bridge_${sessionNonce}`;
+
+    const unlockPage = () => {
+      try {
+        window.oncontextmenu = null;
+        document.oncontextmenu = null;
+        if (document.documentElement)
+          document.documentElement.oncontextmenu = null;
+        if (document.body) document.body.oncontextmenu = null;
+        window.onselectstart = null;
+        document.onselectstart = null;
+        if (document.documentElement)
+          document.documentElement.onselectstart = null;
+        if (document.body) document.body.onselectstart = null;
+        window.ondragstart = null;
+        document.ondragstart = null;
+        window.oncopy = null;
+        document.oncopy = null;
+        if (document.documentElement) document.documentElement.oncopy = null;
+        if (document.body) document.body.oncopy = null;
+      } catch (_e) {}
+    };
+
+    // Listen on the unguessable private session channel
+    try {
+      window.addEventListener(channelName, (e: Event) => {
+        try {
+          const customEvent = e as CustomEvent;
+          handlePageScriptMessage(
+            customEvent.detail,
+            sessionNonce,
+            (newConfig) => {
+              activeConfig = newConfig;
+            },
+            unlockPage,
+          );
+        } catch (_err) {}
+      });
+    } catch (_e) {}
+
+    const sendHandshake = () => {
+      try {
+        window.dispatchEvent(
+          new CustomEvent('__rcr_handshake__', {
+            detail: { channel: channelName, nonce: sessionNonce },
+          }),
+        );
+      } catch (_e) {}
+    };
+
+    // Bidirectional handshake: respond if content script requested handshake probe
+    try {
+      window.addEventListener('__rcr_handshake_req__', () => {
+        sendHandshake();
+      });
+    } catch (_e) {}
+
+    // Announce presence immediately in case content script is already listening
+    sendHandshake();
+
+    // Fallback support for legacy injected script element
     try {
       const scriptEl = document.currentScript;
       if (
@@ -95,30 +249,32 @@ if (typeof window !== 'undefined') {
         activeConfig = validateSettings(
           JSON.parse(scriptEl.dataset.initialConfig),
         );
-        updateEvent = scriptEl.dataset.updateEvent;
-        unlockEvent = scriptEl.dataset.unlockEvent;
+        const legacyUpdate = scriptEl.dataset.updateEvent;
+        const legacyUnlock = scriptEl.dataset.unlockEvent;
 
-        // Immediately scrub sensitive config & event tokens from DOM
         scriptEl.removeAttribute('data-initial-config');
         scriptEl.removeAttribute('data-update-event');
         scriptEl.removeAttribute('data-unlock-event');
         scriptEl.remove();
+
+        if (legacyUpdate) {
+          window.addEventListener(legacyUpdate, (e: Event) => {
+            try {
+              const customEvent = e as CustomEvent<Settings>;
+              if (
+                customEvent.detail &&
+                typeof customEvent.detail === 'object'
+              ) {
+                activeConfig = validateSettings(customEvent.detail);
+              }
+            } catch (_err) {}
+          });
+        }
+        if (legacyUnlock) {
+          window.addEventListener(legacyUnlock, unlockPage);
+        }
       }
     } catch (_e) {}
-
-    // Accept dynamic updates on secret isolated event channel.
-    if (updateEvent) {
-      try {
-        window.addEventListener(updateEvent, (e: Event) => {
-          try {
-            const customEvent = e as CustomEvent<Settings>;
-            if (customEvent.detail && typeof customEvent.detail === 'object') {
-              activeConfig = validateSettings(customEvent.detail);
-            }
-          } catch (_err) {}
-        });
-      } catch (_e) {}
-    }
 
     const origPD = Event.prototype.preventDefault;
     const origSP = Event.prototype.stopPropagation;
@@ -297,18 +453,26 @@ if (typeof window !== 'undefined') {
         );
         if (isPlayerOrInteractive) return;
 
-        const media = elements.find(
-          (el) =>
+        const target = elements.find(
+          (el, idx) =>
+            idx > 0 &&
             el &&
             (el.tagName === 'IMG' ||
               el.tagName === 'VIDEO' ||
               el.tagName === 'CANVAS' ||
-              el.classList?.contains('test-box')),
+              el.tagName === 'PICTURE' ||
+              el.tagName === 'SVG' ||
+              (el instanceof HTMLElement &&
+                (el.innerText || el.textContent || '').trim().length > 0)),
         );
-        if (media && elements[0] !== media) {
+        if (target && elements[0] !== target) {
           for (const el of elements) {
-            if (el === media) break;
+            if (el === target) break;
             if (el && el instanceof HTMLElement) {
+              const prevPointerEvents = el.style.pointerEvents;
+              const prevPriority =
+                el.style.getPropertyPriority('pointer-events');
+
               el.classList.add('rcr-unmasked-overlay');
               el.style.setProperty('pointer-events', 'none', 'important');
 
@@ -321,7 +485,15 @@ if (typeof window !== 'undefined') {
               const timer = setTimeout(() => {
                 try {
                   el.classList.remove('rcr-unmasked-overlay');
-                  el.style.removeProperty('pointer-events');
+                  if (prevPointerEvents) {
+                    el.style.setProperty(
+                      'pointer-events',
+                      prevPointerEvents,
+                      prevPriority,
+                    );
+                  } else {
+                    el.style.removeProperty('pointer-events');
+                  }
                   unmaskTimers.delete(el);
                 } catch (_err) {}
               }, 1000) as unknown as number;

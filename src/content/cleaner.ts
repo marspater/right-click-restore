@@ -20,6 +20,25 @@ export function cleanNode(
   settings: Settings = DEFAULT_SETTINGS,
 ) {
   if (typeof Element === 'undefined' || !(node instanceof Element)) return;
+
+  // Performance Optimization (Bolt ⚡): Fast-path check.
+  // Check if the node has attributes, inline userSelect styles, or shadowRoot.
+  // If an element has no attributes or shadowRoot and userSelect isn't none,
+  // we can exit early without performing expensive matches() or closest() CSS selector lookups.
+  const isHtmlEl =
+    typeof HTMLElement !== 'undefined' && node instanceof HTMLElement;
+  const hasAttributes = node.hasAttributes();
+  const hasShadow = Boolean(node.shadowRoot);
+  const style = isHtmlEl ? node.style : null;
+  const hasUserSelectNone =
+    style !== null &&
+    (style.userSelect === 'none' ||
+      ('webkitUserSelect' in style && style.webkitUserSelect === 'none'));
+
+  if (!hasAttributes && !hasShadow && !hasUserSelectNone) {
+    return;
+  }
+
   try {
     if (
       node.matches(INTERACTIVE_ELEMENTS) ||
@@ -31,40 +50,44 @@ export function cleanNode(
     return;
   }
 
-  if (settings.restoreRightClick) {
+  // Guard removeAttribute calls with hasAttribute checks to eliminate DOM mutation/binding overhead
+  if (settings.restoreRightClick && node.hasAttribute('oncontextmenu')) {
     try {
       node.removeAttribute('oncontextmenu');
     } catch (_e) {}
   }
 
-  if (settings.restoreSelection) {
+  if (settings.restoreSelection && hasAttributes) {
     for (let i = 0; i < SCRUB_ATTRS.length; i++) {
       const attr = SCRUB_ATTRS[i];
-      if (attr !== 'oncontextmenu') {
+      if (attr !== 'oncontextmenu' && node.hasAttribute(attr)) {
         try {
           node.removeAttribute(attr);
         } catch (_e) {}
       }
     }
-    if (typeof HTMLElement !== 'undefined' && node instanceof HTMLElement) {
-      try {
-        if (node.style.userSelect === 'none') node.style.userSelect = 'auto';
-        if (
-          'webkitUserSelect' in node.style &&
-          node.style.webkitUserSelect === 'none'
-        ) {
-          node.style.webkitUserSelect = 'auto';
-        }
-      } catch (_e) {}
-    }
+  }
+
+  if (settings.restoreSelection && isHtmlEl && hasUserSelectNone) {
+    try {
+      if (node.style.userSelect === 'none') node.style.userSelect = 'auto';
+      if (
+        'webkitUserSelect' in node.style &&
+        node.style.webkitUserSelect === 'none'
+      ) {
+        node.style.webkitUserSelect = 'auto';
+      }
+    } catch (_e) {}
   }
 
   // Traverse open shadow root if accessible
-  try {
-    if (node.shadowRoot) {
-      cleanDOMTree(node.shadowRoot, settings);
-    }
-  } catch (_e) {}
+  if (hasShadow) {
+    try {
+      if (node.shadowRoot) {
+        cleanDOMTree(node.shadowRoot, settings);
+      }
+    } catch (_e) {}
+  }
 }
 
 export function cleanAddedNode(

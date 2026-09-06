@@ -377,9 +377,9 @@ async function forceUnlockPage() {
       onclick={forceUnlockPage}
       disabled={unlockStatus === 'unlocking' || !isSiteActive}
       aria-live="polite"
-      class={`w-full py-2 px-3 rounded-xl font-medium text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm ${
+      class={`w-full py-2 px-3 rounded-xl font-medium text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed ${
         !isSiteActive
-          ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500 cursor-not-allowed shadow-none'
+          ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500 shadow-none'
           : unlockStatus === 'success'
           ? 'bg-emerald-500 text-white cursor-pointer active:scale-[0.99]'
           : unlockStatus === 'error'

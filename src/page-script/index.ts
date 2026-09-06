@@ -24,7 +24,9 @@ export function isInteractiveNode(node: Node | null): boolean {
       if (safeClosest(curr, INTERACTIVE_CONTAINERS)) return true;
       if (safeClosest(curr, INTERACTIVE_ELEMENTS)) return true;
     }
-  } catch (_e) {}
+  } catch (_e) {
+    // Ignore DOM inspection errors on restricted or detached nodes
+  }
   return false;
 }
 
@@ -46,7 +48,9 @@ export function isInteractiveEvent(event: Event): boolean {
         );
       }
     }
-  } catch (_e) {}
+  } catch (_e) {
+    // Ignore event inspection errors
+  }
   return isInteractiveNode(event.target instanceof Node ? event.target : null);
 }
 
@@ -63,7 +67,9 @@ export function isModifierPressed(event: Event): boolean {
       const e = event as MouseEvent;
       return Boolean(e.shiftKey || e.altKey);
     }
-  } catch (_e) {}
+  } catch (_e) {
+    // Ignore property inspection errors on synthetic events
+  }
   return false;
 }
 
@@ -153,7 +159,9 @@ if (typeof window !== 'undefined') {
         document.oncopy = null;
         if (document.documentElement) document.documentElement.oncopy = null;
         if (document.body) document.body.oncopy = null;
-      } catch (_e) {}
+      } catch (_e) {
+        // Ignore handler cleanup errors on restricted frames
+      }
     };
 
     // Listen on the unguessable private session channel
@@ -169,9 +177,13 @@ if (typeof window !== 'undefined') {
             },
             unlockPage,
           );
-        } catch (_err) {}
+        } catch (_err) {
+          // Ignore message processing errors
+        }
       });
-    } catch (_e) {}
+    } catch (_e) {
+      // Ignore channel setup error
+    }
 
     const sendHandshake = () => {
       try {
@@ -180,7 +192,9 @@ if (typeof window !== 'undefined') {
             detail: { channel: channelName, nonce: sessionNonce },
           }),
         );
-      } catch (_e) {}
+      } catch (_e) {
+        // Ignore event dispatch errors
+      }
     };
 
     // Bidirectional handshake: respond if content script requested handshake probe
@@ -188,7 +202,9 @@ if (typeof window !== 'undefined') {
       window.addEventListener('__rcr_handshake_req__', () => {
         sendHandshake();
       });
-    } catch (_e) {}
+    } catch (_e) {
+      // Ignore handshake setup error
+    }
 
     // Announce presence immediately in case content script is already listening
     sendHandshake();
@@ -221,14 +237,18 @@ if (typeof window !== 'undefined') {
               ) {
                 activeConfig = validateSettings(customEvent.detail);
               }
-            } catch (_err) {}
+            } catch (_err) {
+              // Ignore legacy update error
+            }
           });
         }
         if (legacyUnlock) {
           window.addEventListener(legacyUnlock, unlockPage);
         }
       }
-    } catch (_e) {}
+    } catch (_e) {
+      // Ignore legacy script dataset read error
+    }
 
     const origPD = Event.prototype.preventDefault;
     const origSP = Event.prototype.stopPropagation;
@@ -293,7 +313,9 @@ if (typeof window !== 'undefined') {
       if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
       try {
         origPD.apply(this);
-      } catch (_e) {}
+      } catch (_e) {
+        // Ignore native preventDefault failure
+      }
     };
 
     try {
@@ -308,33 +330,43 @@ if (typeof window !== 'undefined') {
               return true;
             try {
               if (origDescriptor?.get) return origDescriptor.get.call(this);
-            } catch (_e) {}
+            } catch (_e) {
+              // Ignore native returnValue getter failure
+            }
             return true;
           },
           set(val) {
             if (this && this instanceof Event && shouldBlockEvent(this)) return;
             try {
               if (origDescriptor?.set) origDescriptor.set.call(this, val);
-            } catch (_e) {}
+            } catch (_e) {
+              // Ignore native returnValue setter failure
+            }
           },
           configurable: true,
           enumerable: true,
         });
       }
-    } catch (_e) {}
+    } catch (_e) {
+      // Ignore property definition error
+    }
 
     Event.prototype.stopPropagation = function (this: Event): void {
       if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
       try {
         origSP.apply(this);
-      } catch (_e) {}
+      } catch (_e) {
+        // Ignore native stopPropagation failure
+      }
     };
 
     Event.prototype.stopImmediatePropagation = function (this: Event): void {
       if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
       try {
         origSIP.apply(this);
-      } catch (_e) {}
+      } catch (_e) {
+        // Ignore native stopImmediatePropagation failure
+      }
     };
 
     const targets = [
@@ -367,7 +399,9 @@ if (typeof window !== 'undefined') {
                 if (origDescriptor?.get) {
                   return origDescriptor.get.call(this);
                 }
-              } catch (_e) {}
+              } catch (_e) {
+                // Ignore native getter call failure
+              }
               return undefined;
             },
             set(val) {
@@ -378,12 +412,16 @@ if (typeof window !== 'undefined') {
                 if (origDescriptor?.set) {
                   origDescriptor.set.call(this, val);
                 }
-              } catch (_e) {}
+              } catch (_e) {
+                // Ignore native setter call failure
+              }
             },
             configurable: true,
             enumerable: true,
           });
-        } catch (_err) {}
+        } catch (_err) {
+          // Ignore event handler property override failure
+        }
       }
     }
 
@@ -449,38 +487,24 @@ if (typeof window !== 'undefined') {
                     el.style.removeProperty('pointer-events');
                   }
                   unmaskTimers.delete(el);
-                } catch (_err) {}
+                } catch (_err) {
+                  // Ignore overlay style restoration error
+                }
               }, 1000) as unknown as number;
 
               unmaskTimers.set(el, timer);
             }
           }
         }
-      } catch (_err) {}
+      } catch (_err) {
+        // Ignore unmaskMedia error
+      }
     }
 
     try {
       document.addEventListener('contextmenu', (e) => unmaskMedia(e), false);
-    } catch (_e) {}
-
-    if (unlockEvent) {
-      try {
-        window.addEventListener(unlockEvent, () => {
-          try {
-            window.oncontextmenu = null;
-            document.oncontextmenu = null;
-            if (document.body) document.body.oncontextmenu = null;
-            window.onselectstart = null;
-            document.onselectstart = null;
-            if (document.body) document.body.onselectstart = null;
-            window.ondragstart = null;
-            document.ondragstart = null;
-            window.oncopy = null;
-            document.oncopy = null;
-            if (document.body) document.body.oncopy = null;
-          } catch (_e) {}
-        });
-      } catch (_e) {}
+    } catch (_e) {
+      // Ignore contextmenu listener attachment error
     }
   }
 }

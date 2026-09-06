@@ -16,7 +16,9 @@ export function getUnshadowedMethod(
     if (own && typeof own.value === 'function') {
       return own.value;
     }
-  } catch (_e) {}
+  } catch (_e) {
+    // Ignore property access errors on cross-origin or restricted objects
+  }
   return null;
 }
 
@@ -37,7 +39,9 @@ export function getUnshadowedGetter(
     if (own && typeof own.get === 'function') {
       return own.get;
     }
-  } catch (_e) {}
+  } catch (_e) {
+    // Ignore property access errors on cross-origin or restricted objects
+  }
   return null;
 }
 
@@ -49,6 +53,7 @@ export function safeMatches(element: Element, selector: string): boolean {
     }
     return element.matches(selector);
   } catch (_e) {
+    // Fallback if element matching throws (e.g., invalid selector or detached node)
     return false;
   }
 }
@@ -64,6 +69,7 @@ export function safeClosest(
     }
     return element.closest(selector);
   } catch (_e) {
+    // Fallback if element traversal throws
     return null;
   }
 }
@@ -76,6 +82,7 @@ export function safeHasAttribute(element: Element, attr: string): boolean {
     }
     return element.hasAttribute(attr);
   } catch (_e) {
+    // Fallback if attribute inspection throws
     return false;
   }
 }
@@ -89,7 +96,9 @@ export function safeRemoveAttribute(element: Element, attr: string): void {
     } else {
       element.removeAttribute(attr);
     }
-  } catch (_e) {}
+  } catch (_e) {
+    // Fallback if attribute removal throws
+  }
 }
 
 export function safeGetShadowRoot(element: Element): ShadowRoot | null {
@@ -100,6 +109,7 @@ export function safeGetShadowRoot(element: Element): ShadowRoot | null {
     }
     return element.shadowRoot;
   } catch (_e) {
+    // Fallback if shadowRoot access throws
     return null;
   }
 }
@@ -112,6 +122,7 @@ export function safeGetStyle(element: HTMLElement): CSSStyleDeclaration | null {
     }
     return element.style;
   } catch (_e) {
+    // Fallback if style access throws
     return null;
   }
 }

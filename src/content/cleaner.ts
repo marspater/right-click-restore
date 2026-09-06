@@ -3,27 +3,13 @@ import {
   INTERACTIVE_ELEMENTS,
 } from '../shared/constants';
 import {
-  getUnshadowedGetter,
-  getUnshadowedMethod,
   safeClosest,
   safeGetShadowRoot,
   safeGetStyle,
-  safeHasAttribute,
   safeMatches,
   safeRemoveAttribute,
 } from '../shared/dom';
 import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
-
-export {
-  getUnshadowedMethod,
-  getUnshadowedGetter,
-  safeMatches,
-  safeClosest,
-  safeHasAttribute,
-  safeRemoveAttribute,
-  safeGetShadowRoot,
-  safeGetStyle,
-};
 
 export const SCRUB_ATTRS = [
   'oncontextmenu',
@@ -55,6 +41,7 @@ export function cleanNode(
       return;
     }
   } catch (_e) {
+    // Ignore element interactive check errors
     return;
   }
 
@@ -81,7 +68,9 @@ export function cleanNode(
             style.webkitUserSelect = 'auto';
           }
         }
-      } catch (_e) {}
+      } catch (_e) {
+        // Ignore style modification errors
+      }
     }
   }
 
@@ -91,7 +80,9 @@ export function cleanNode(
     if (shadow) {
       cleanDOMTree(shadow, settings);
     }
-  } catch (_e) {}
+  } catch (_e) {
+    // Ignore shadow root traversal errors
+  }
 }
 
 export function cleanAddedNode(
@@ -104,7 +95,9 @@ export function cleanAddedNode(
     for (const child of node.querySelectorAll(SCRUB_SELECTOR)) {
       cleanNode(child, settings);
     }
-  } catch (_e) {}
+  } catch (_e) {
+    // Ignore selector query errors on detached nodes
+  }
 }
 
 export function cleanDOMTree(
@@ -118,5 +111,7 @@ export function cleanDOMTree(
     for (const node of root.querySelectorAll(SCRUB_SELECTOR)) {
       cleanNode(node, settings);
     }
-  } catch (_e) {}
+  } catch (_e) {
+    // Ignore querySelectorAll errors on restricted roots
+  }
 }

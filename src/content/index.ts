@@ -1,3 +1,4 @@
+import { getSecureRandomString } from '../shared/crypto';
 import {
   DEFAULT_SETTINGS,
   type Settings,
@@ -91,14 +92,8 @@ export function handleContentMessage(
 }
 
 (() => {
-  const updateEventName =
-    typeof crypto !== 'undefined' && crypto.randomUUID
-      ? `__rcr_update_${crypto.randomUUID()}`
-      : `__rcr_update_${Math.random().toString(36).substring(2)}`;
-  const unlockEventName =
-    typeof crypto !== 'undefined' && crypto.randomUUID
-      ? `__rcr_unlock_${crypto.randomUUID()}`
-      : `__rcr_unlock_${Math.random().toString(36).substring(2)}`;
+  const updateEventName = `__rcr_update_${getSecureRandomString()}`;
+  const unlockEventName = `__rcr_unlock_${getSecureRandomString()}`;
 
   let currentSettings: Settings = { ...DEFAULT_SETTINGS };
   let observer: MutationObserver | null = null;

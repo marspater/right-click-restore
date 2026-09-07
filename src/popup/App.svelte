@@ -158,10 +158,10 @@ const statusAnnouncement = $derived(
   unlockStatus === 'unlocking'
     ? 'Unlocking current page…'
     : unlockStatus === 'success'
-    ? 'Page unlocked successfully'
-    : unlockStatus === 'error'
-    ? 'Unable to unlock current page'
-    : '',
+      ? 'Page unlocked successfully'
+      : unlockStatus === 'error'
+        ? 'Unable to unlock current page'
+        : '',
 );
 
 $effect(() => {

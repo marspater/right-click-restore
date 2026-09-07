@@ -1,62 +1,13 @@
-import {
-  ALL_INTERACTIVE_SELECTORS,
-  INTERACTIVE_CONTAINERS,
-  INTERACTIVE_ELEMENTS,
-} from '../shared/constants';
+import { ALL_INTERACTIVE_SELECTORS } from '../shared/constants';
+import { getSecureRandomString } from '../shared/crypto';
+import { getUnshadowedMethod, safeClosest, safeMatches } from '../shared/dom';
 import {
   DEFAULT_SETTINGS,
   type Settings,
   validateSettings,
 } from '../shared/settings';
 
-function getUnshadowedMethod(
-  obj: object,
-  methodName: string,
-): ((...args: unknown[]) => unknown) | null {
-  try {
-    let proto = Object.getPrototypeOf(obj);
-    while (proto && proto !== Object.prototype) {
-      const desc = Object.getOwnPropertyDescriptor(proto, methodName);
-      if (desc && typeof desc.value === 'function') {
-        return desc.value;
-      }
-      proto = Object.getPrototypeOf(proto);
-    }
-    // Fallback if defined on mock/plain object in tests
-    const own = Object.getOwnPropertyDescriptor(obj, methodName);
-    if (own && typeof own.value === 'function') {
-      return own.value;
-    }
-  } catch (_e) {}
-  return null;
-}
-
-export function safeMatches(element: Element, selector: string): boolean {
-  try {
-    const fn = getUnshadowedMethod(element, 'matches');
-    if (fn) {
-      return Boolean(fn.call(element, selector));
-    }
-    return element.matches(selector);
-  } catch (_e) {
-    return false;
-  }
-}
-
-export function safeClosest(
-  element: Element,
-  selector: string,
-): Element | null {
-  try {
-    const fn = getUnshadowedMethod(element, 'closest');
-    if (fn) {
-      return fn.call(element, selector) as Element | null;
-    }
-    return element.closest(selector);
-  } catch (_e) {
-    return null;
-  }
-}
+export { getUnshadowedMethod, safeClosest, safeMatches } from '../shared/dom';
 
 export function isInteractiveNode(node: Node | null): boolean {
   if (!node) return false;
@@ -66,9 +17,7 @@ export function isInteractiveNode(node: Node | null): boolean {
       curr = curr.parentElement;
     }
     if (curr instanceof Element) {
-      if (safeMatches(curr, INTERACTIVE_ELEMENTS)) return true;
-      if (safeClosest(curr, INTERACTIVE_CONTAINERS)) return true;
-      if (safeClosest(curr, INTERACTIVE_ELEMENTS)) return true;
+      if (safeClosest(curr, ALL_INTERACTIVE_SELECTORS)) return true;
     }
   } catch (_e) {}
   return false;
@@ -173,11 +122,7 @@ if (typeof window !== 'undefined') {
     let activeConfig: Settings = { ...DEFAULT_SETTINGS };
 
     // 128-bit cryptographically secure session nonce
-    const sessionNonce =
-      typeof crypto !== 'undefined' && crypto.randomUUID
-        ? crypto.randomUUID()
-        : Math.random().toString(36).slice(2) +
-          Math.random().toString(36).slice(2);
+    const sessionNonce = getSecureRandomString();
 
     const channelName = `__rcr_bridge_${sessionNonce}`;
 
@@ -508,25 +453,5 @@ if (typeof window !== 'undefined') {
     try {
       document.addEventListener('contextmenu', (e) => unmaskMedia(e), false);
     } catch (_e) {}
-
-    if (unlockEvent) {
-      try {
-        window.addEventListener(unlockEvent, () => {
-          try {
-            window.oncontextmenu = null;
-            document.oncontextmenu = null;
-            if (document.body) document.body.oncontextmenu = null;
-            window.onselectstart = null;
-            document.onselectstart = null;
-            if (document.body) document.body.onselectstart = null;
-            window.ondragstart = null;
-            document.ondragstart = null;
-            window.oncopy = null;
-            document.oncopy = null;
-            if (document.body) document.body.oncopy = null;
-          } catch (_e) {}
-        });
-      } catch (_e) {}
-    }
   }
 }

@@ -32,12 +32,15 @@ export function normalizeHostname(hostname: string): string {
     return cached;
   }
 
+  // Early DoS defense: cap maximum input length before string operations
+  const input = hostname.length > 2048 ? hostname.slice(0, 2048) : hostname;
+
   // 1. Strip control characters and null bytes without regex control chars
   let clean = '';
-  for (let i = 0; i < hostname.length; i++) {
-    const code = hostname.charCodeAt(i);
+  for (let i = 0; i < input.length; i++) {
+    const code = input.charCodeAt(i);
     if (code > 31 && code !== 127) {
-      clean += hostname[i];
+      clean += input[i];
     }
   }
   clean = clean.trim().toLowerCase();

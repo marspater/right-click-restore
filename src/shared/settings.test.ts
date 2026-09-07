@@ -27,6 +27,13 @@ describe('settings & domain matching', () => {
     expect(normalizeHostname('bad_domain!@#$')).toBe('');
   });
 
+  test('caps oversized hostname inputs to prevent DoS attacks', () => {
+    const hugeHostname = `${'a'.repeat(10000)}.example.com`;
+    expect(() => normalizeHostname(hugeHostname)).not.toThrow();
+    // Oversized hostname is capped and safely trimmed/normalized to MAX_HOSTNAME_LENGTH
+    expect(normalizeHostname(hugeHostname)).toBe('a'.repeat(253));
+  });
+
   test('matches the exact domain', () => {
     expect(isDomainDisabled('example.com', ['example.com'])).toBe(true);
     expect(isDomainDisabled('www.example.com', ['example.com'])).toBe(true);

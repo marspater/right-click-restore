@@ -181,6 +181,7 @@ if (typeof window !== 'undefined') {
 
     const channelName = `__rcr_bridge_${sessionNonce}`;
 
+    // Page unlocking is safely invoked via cryptographic nonce validation in handlePageScriptMessage
     const unlockPage = () => {
       try {
         window.oncontextmenu = null;
@@ -508,25 +509,5 @@ if (typeof window !== 'undefined') {
     try {
       document.addEventListener('contextmenu', (e) => unmaskMedia(e), false);
     } catch (_e) {}
-
-    if (unlockEvent) {
-      try {
-        window.addEventListener(unlockEvent, () => {
-          try {
-            window.oncontextmenu = null;
-            document.oncontextmenu = null;
-            if (document.body) document.body.oncontextmenu = null;
-            window.onselectstart = null;
-            document.onselectstart = null;
-            if (document.body) document.body.onselectstart = null;
-            window.ondragstart = null;
-            document.ondragstart = null;
-            window.oncopy = null;
-            document.oncopy = null;
-            if (document.body) document.body.oncopy = null;
-          } catch (_e) {}
-        });
-      } catch (_e) {}
-    }
   }
 }

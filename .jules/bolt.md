@@ -1,0 +1,3 @@
+## 2025-05-20 - Consolidated DOM selector checks & fast-path prototype lookups
+**Learning:** Checking `safeMatches`, `safeClosest(CONTAINERS)`, and `safeClosest(ELEMENTS)` separately traversed ancestor chains up to 3 times per DOM node. Consolidating them into `safeClosest(node, ALL_INTERACTIVE_SELECTORS)` reduces DOM tree traversal to 1 pass. Additionally, checking `!Object.prototype.hasOwnProperty.call(obj, methodName)` provides an $O(1)$ fast path for unshadowed methods before falling back to full prototype descriptor iteration.
+**Action:** Always combine interactive container/element selector queries into a single `closest()` call and check for own properties before walking prototype chains.

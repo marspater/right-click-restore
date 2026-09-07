@@ -6,8 +6,6 @@ import {
   validateSettings,
 } from '../shared/settings';
 
-export { safeClosest, safeMatches };
-
 export function isInteractiveNode(node: Node | null): boolean {
   if (!node) return false;
   try {

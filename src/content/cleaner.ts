@@ -1,8 +1,6 @@
 import { ALL_INTERACTIVE_SELECTORS } from '../shared/constants';
-import { getUnshadowedMethod, safeClosest, safeMatches } from '../shared/dom';
+import { getUnshadowedMethod, safeClosest } from '../shared/dom';
 import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
-
-export { safeClosest, safeMatches };
 
 export const SCRUB_ATTRS = [
   'oncontextmenu',

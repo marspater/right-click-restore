@@ -144,7 +144,7 @@ body {
   left: 2px;
   bottom: 2px;
   background-color: #ffffff;
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), width 0.15s ease-out;
   border-radius: 50%;
   box-shadow: var(--switch-knob-shadow);
 }
@@ -155,6 +155,15 @@ body {
 
 .apple-switch input:checked + .apple-slider:before {
   transform: translateX(16px);
+}
+
+.apple-switch input:active:not(:disabled) + .apple-slider:before {
+  width: 21px;
+}
+
+.apple-switch input:checked:active:not(:disabled) + .apple-slider:before {
+  transform: translateX(13px);
+  width: 21px;
 }
 
 /* Small Variant for List Items */
@@ -172,6 +181,15 @@ body {
 
 .apple-switch-sm input:checked + .apple-slider:before {
   transform: translateX(14px);
+}
+
+.apple-switch-sm input:active:not(:disabled) + .apple-slider:before {
+  width: 17px;
+}
+
+.apple-switch-sm input:checked:active:not(:disabled) + .apple-slider:before {
+  transform: translateX(11px);
+  width: 17px;
 }
 
 /* Accessible Focus States */
@@ -201,8 +219,24 @@ button:focus-visible {
   background-color: var(--bg-row-hover);
 }
 
-.settings-row:focus-within {
+.settings-row:focus-within,
+.settings-row:has(input:focus-visible) {
   background-color: var(--bg-row-hover);
+  outline: 2px solid var(--accent-blue);
+  outline-offset: -1px;
+}
+
+/* Screen Reader Only Utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
 
 .settings-divider {

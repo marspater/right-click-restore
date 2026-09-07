@@ -154,6 +154,25 @@ function toggleFeature(key: keyof Settings) {
 
 let unlockTimeout: ReturnType<typeof setTimeout> | null = null;
 
+const statusAnnouncement = $derived(
+  unlockStatus === 'unlocking'
+    ? 'Unlocking current page…'
+    : unlockStatus === 'success'
+    ? 'Page unlocked successfully'
+    : unlockStatus === 'error'
+    ? 'Unable to unlock current page'
+    : '',
+);
+
+$effect(() => {
+  return () => {
+    if (unlockTimeout) {
+      clearTimeout(unlockTimeout);
+      unlockTimeout = null;
+    }
+  };
+});
+
 async function forceUnlockPage() {
   if (!activeTabId || unlockStatus === 'unlocking') return;
   unlockStatus = 'unlocking';
@@ -233,11 +252,16 @@ async function forceUnlockPage() {
     <div class="flex items-center gap-2.5 min-w-0 pr-2">
       <!-- Status Beacon -->
       <div class="flex items-center justify-center flex-shrink-0" aria-hidden="true">
-        <span class={`w-2 h-2 rounded-full transition-colors duration-200 ${
-          isSiteActive
-            ? 'bg-[var(--accent-green)]'
-            : 'bg-[var(--text-tertiary)]'
-        }`}></span>
+        <span class="relative flex h-2.5 w-2.5 items-center justify-center">
+          {#if isSiteActive}
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--accent-green)] opacity-35"></span>
+          {/if}
+          <span class={`relative inline-flex rounded-full h-2 w-2 transition-all duration-200 ${
+            isSiteActive
+              ? 'bg-[var(--accent-green)] shadow-[0_0_6px_rgba(52,199,89,0.5)]'
+              : 'bg-[var(--text-tertiary)]'
+          }`}></span>
+        </span>
       </div>
 
       <!-- Domain Labels Stack -->
@@ -368,13 +392,17 @@ async function forceUnlockPage() {
     </label>
   </section>
 
+  <!-- Live Region Status Announcement for Screen Readers -->
+  <div class="sr-only" role="status" aria-live="polite">
+    {statusAnnouncement}
+  </div>
+
   <!-- Force Unlock Action Button -->
   <div class="mb-2">
     <button
       type="button"
       onclick={forceUnlockPage}
-      disabled={unlockStatus === 'unlocking' || !isSiteActive}
-      aria-live="polite"
+      disabled={unlockStatus !== 'idle' || !isSiteActive}
       class={`w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none active:scale-[0.99] disabled:cursor-not-allowed ${
         unlockStatus === 'success'
           ? 'bg-[var(--accent-green)] text-white shadow-sm border border-transparent'

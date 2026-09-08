@@ -403,6 +403,8 @@ async function forceUnlockPage() {
       type="button"
       onclick={forceUnlockPage}
       disabled={unlockStatus !== 'idle' || !isSiteActive}
+      title={isSiteActive ? "Manually run immediate context menu and selection cleanup on active page" : "Enable protection on this site to force unlock"}
+      aria-label="Force unlock page to restore context menu and text selection"
       class={`w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none active:scale-[0.99] disabled:cursor-not-allowed ${
         unlockStatus === 'success'
           ? 'bg-[var(--accent-green)] text-white shadow-sm border border-transparent'

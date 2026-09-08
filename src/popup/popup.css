@@ -198,6 +198,11 @@ body {
   outline-offset: 2px;
 }
 
+/* Avoid duplicate inner focus ring when switch is nested inside a settings row */
+.settings-row .apple-switch input:focus-visible + .apple-slider {
+  outline: none;
+}
+
 button:focus-visible {
   outline: 2px solid var(--accent-blue);
   outline-offset: 2px;
@@ -212,11 +217,15 @@ button:focus-visible {
   border-radius: 8px;
   cursor: pointer;
   user-select: none;
-  transition: background-color 0.12s ease;
+  transition: background-color 0.12s ease, opacity 0.12s ease;
 }
 
 .settings-row:hover {
   background-color: var(--bg-row-hover);
+}
+
+.settings-row:active {
+  opacity: 0.85;
 }
 
 .settings-row:focus-within,
@@ -268,7 +277,7 @@ kbd {
   border: 0.5px solid var(--border-kbd);
   border-radius: var(--radius-kbd);
   padding: 2px 4px;
-  vertical-align: baseline;
+  vertical-align: middle;
 }
 
 /* Reduced Motion Support */

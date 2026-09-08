@@ -33,15 +33,17 @@ describe('getSecureRandomString', () => {
     }
   });
 
-  test('handles missing crypto object gracefully', () => {
+  test('handles missing crypto object gracefully and generates distinct values', () => {
     const originalCrypto = globalThis.crypto;
     // @ts-expect-error test simulation of environment without crypto
     globalThis.crypto = undefined;
 
     try {
-      const token = getSecureRandomString();
-      expect(typeof token).toBe('string');
-      expect(token.length).toBeGreaterThan(0);
+      const token1 = getSecureRandomString();
+      const token2 = getSecureRandomString();
+      expect(typeof token1).toBe('string');
+      expect(token1.length).toBeGreaterThan(0);
+      expect(token1).not.toBe(token2);
     } finally {
       globalThis.crypto = originalCrypto;
     }

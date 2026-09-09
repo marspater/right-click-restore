@@ -259,6 +259,8 @@ async function forceUnlockPage() {
           <span class={`relative inline-flex rounded-full h-2 w-2 transition-all duration-200 ${
             isSiteActive
               ? 'bg-[var(--accent-green)] shadow-[0_0_6px_rgba(52,199,89,0.5)]'
+              : settings.enabled && isSiteDisabled
+              ? 'bg-[var(--accent-orange)] shadow-[0_0_6px_rgba(255,149,0,0.4)]'
               : 'bg-[var(--text-tertiary)]'
           }`}></span>
         </span>
@@ -286,7 +288,7 @@ async function forceUnlockPage() {
   <!-- Settings List Group -->
   <section class={`glass-card p-1 mb-2 flex flex-col ${isSiteActive ? '' : 'dimmed'}`}>
     <!-- Feature 1: Restore Right Click -->
-    <label class="settings-row">
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive}>
       <div class="flex items-center gap-2.5 min-w-0">
         <div class="w-6 h-6 rounded-[7px] bg-[var(--bg-badge)] text-[var(--text-secondary)] flex items-center justify-center flex-shrink-0" aria-hidden="true">
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -308,7 +310,7 @@ async function forceUnlockPage() {
     <div class="settings-divider" aria-hidden="true"></div>
 
     <!-- Feature 2: Allow Selection & Copy -->
-    <label class="settings-row">
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive}>
       <div class="flex items-center gap-2.5 min-w-0">
         <div class="w-6 h-6 rounded-[7px] bg-[var(--bg-badge)] text-[var(--text-secondary)] flex items-center justify-center flex-shrink-0" aria-hidden="true">
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -330,7 +332,7 @@ async function forceUnlockPage() {
     <div class="settings-divider" aria-hidden="true"></div>
 
     <!-- Feature 3: Anti-Shield Overlay -->
-    <label class="settings-row">
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive}>
       <div class="flex items-center gap-2.5 min-w-0">
         <div class="w-6 h-6 rounded-[7px] bg-[var(--bg-badge)] text-[var(--text-secondary)] flex items-center justify-center flex-shrink-0" aria-hidden="true">
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -351,7 +353,7 @@ async function forceUnlockPage() {
     <div class="settings-divider" aria-hidden="true"></div>
 
     <!-- Feature 4: Absolute Force Mode -->
-    <label class="settings-row">
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive}>
       <div class="flex items-center gap-2.5 min-w-0">
         <div class="w-6 h-6 rounded-[7px] bg-[var(--bg-badge)] text-[var(--text-secondary)] flex items-center justify-center flex-shrink-0" aria-hidden="true">
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -372,7 +374,7 @@ async function forceUnlockPage() {
     <div class="settings-divider" aria-hidden="true"></div>
 
     <!-- Feature 5: Modifier Key Bypass -->
-    <label class="settings-row">
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive}>
       <div class="flex items-center gap-2.5 min-w-0">
         <div class="w-6 h-6 rounded-[7px] bg-[var(--bg-badge)] text-[var(--text-secondary)] flex items-center justify-center flex-shrink-0" aria-hidden="true">
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -403,14 +405,15 @@ async function forceUnlockPage() {
       type="button"
       onclick={forceUnlockPage}
       disabled={unlockStatus !== 'idle' || !isSiteActive}
-      class={`w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none active:scale-[0.99] disabled:cursor-not-allowed ${
+      aria-label="Force unlock current page context menu and selection"
+      class={`w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 select-none ${
         unlockStatus === 'success'
-          ? 'bg-[var(--accent-green)] text-white shadow-sm border border-transparent'
+          ? 'bg-[var(--accent-green)] text-white shadow-sm border border-transparent cursor-default'
           : unlockStatus === 'error'
-          ? 'bg-[var(--accent-red)] text-white shadow-sm border border-transparent'
+          ? 'bg-[var(--accent-red)] text-white shadow-sm border border-transparent cursor-default'
           : isSiteActive
-          ? 'bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] text-[var(--text-primary)] border border-[var(--border-subtle)] shadow-[var(--shadow-btn)]'
-          : 'bg-[var(--bg-card)] text-[var(--text-tertiary)] border border-[var(--border-subtle)] opacity-50'
+          ? 'bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] active:scale-[0.985] text-[var(--text-primary)] border border-[var(--border-subtle)] shadow-[var(--shadow-btn)] cursor-pointer'
+          : 'bg-[var(--bg-card)] text-[var(--text-tertiary)] border border-[var(--border-subtle)] opacity-50 cursor-not-allowed'
       }`}
     >
       {#if unlockStatus === 'unlocking'}

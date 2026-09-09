@@ -212,18 +212,30 @@ button:focus-visible {
   border-radius: 8px;
   cursor: pointer;
   user-select: none;
-  transition: background-color 0.12s ease;
+  transition: background-color 0.12s ease, opacity 0.12s ease;
 }
 
-.settings-row:hover {
+.settings-row:hover:not(.is-disabled) {
   background-color: var(--bg-row-hover);
 }
 
-.settings-row:focus-within,
-.settings-row:has(input:focus-visible) {
+.settings-row.is-disabled {
+  cursor: not-allowed;
+}
+
+.settings-row:focus-within:not(.is-disabled),
+.settings-row:has(input:focus-visible):not(.is-disabled) {
   background-color: var(--bg-row-hover);
   outline: 2px solid var(--accent-blue);
   outline-offset: -1px;
+}
+
+/* Prevent duplicate outline on switch slider inside focused settings row */
+.settings-row:has(input:focus-visible)
+  .apple-switch
+  input:focus-visible
+  + .apple-slider {
+  outline: none;
 }
 
 /* Screen Reader Only Utility */

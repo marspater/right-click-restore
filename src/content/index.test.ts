@@ -212,4 +212,63 @@ describe('content script message handler', () => {
 
     expect(response).toEqual({ status: 'error' });
   });
+
+  test('locks bridge channel and ignores hijacking attempts via window dispatch', () => {
+    let legitReceived = false;
+    let hijackReceived = false;
+
+    windowInstance.addEventListener('__rcr_bridge_legit', (e: Event) => {
+      if ((e as CustomEvent)?.detail?.nonce === 'secret-123') {
+        legitReceived = true;
+      }
+    });
+
+    windowInstance.addEventListener('__rcr_bridge_hijack', () => {
+      hijackReceived = true;
+    });
+
+    let bridgeChannel: string | null = null;
+    let bridgeNonce: string | null = null;
+
+    const listener = (e: Event) => {
+      const detail = (e as CustomEvent)?.detail;
+      if (
+        bridgeChannel === null &&
+        detail &&
+        typeof detail.channel === 'string' &&
+        detail.channel.length > 0 &&
+        typeof detail.nonce === 'string' &&
+        detail.nonce.length > 0
+      ) {
+        bridgeChannel = detail.channel;
+        bridgeNonce = detail.nonce;
+        windowInstance.dispatchEvent(
+          new CustomEvent(bridgeChannel, {
+            detail: { nonce: bridgeNonce, type: 'UPDATE' },
+          }),
+        );
+      }
+    };
+
+    windowInstance.addEventListener('__rcr_handshake__', listener);
+
+    // Initial valid handshake
+    windowInstance.dispatchEvent(
+      new CustomEvent('__rcr_handshake__', {
+        detail: { channel: '__rcr_bridge_legit', nonce: 'secret-123' },
+      }),
+    );
+
+    // Malicious attempt to hijack bridge channel
+    windowInstance.dispatchEvent(
+      new CustomEvent('__rcr_handshake__', {
+        detail: { channel: '__rcr_bridge_hijack', nonce: 'fake-nonce' },
+      }),
+    );
+
+    expect(legitReceived).toBe(true);
+    expect(hijackReceived).toBe(false);
+    expect(bridgeChannel).toBe('__rcr_bridge_legit');
+    expect(bridgeNonce).toBe('secret-123');
+  });
 });

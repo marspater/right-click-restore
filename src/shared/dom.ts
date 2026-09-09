@@ -3,6 +3,18 @@ export function getUnshadowedMethod(
   methodName: string,
 ): ((...args: unknown[]) => unknown) | null {
   try {
+    // Fast-path optimization: when methodName is not an own property of obj
+    // and not a built-in property on Object.prototype, direct property lookup
+    // retrieves the prototype method without triggering prototype-chain reflection loops.
+    if (
+      !(methodName in Object.prototype) &&
+      !Object.prototype.hasOwnProperty.call(obj, methodName)
+    ) {
+      const fn = (obj as Record<string, unknown>)[methodName];
+      if (typeof fn === 'function') {
+        return fn as (...args: unknown[]) => unknown;
+      }
+    }
     let proto = Object.getPrototypeOf(obj);
     while (proto && proto !== Object.prototype) {
       const desc = Object.getOwnPropertyDescriptor(proto, methodName);
@@ -100,6 +112,10 @@ export function safeRemoveAttribute(element: Element, attr: string): void {
 
 export function safeGetShadowRoot(element: Element): ShadowRoot | null {
   try {
+    // Fast-path: if shadowRoot is not shadowed as an own property, access natively.
+    if (!Object.prototype.hasOwnProperty.call(element, 'shadowRoot')) {
+      return element.shadowRoot;
+    }
     const getter = getUnshadowedGetter(element, 'shadowRoot');
     if (getter) {
       return getter.call(element) as ShadowRoot | null;
@@ -112,6 +128,10 @@ export function safeGetShadowRoot(element: Element): ShadowRoot | null {
 
 export function safeGetStyle(element: HTMLElement): CSSStyleDeclaration | null {
   try {
+    // Fast-path: if style is not shadowed as an own property, access natively.
+    if (!Object.prototype.hasOwnProperty.call(element, 'style')) {
+      return element.style;
+    }
     const getter = getUnshadowedGetter(element, 'style');
     if (getter) {
       return getter.call(element) as CSSStyleDeclaration | null;

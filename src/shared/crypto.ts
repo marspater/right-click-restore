@@ -19,6 +19,5 @@ export function getSecureRandomString(): string {
     typeof performance !== 'undefined' && typeof performance.now === 'function'
       ? Math.floor(performance.now() * 1000).toString(36)
       : '';
-  const rand = Math.random().toString(36).substring(2);
-  return `${timestamp}-${perf}-${rand}`;
+  return `${timestamp}-${perf}`;
 }

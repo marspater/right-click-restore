@@ -89,6 +89,7 @@ export function handlePageScriptMessage(
   if (
     typeof expectedNonce !== 'string' ||
     expectedNonce.length === 0 ||
+    typeof payload.nonce !== 'string' ||
     payload.nonce !== expectedNonce
   ) {
     return false;

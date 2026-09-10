@@ -10,6 +10,7 @@
   --bg-card-hover: rgba(255, 255, 255, 0.92);
   --bg-row-hover: rgba(0, 0, 0, 0.035);
   --bg-badge: rgba(0, 0, 0, 0.04);
+  --bg-badge-active: rgba(0, 122, 255, 0.12);
   --bg-kbd: rgba(0, 0, 0, 0.06);
 
   --border-subtle: rgba(0, 0, 0, 0.08);
@@ -48,6 +49,7 @@
     --bg-card-hover: rgba(55, 55, 60, 0.8);
     --bg-row-hover: rgba(255, 255, 255, 0.06);
     --bg-badge: rgba(255, 255, 255, 0.06);
+    --bg-badge-active: rgba(10, 132, 255, 0.2);
     --bg-kbd: rgba(255, 255, 255, 0.12);
 
     --border-subtle: rgba(255, 255, 255, 0.09);
@@ -212,18 +214,34 @@ button:focus-visible {
   border-radius: 8px;
   cursor: pointer;
   user-select: none;
-  transition: background-color 0.12s ease;
+  transition: background-color 0.12s ease, opacity 0.12s ease;
 }
 
-.settings-row:hover {
+.settings-row:hover:not(.is-disabled) {
   background-color: var(--bg-row-hover);
 }
 
-.settings-row:focus-within,
-.settings-row:has(input:focus-visible) {
+.settings-row:active:not(.is-disabled) {
+  opacity: 0.85;
+}
+
+.settings-row.is-disabled {
+  cursor: not-allowed;
+}
+
+.settings-row:focus-within:not(.is-disabled),
+.settings-row:has(input:focus-visible):not(.is-disabled) {
   background-color: var(--bg-row-hover);
   outline: 2px solid var(--accent-blue);
   outline-offset: -1px;
+}
+
+/* Prevent duplicate outline on switch slider inside focused settings row */
+.settings-row:has(input:focus-visible)
+  .apple-switch
+  input:focus-visible
+  + .apple-slider {
+  outline: none;
 }
 
 /* Screen Reader Only Utility */
@@ -268,7 +286,7 @@ kbd {
   border: 0.5px solid var(--border-kbd);
   border-radius: var(--radius-kbd);
   padding: 2px 4px;
-  vertical-align: baseline;
+  vertical-align: middle;
 }
 
 /* Reduced Motion Support */

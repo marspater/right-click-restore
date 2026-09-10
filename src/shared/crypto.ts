@@ -1,3 +1,5 @@
+let fallbackCounter = 0;
+
 /**
  * Generates a cryptographically secure random 128-bit hex string or UUID token.
  * Uses `crypto.randomUUID()` when supported, falling back to `crypto.getRandomValues()`.
@@ -13,11 +15,13 @@ export function getSecureRandomString(): string {
       return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
     }
   }
-  // High-precision fallback when crypto is absent (e.g., bare execution environments)
+  // High-precision monotonic counter fallback when crypto is absent (e.g., bare execution environments)
+  fallbackCounter = (fallbackCounter + 1) % 0xffffffff;
   const timestamp = Date.now().toString(36);
   const perf =
     typeof performance !== 'undefined' && typeof performance.now === 'function'
       ? Math.floor(performance.now() * 1000).toString(36)
       : '';
-  return `${timestamp}-${perf}`;
+  const seq = fallbackCounter.toString(36);
+  return `${timestamp}-${perf}-${seq}`;
 }

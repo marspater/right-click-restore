@@ -188,10 +188,14 @@ export function handleContentMessage(
       window.addEventListener('__rcr_handshake__', (e: Event) => {
         try {
           const detail = (e as CustomEvent)?.detail;
+          // Security hardening: Lock channel & nonce once established to prevent hijacking from untrusted page scripts
           if (
+            bridgeChannel === null &&
             detail &&
             typeof detail.channel === 'string' &&
-            typeof detail.nonce === 'string'
+            detail.channel.length > 0 &&
+            typeof detail.nonce === 'string' &&
+            detail.nonce.length > 0
           ) {
             bridgeChannel = detail.channel;
             bridgeNonce = detail.nonce;

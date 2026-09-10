@@ -259,7 +259,9 @@ async function forceUnlockPage() {
           <span class={`relative inline-flex rounded-full h-2 w-2 transition-all duration-200 ${
             isSiteActive
               ? 'bg-[var(--accent-green)] shadow-[0_0_6px_rgba(52,199,89,0.5)]'
-              : 'bg-[var(--text-tertiary)]'
+              : settings.enabled && isSiteDisabled
+                ? 'bg-[var(--accent-orange)] shadow-[0_0_6px_rgba(255,149,0,0.4)]'
+                : 'bg-[var(--text-tertiary)]'
           }`}></span>
         </span>
       </div>
@@ -286,9 +288,13 @@ async function forceUnlockPage() {
   <!-- Settings List Group -->
   <section class={`glass-card p-1 mb-2 flex flex-col ${isSiteActive ? '' : 'dimmed'}`}>
     <!-- Feature 1: Restore Right Click -->
-    <label class="settings-row">
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive}>
       <div class="flex items-center gap-2.5 min-w-0">
-        <div class="w-6 h-6 rounded-[7px] bg-[var(--bg-badge)] text-[var(--text-secondary)] flex items-center justify-center flex-shrink-0" aria-hidden="true">
+        <div class={`w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
+          isSiteActive && settings.restoreRightClick
+            ? 'bg-[var(--bg-badge-active)] text-[var(--accent-blue)]'
+            : 'bg-[var(--bg-badge)] text-[var(--text-secondary)]'
+        }`} aria-hidden="true">
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
             <path d="M7 11V7a5 5 0 0 1 9.9-1" />
@@ -308,9 +314,13 @@ async function forceUnlockPage() {
     <div class="settings-divider" aria-hidden="true"></div>
 
     <!-- Feature 2: Allow Selection & Copy -->
-    <label class="settings-row">
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive}>
       <div class="flex items-center gap-2.5 min-w-0">
-        <div class="w-6 h-6 rounded-[7px] bg-[var(--bg-badge)] text-[var(--text-secondary)] flex items-center justify-center flex-shrink-0" aria-hidden="true">
+        <div class={`w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
+          isSiteActive && settings.restoreSelection
+            ? 'bg-[var(--bg-badge-active)] text-[var(--accent-blue)]'
+            : 'bg-[var(--bg-badge)] text-[var(--text-secondary)]'
+        }`} aria-hidden="true">
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 20h9" />
             <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
@@ -330,9 +340,13 @@ async function forceUnlockPage() {
     <div class="settings-divider" aria-hidden="true"></div>
 
     <!-- Feature 3: Anti-Shield Overlay -->
-    <label class="settings-row">
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive}>
       <div class="flex items-center gap-2.5 min-w-0">
-        <div class="w-6 h-6 rounded-[7px] bg-[var(--bg-badge)] text-[var(--text-secondary)] flex items-center justify-center flex-shrink-0" aria-hidden="true">
+        <div class={`w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
+          isSiteActive && settings.antiShield
+            ? 'bg-[var(--bg-badge-active)] text-[var(--accent-blue)]'
+            : 'bg-[var(--bg-badge)] text-[var(--text-secondary)]'
+        }`} aria-hidden="true">
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           </svg>
@@ -351,9 +365,13 @@ async function forceUnlockPage() {
     <div class="settings-divider" aria-hidden="true"></div>
 
     <!-- Feature 4: Absolute Force Mode -->
-    <label class="settings-row">
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive}>
       <div class="flex items-center gap-2.5 min-w-0">
-        <div class="w-6 h-6 rounded-[7px] bg-[var(--bg-badge)] text-[var(--text-secondary)] flex items-center justify-center flex-shrink-0" aria-hidden="true">
+        <div class={`w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
+          isSiteActive && settings.absoluteForce
+            ? 'bg-[var(--bg-badge-active)] text-[var(--accent-blue)]'
+            : 'bg-[var(--bg-badge)] text-[var(--text-secondary)]'
+        }`} aria-hidden="true">
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
           </svg>
@@ -372,9 +390,13 @@ async function forceUnlockPage() {
     <div class="settings-divider" aria-hidden="true"></div>
 
     <!-- Feature 5: Modifier Key Bypass -->
-    <label class="settings-row">
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive}>
       <div class="flex items-center gap-2.5 min-w-0">
-        <div class="w-6 h-6 rounded-[7px] bg-[var(--bg-badge)] text-[var(--text-secondary)] flex items-center justify-center flex-shrink-0" aria-hidden="true">
+        <div class={`w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
+          isSiteActive && settings.bypassModifierKey
+            ? 'bg-[var(--bg-badge-active)] text-[var(--accent-blue)]'
+            : 'bg-[var(--bg-badge)] text-[var(--text-secondary)]'
+        }`} aria-hidden="true">
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="2" y="4" width="20" height="16" rx="2" />
             <path d="M6 8h.001M10 8h.001M14 8h.001M18 8h.001M8 12h.001M12 12h.001M16 12h.001M7 16h10" />
@@ -403,14 +425,18 @@ async function forceUnlockPage() {
       type="button"
       onclick={forceUnlockPage}
       disabled={unlockStatus !== 'idle' || !isSiteActive}
-      class={`w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none active:scale-[0.99] disabled:cursor-not-allowed ${
+      title={isSiteActive ? 'Force unlock context menu and selection on active page' : 'Protection is inactive on this page'}
+      aria-label="Force unlock context menu and selection on active page"
+      class={`w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none disabled:cursor-not-allowed ${
+        isSiteActive && unlockStatus === 'idle' ? 'active:scale-[0.985]' : ''
+      } ${
         unlockStatus === 'success'
           ? 'bg-[var(--accent-green)] text-white shadow-sm border border-transparent'
           : unlockStatus === 'error'
-          ? 'bg-[var(--accent-red)] text-white shadow-sm border border-transparent'
-          : isSiteActive
-          ? 'bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] text-[var(--text-primary)] border border-[var(--border-subtle)] shadow-[var(--shadow-btn)]'
-          : 'bg-[var(--bg-card)] text-[var(--text-tertiary)] border border-[var(--border-subtle)] opacity-50'
+            ? 'bg-[var(--accent-red)] text-white shadow-sm border border-transparent'
+            : isSiteActive
+              ? 'bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] text-[var(--text-primary)] border border-[var(--border-subtle)] shadow-[var(--shadow-btn)]'
+              : 'bg-[var(--bg-card)] text-[var(--text-tertiary)] border border-[var(--border-subtle)] opacity-50'
       }`}
     >
       {#if unlockStatus === 'unlocking'}

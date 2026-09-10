@@ -214,6 +214,15 @@ describe('page-script helpers', () => {
 
       expect(accepted).toBe(false);
       expect(updated).toBe(false);
+
+      const nonStringAccepted = handlePageScriptMessage(
+        { nonce: 12345, type: 'UPDATE', config: { enabled: false } },
+        'secret-nonce',
+        () => {
+          updated = true;
+        },
+      );
+      expect(nonStringAccepted).toBe(false);
     });
 
     test('accepts valid UPDATE message with matching nonce', () => {

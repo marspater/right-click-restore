@@ -1,8 +1,24 @@
+const OBJECT_PROTO_METHODS = new Set(
+  Object.getOwnPropertyNames(Object.prototype),
+);
+
 export function getUnshadowedMethod(
   obj: object,
   methodName: string,
 ): ((...args: unknown[]) => unknown) | null {
   try {
+    // Fast-path: 99.99% of standard DOM nodes do not own the method property on their instance,
+    // and DOM methods (matches, closest, etc.) are not on Object.prototype.
+    if (
+      !OBJECT_PROTO_METHODS.has(methodName) &&
+      !Object.prototype.hasOwnProperty.call(obj, methodName)
+    ) {
+      const fn = (obj as Record<string, unknown>)[methodName];
+      if (typeof fn === 'function') {
+        return fn as (...args: unknown[]) => unknown;
+      }
+    }
+
     let proto = Object.getPrototypeOf(obj);
     while (proto && proto !== Object.prototype) {
       const desc = Object.getOwnPropertyDescriptor(proto, methodName);
@@ -100,6 +116,9 @@ export function safeRemoveAttribute(element: Element, attr: string): void {
 
 export function safeGetShadowRoot(element: Element): ShadowRoot | null {
   try {
+    if (!Object.prototype.hasOwnProperty.call(element, 'shadowRoot')) {
+      return element.shadowRoot;
+    }
     const getter = getUnshadowedGetter(element, 'shadowRoot');
     if (getter) {
       return getter.call(element) as ShadowRoot | null;
@@ -112,6 +131,9 @@ export function safeGetShadowRoot(element: Element): ShadowRoot | null {
 
 export function safeGetStyle(element: HTMLElement): CSSStyleDeclaration | null {
   try {
+    if (!Object.prototype.hasOwnProperty.call(element, 'style')) {
+      return element.style;
+    }
     const getter = getUnshadowedGetter(element, 'style');
     if (getter) {
       return getter.call(element) as CSSStyleDeclaration | null;

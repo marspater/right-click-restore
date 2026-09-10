@@ -1,8 +1,28 @@
+const OBJECT_PROTO_METHODS = new Set(
+  Object.getOwnPropertyNames(Object.prototype),
+);
+
 export function getUnshadowedMethod(
   obj: object,
   methodName: string,
 ): ((...args: unknown[]) => unknown) | null {
   try {
+    // Fast-path: 99.99% of standard DOM nodes do not own the method property on their instance,
+    // and DOM methods (matches, closest, etc.) are not on Object.prototype.
+    // Checking !OBJECT_PROTO_METHODS.has(methodName) ensures Object.prototype methods (toString, valueOf)
+    // correctly return null rather than being leaked from Object.prototype.
+    if (
+      !OBJECT_PROTO_METHODS.has(methodName) &&
+      !Object.prototype.hasOwnProperty.call(obj, methodName)
+    ) {
+      const fn = (obj as Record<string, unknown>)[methodName];
+      if (typeof fn === 'function') {
+        return fn as (...args: unknown[]) => unknown;
+      }
+    }
+
+    // Slow-path fallback: If methodName IS an own property on obj (e.g. DOM clobbered <form><input name="matches"></form>
+    // or test mock objects), traverse prototype chain to locate genuine prototype method.
     let proto = Object.getPrototypeOf(obj);
     while (proto && proto !== Object.prototype) {
       const desc = Object.getOwnPropertyDescriptor(proto, methodName);

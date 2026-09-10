@@ -10,6 +10,7 @@
   --bg-card-hover: rgba(255, 255, 255, 0.92);
   --bg-row-hover: rgba(0, 0, 0, 0.035);
   --bg-badge: rgba(0, 0, 0, 0.04);
+  --bg-badge-active: rgba(0, 122, 255, 0.12);
   --bg-kbd: rgba(0, 0, 0, 0.06);
 
   --border-subtle: rgba(0, 0, 0, 0.08);
@@ -48,6 +49,7 @@
     --bg-card-hover: rgba(55, 55, 60, 0.8);
     --bg-row-hover: rgba(255, 255, 255, 0.06);
     --bg-badge: rgba(255, 255, 255, 0.06);
+    --bg-badge-active: rgba(10, 132, 255, 0.2);
     --bg-kbd: rgba(255, 255, 255, 0.12);
 
     --border-subtle: rgba(255, 255, 255, 0.09);
@@ -196,6 +198,14 @@ body {
 .apple-switch input:focus-visible + .apple-slider {
   outline: 2px solid var(--accent-blue);
   outline-offset: 2px;
+}
+
+.apple-switch input:disabled {
+  cursor: not-allowed;
+}
+
+label:has(input:disabled) {
+  cursor: not-allowed;
 }
 
 button:focus-visible {

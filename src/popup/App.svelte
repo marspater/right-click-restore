@@ -259,7 +259,9 @@ async function forceUnlockPage() {
           <span class={`relative inline-flex rounded-full h-2 w-2 transition-all duration-200 ${
             isSiteActive
               ? 'bg-[var(--accent-green)] shadow-[0_0_6px_rgba(52,199,89,0.5)]'
-              : 'bg-[var(--text-tertiary)]'
+              : isSiteDisabled
+                ? 'bg-[var(--accent-orange)] shadow-[0_0_6px_rgba(255,149,0,0.4)]'
+                : 'bg-[var(--text-tertiary)]'
           }`}></span>
         </span>
       </div>
@@ -288,7 +290,11 @@ async function forceUnlockPage() {
     <!-- Feature 1: Restore Right Click -->
     <label class="settings-row">
       <div class="flex items-center gap-2.5 min-w-0">
-        <div class="w-6 h-6 rounded-[7px] bg-[var(--bg-badge)] text-[var(--text-secondary)] flex items-center justify-center flex-shrink-0" aria-hidden="true">
+        <div class={`w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
+          isSiteActive && settings.restoreRightClick
+            ? 'bg-[var(--bg-badge-active)] text-[var(--accent-blue)]'
+            : 'bg-[var(--bg-badge)] text-[var(--text-secondary)]'
+        }`} aria-hidden="true">
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
             <path d="M7 11V7a5 5 0 0 1 9.9-1" />
@@ -300,7 +306,7 @@ async function forceUnlockPage() {
         </div>
       </div>
       <span class="apple-switch apple-switch-sm">
-        <input type="checkbox" role="switch" checked={settings.restoreRightClick} aria-checked={settings.restoreRightClick} disabled={!isSiteActive} onchange={() => toggleFeature('restoreRightClick')} aria-label="Restore Right Click" />
+        <input type="checkbox" role="switch" checked={settings.restoreRightClick} aria-checked={settings.restoreRightClick} disabled={!isSiteActive} onchange={() => toggleFeature('restoreRightClick')} />
         <span class="apple-slider"></span>
       </span>
     </label>
@@ -310,7 +316,11 @@ async function forceUnlockPage() {
     <!-- Feature 2: Allow Selection & Copy -->
     <label class="settings-row">
       <div class="flex items-center gap-2.5 min-w-0">
-        <div class="w-6 h-6 rounded-[7px] bg-[var(--bg-badge)] text-[var(--text-secondary)] flex items-center justify-center flex-shrink-0" aria-hidden="true">
+        <div class={`w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
+          isSiteActive && settings.restoreSelection
+            ? 'bg-[var(--bg-badge-active)] text-[var(--accent-blue)]'
+            : 'bg-[var(--bg-badge)] text-[var(--text-secondary)]'
+        }`} aria-hidden="true">
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 20h9" />
             <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
@@ -322,7 +332,7 @@ async function forceUnlockPage() {
         </div>
       </div>
       <span class="apple-switch apple-switch-sm">
-        <input type="checkbox" role="switch" checked={settings.restoreSelection} aria-checked={settings.restoreSelection} disabled={!isSiteActive} onchange={() => toggleFeature('restoreSelection')} aria-label="Allow Selection & Copy" />
+        <input type="checkbox" role="switch" checked={settings.restoreSelection} aria-checked={settings.restoreSelection} disabled={!isSiteActive} onchange={() => toggleFeature('restoreSelection')} />
         <span class="apple-slider"></span>
       </span>
     </label>
@@ -332,7 +342,11 @@ async function forceUnlockPage() {
     <!-- Feature 3: Anti-Shield Overlay -->
     <label class="settings-row">
       <div class="flex items-center gap-2.5 min-w-0">
-        <div class="w-6 h-6 rounded-[7px] bg-[var(--bg-badge)] text-[var(--text-secondary)] flex items-center justify-center flex-shrink-0" aria-hidden="true">
+        <div class={`w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
+          isSiteActive && settings.antiShield
+            ? 'bg-[var(--bg-badge-active)] text-[var(--accent-blue)]'
+            : 'bg-[var(--bg-badge)] text-[var(--text-secondary)]'
+        }`} aria-hidden="true">
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           </svg>
@@ -343,7 +357,7 @@ async function forceUnlockPage() {
         </div>
       </div>
       <span class="apple-switch apple-switch-sm">
-        <input type="checkbox" role="switch" checked={settings.antiShield} aria-checked={settings.antiShield} disabled={!isSiteActive} onchange={() => toggleFeature('antiShield')} aria-label="Anti-Shield Overlay" />
+        <input type="checkbox" role="switch" checked={settings.antiShield} aria-checked={settings.antiShield} disabled={!isSiteActive} onchange={() => toggleFeature('antiShield')} />
         <span class="apple-slider"></span>
       </span>
     </label>
@@ -353,7 +367,11 @@ async function forceUnlockPage() {
     <!-- Feature 4: Absolute Force Mode -->
     <label class="settings-row">
       <div class="flex items-center gap-2.5 min-w-0">
-        <div class="w-6 h-6 rounded-[7px] bg-[var(--bg-badge)] text-[var(--text-secondary)] flex items-center justify-center flex-shrink-0" aria-hidden="true">
+        <div class={`w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
+          isSiteActive && settings.absoluteForce
+            ? 'bg-[var(--bg-badge-active)] text-[var(--accent-blue)]'
+            : 'bg-[var(--bg-badge)] text-[var(--text-secondary)]'
+        }`} aria-hidden="true">
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
           </svg>
@@ -364,7 +382,7 @@ async function forceUnlockPage() {
         </div>
       </div>
       <span class="apple-switch apple-switch-sm">
-        <input type="checkbox" role="switch" checked={settings.absoluteForce} aria-checked={settings.absoluteForce} disabled={!isSiteActive} onchange={() => toggleFeature('absoluteForce')} aria-label="Absolute Force Mode" />
+        <input type="checkbox" role="switch" checked={settings.absoluteForce} aria-checked={settings.absoluteForce} disabled={!isSiteActive} onchange={() => toggleFeature('absoluteForce')} />
         <span class="apple-slider"></span>
       </span>
     </label>
@@ -374,7 +392,11 @@ async function forceUnlockPage() {
     <!-- Feature 5: Modifier Key Bypass -->
     <label class="settings-row">
       <div class="flex items-center gap-2.5 min-w-0">
-        <div class="w-6 h-6 rounded-[7px] bg-[var(--bg-badge)] text-[var(--text-secondary)] flex items-center justify-center flex-shrink-0" aria-hidden="true">
+        <div class={`w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
+          isSiteActive && settings.bypassModifierKey
+            ? 'bg-[var(--bg-badge-active)] text-[var(--accent-blue)]'
+            : 'bg-[var(--bg-badge)] text-[var(--text-secondary)]'
+        }`} aria-hidden="true">
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="2" y="4" width="20" height="16" rx="2" />
             <path d="M6 8h.001M10 8h.001M14 8h.001M18 8h.001M8 12h.001M12 12h.001M16 12h.001M7 16h10" />
@@ -386,7 +408,7 @@ async function forceUnlockPage() {
         </div>
       </div>
       <span class="apple-switch apple-switch-sm">
-        <input type="checkbox" role="switch" checked={settings.bypassModifierKey} aria-checked={settings.bypassModifierKey} disabled={!isSiteActive} onchange={() => toggleFeature('bypassModifierKey')} aria-label="Modifier Key Bypass" />
+        <input type="checkbox" role="switch" checked={settings.bypassModifierKey} aria-checked={settings.bypassModifierKey} disabled={!isSiteActive} onchange={() => toggleFeature('bypassModifierKey')} />
         <span class="apple-slider"></span>
       </span>
     </label>

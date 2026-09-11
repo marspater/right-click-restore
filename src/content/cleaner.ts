@@ -86,11 +86,20 @@ export function cleanNode(
 export function cleanAddedNode(
   node: unknown,
   settings: Settings = DEFAULT_SETTINGS,
+  visited?: Set<unknown>,
 ) {
   if (typeof Element === 'undefined' || !(node instanceof Element)) return;
+  if (visited) {
+    if (visited.has(node)) return;
+    visited.add(node);
+  }
   cleanNode(node, settings);
   try {
     for (const child of node.querySelectorAll(SCRUB_SELECTOR)) {
+      if (visited) {
+        if (visited.has(child)) continue;
+        visited.add(child);
+      }
       cleanNode(child, settings);
     }
   } catch (_e) {}
@@ -99,12 +108,21 @@ export function cleanAddedNode(
 export function cleanDOMTree(
   root: ParentNode = document,
   settings: Settings = DEFAULT_SETTINGS,
+  visited?: Set<unknown>,
 ) {
   if (typeof Element !== 'undefined' && root instanceof Element) {
+    if (visited) {
+      if (visited.has(root)) return;
+      visited.add(root);
+    }
     cleanNode(root, settings);
   }
   try {
     for (const node of root.querySelectorAll(SCRUB_SELECTOR)) {
+      if (visited) {
+        if (visited.has(node)) continue;
+        visited.add(node);
+      }
       cleanNode(node, settings);
     }
   } catch (_e) {}

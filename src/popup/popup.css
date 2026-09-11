@@ -205,7 +205,31 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
-/* Inset Settings Row */
+/* Inset Settings Row & Domain Card */
+.domain-card {
+  user-select: none;
+}
+
+.domain-card.is-interactive {
+  cursor: pointer;
+}
+
+.domain-card.is-interactive:hover:not(.dimmed) {
+  background-color: var(--bg-card-hover);
+}
+
+.domain-card:has(input:focus-visible):not(.dimmed) {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: -1px;
+}
+
+.domain-card:has(input:focus-visible)
+  .apple-switch
+  input:focus-visible
+  + .apple-slider {
+  outline: none;
+}
+
 .settings-row {
   display: flex;
   align-items: center;
@@ -229,7 +253,6 @@ button:focus-visible {
   cursor: not-allowed;
 }
 
-.settings-row:focus-within:not(.is-disabled),
 .settings-row:has(input:focus-visible):not(.is-disabled) {
   background-color: var(--bg-row-hover);
   outline: 2px solid var(--accent-blue);

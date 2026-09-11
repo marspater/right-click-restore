@@ -3,7 +3,6 @@ import { getSecureRandomString } from '../shared/crypto';
 import {
   getUnshadowedMethod,
   isInteractiveNode,
-  safeClosest,
   safeMatches,
 } from '../shared/dom';
 import {

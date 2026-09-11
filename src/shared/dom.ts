@@ -155,6 +155,8 @@ export function isInteractiveNode(node: Node | null): boolean {
     if (typeof Element !== 'undefined' && curr instanceof Element) {
       if (safeClosest(curr, ALL_INTERACTIVE_SELECTORS)) return true;
     }
-  } catch (_e) {}
+  } catch (_e) {
+    return false;
+  }
   return false;
 }

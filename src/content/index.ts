@@ -120,11 +120,12 @@ export function handleContentMessage(
     if (!currentSettings.enabled || pendingNodes.size === 0) return;
 
     let processed = 0;
+    const visited = new Set<unknown>();
     for (const node of pendingNodes) {
       if (processed >= BATCH_SIZE) break;
       pendingNodes.delete(node);
       try {
-        cleanAddedNodeBase(node, currentSettings);
+        cleanAddedNodeBase(node, currentSettings, visited);
       } catch (_e) {}
       processed++;
     }

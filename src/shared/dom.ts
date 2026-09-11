@@ -1,3 +1,4 @@
+import { ALL_INTERACTIVE_SELECTORS } from './constants';
 const OBJECT_PROTO_METHODS = new Set(
   Object.getOwnPropertyNames(Object.prototype),
 );
@@ -142,4 +143,18 @@ export function safeGetStyle(element: HTMLElement): CSSStyleDeclaration | null {
   } catch (_e) {
     return null;
   }
+}
+
+export function isInteractiveNode(node: Node | null): boolean {
+  if (!node) return false;
+  try {
+    let curr: Node | null = node;
+    if (typeof Node !== 'undefined' && curr.nodeType === Node.TEXT_NODE) {
+      curr = curr.parentElement;
+    }
+    if (typeof Element !== 'undefined' && curr instanceof Element) {
+      if (safeClosest(curr, ALL_INTERACTIVE_SELECTORS)) return true;
+    }
+  } catch (_e) {}
+  return false;
 }

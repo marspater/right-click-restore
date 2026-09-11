@@ -1,6 +1,5 @@
-import { ALL_INTERACTIVE_SELECTORS } from '../shared/constants';
 import {
-  safeClosest,
+  isInteractiveNode,
   safeGetShadowRoot,
   safeGetStyle,
   safeRemoveAttribute,
@@ -10,6 +9,7 @@ import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
 export {
   getUnshadowedGetter,
   getUnshadowedMethod,
+  isInteractiveNode,
   safeClosest,
   safeGetShadowRoot,
   safeGetStyle,
@@ -39,11 +39,7 @@ export function cleanNode(
 ) {
   if (typeof Element === 'undefined' || !(node instanceof Element)) return;
 
-  try {
-    if (safeClosest(node, ALL_INTERACTIVE_SELECTORS)) {
-      return;
-    }
-  } catch (_e) {
+  if (isInteractiveNode(node as Node)) {
     return;
   }
 

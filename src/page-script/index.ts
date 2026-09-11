@@ -1,27 +1,23 @@
 import { ALL_INTERACTIVE_SELECTORS } from '../shared/constants';
 import { getSecureRandomString } from '../shared/crypto';
-import { getUnshadowedMethod, safeClosest, safeMatches } from '../shared/dom';
+import {
+  getUnshadowedMethod,
+  isInteractiveNode,
+  safeClosest,
+  safeMatches,
+} from '../shared/dom';
 import {
   DEFAULT_SETTINGS,
   type Settings,
   validateSettings,
 } from '../shared/settings';
 
-export { getUnshadowedMethod, safeClosest, safeMatches } from '../shared/dom';
-
-export function isInteractiveNode(node: Node | null): boolean {
-  if (!node) return false;
-  try {
-    let curr: Node | null = node;
-    if (curr.nodeType === Node.TEXT_NODE) {
-      curr = curr.parentElement;
-    }
-    if (curr instanceof Element) {
-      if (safeClosest(curr, ALL_INTERACTIVE_SELECTORS)) return true;
-    }
-  } catch (_e) {}
-  return false;
-}
+export {
+  getUnshadowedMethod,
+  isInteractiveNode,
+  safeClosest,
+  safeMatches,
+} from '../shared/dom';
 
 // Fast-path interactive event check. When composedPath is available and non-empty,
 // iterating over path elements already inspects target and all parent ancestors.

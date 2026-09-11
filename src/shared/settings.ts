@@ -158,10 +158,7 @@ export function isDomainDisabled(
   if (!host) return false;
 
   for (let i = 0; i < disabledDomains.length; i++) {
-    const domain = disabledDomains[i];
-    if (!domain) continue;
-
-    const disabled = normalizeHostname(domain);
+    const disabled = disabledDomains[i];
     if (disabled && (disabled === host || host.endsWith(`.${disabled}`))) {
       return true;
     }

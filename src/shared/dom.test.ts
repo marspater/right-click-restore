@@ -7,6 +7,7 @@ import {
   safeGetShadowRoot,
   safeGetStyle,
   safeHasAttribute,
+  safeHasAttributes,
   safeMatches,
   safeRemoveAttribute,
 } from './dom';
@@ -146,14 +147,34 @@ describe('shared DOM utilities', () => {
     });
   });
 
-  describe('safeHasAttribute and safeRemoveAttribute', () => {
+  describe('safeHasAttribute, safeHasAttributes and safeRemoveAttribute', () => {
     test('safely checks and removes attributes', () => {
       const el = document.createElement('div');
+      expect(safeHasAttributes(el)).toBe(false);
+      expect(safeHasAttribute(el, 'oncontextmenu')).toBe(false);
+
       el.setAttribute('oncontextmenu', 'return false');
 
+      expect(safeHasAttributes(el)).toBe(true);
       expect(safeHasAttribute(el, 'oncontextmenu')).toBe(true);
       safeRemoveAttribute(el, 'oncontextmenu');
       expect(safeHasAttribute(el, 'oncontextmenu')).toBe(false);
+      expect(safeHasAttributes(el)).toBe(false);
+    });
+
+    test('resists DOM clobbering when hasAttributes is shadowed', () => {
+      const form = document.createElement('form');
+      form.setAttribute('action', '/');
+      const input = document.createElement('input');
+      input.setAttribute('name', 'hasAttributes');
+      form.appendChild(input);
+
+      Object.defineProperty(form, 'hasAttributes', {
+        value: input,
+        configurable: true,
+      });
+
+      expect(safeHasAttributes(form)).toBe(true);
     });
   });
 

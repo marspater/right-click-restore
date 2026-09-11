@@ -1,0 +1,3 @@
+## 2025-02-23 - DOM Node Scrubbing Fast-Paths & Attribute Short-Circuiting
+**Learning:** Checking `element.hasAttributes()` in DOM cleaner routines avoids 6x redundant `hasAttribute` / `removeAttribute` prototype lookup loops per node on attribute-less elements. Furthermore, O(1) tag checks (`INPUT`, `TEXTAREA`, `SELECT`, `BUTTON`, `CANVAS`) bypass expensive CSS selector parsing in `safeClosest` and `safeMatches`.
+**Action:** When cleaning or inspecting large DOM subtrees, guard attribute iteration with `safeHasAttributes` and test tag names directly before invoking general CSS selector queries.

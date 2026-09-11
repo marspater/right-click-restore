@@ -17,6 +17,16 @@ export function isInteractiveNode(node: Node | null): boolean {
       curr = curr.parentElement;
     }
     if (curr instanceof Element) {
+      const tag = curr.tagName;
+      if (
+        tag === 'INPUT' ||
+        tag === 'TEXTAREA' ||
+        tag === 'SELECT' ||
+        tag === 'BUTTON' ||
+        tag === 'CANVAS'
+      ) {
+        return true;
+      }
       if (safeClosest(curr, ALL_INTERACTIVE_SELECTORS)) return true;
     }
   } catch (_e) {}
@@ -34,11 +44,20 @@ export function isInteractiveEvent(event: Event): boolean {
     if (composedPathFn) {
       const path = composedPathFn.call(event) as unknown[];
       if (Array.isArray(path) && path.length > 0) {
-        return path.some(
-          (item) =>
-            item instanceof Element &&
-            safeMatches(item, ALL_INTERACTIVE_SELECTORS),
-        );
+        return path.some((item) => {
+          if (!(item instanceof Element)) return false;
+          const tag = item.tagName;
+          if (
+            tag === 'INPUT' ||
+            tag === 'TEXTAREA' ||
+            tag === 'SELECT' ||
+            tag === 'BUTTON' ||
+            tag === 'CANVAS'
+          ) {
+            return true;
+          }
+          return safeMatches(item, ALL_INTERACTIVE_SELECTORS);
+        });
       }
     }
   } catch (_e) {}

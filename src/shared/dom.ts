@@ -88,8 +88,21 @@ export function safeClosest(
   }
 }
 
+export function safeHasAttributes(element: Element): boolean {
+  try {
+    const fn = getUnshadowedMethod(element, 'hasAttributes');
+    if (fn) {
+      return Boolean(fn.call(element));
+    }
+    return element.hasAttributes();
+  } catch (_e) {
+    return true;
+  }
+}
+
 export function safeHasAttribute(element: Element, attr: string): boolean {
   try {
+    if (!safeHasAttributes(element)) return false;
     const fn = getUnshadowedMethod(element, 'hasAttribute');
     if (fn) {
       return Boolean(fn.call(element, attr));

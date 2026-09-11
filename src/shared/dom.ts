@@ -153,10 +153,10 @@ export function isInteractiveNode(node: Node | null): boolean {
       curr = curr.parentElement;
     }
     if (typeof Element !== 'undefined' && curr instanceof Element) {
-      if (safeClosest(curr, ALL_INTERACTIVE_SELECTORS)) return true;
+      return Boolean(safeClosest(curr, ALL_INTERACTIVE_SELECTORS));
     }
+    return false;
   } catch (_e) {
     return false;
   }
-  return false;
 }

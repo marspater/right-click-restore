@@ -3,6 +3,7 @@ import {
   safeClosest,
   safeGetShadowRoot,
   safeGetStyle,
+  safeHasAttribute,
   safeRemoveAttribute,
 } from '../shared/dom';
 import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
@@ -18,14 +19,16 @@ export {
   safeRemoveAttribute,
 } from '../shared/dom';
 
-export const SCRUB_ATTRS = [
-  'oncontextmenu',
+export const SCRUB_CONTEXT_ATTR = 'oncontextmenu';
+export const SCRUB_SELECTION_ATTRS = [
   'onselectstart',
   'ondragstart',
   'oncopy',
   'oncut',
   'onbeforecopy',
 ];
+
+export const SCRUB_ATTRS = [SCRUB_CONTEXT_ATTR, ...SCRUB_SELECTION_ATTRS];
 
 export const SCRUB_SELECTOR = [
   ...SCRUB_ATTRS.map((attr) => `[${attr}]`),
@@ -39,6 +42,52 @@ export function cleanNode(
 ) {
   if (typeof Element === 'undefined' || !(node instanceof Element)) return;
 
+  if (!settings.restoreRightClick && !settings.restoreSelection) return;
+
+  // Fast O(1) check: determine if node has any attributes or styles to clean, or a shadow root.
+  // Skipping safeClosest when node has no target attributes/styles avoids expensive DOM parent hierarchy traversals.
+  const hasContextMenu =
+    settings.restoreRightClick && safeHasAttribute(node, SCRUB_CONTEXT_ATTR);
+
+  let hasSelectionAttr = false;
+  if (settings.restoreSelection) {
+    for (let i = 0; i < SCRUB_SELECTION_ATTRS.length; i++) {
+      if (safeHasAttribute(node, SCRUB_SELECTION_ATTRS[i])) {
+        hasSelectionAttr = true;
+        break;
+      }
+    }
+  }
+
+  let style: CSSStyleDeclaration | null = null;
+  let hasUserSelectStyle = false;
+  if (
+    settings.restoreSelection &&
+    typeof HTMLElement !== 'undefined' &&
+    node instanceof HTMLElement
+  ) {
+    try {
+      style = safeGetStyle(node);
+      if (style) {
+        if (
+          style.userSelect === 'none' ||
+          ('webkitUserSelect' in style && style.webkitUserSelect === 'none')
+        ) {
+          hasUserSelectStyle = true;
+        }
+      }
+    } catch (_e) {}
+  }
+
+  let shadow: ShadowRoot | null = null;
+  try {
+    shadow = safeGetShadowRoot(node);
+  } catch (_e) {}
+
+  if (!hasContextMenu && !hasSelectionAttr && !hasUserSelectStyle && !shadow) {
+    return;
+  }
+
   try {
     if (safeClosest(node, ALL_INTERACTIVE_SELECTORS)) {
       return;
@@ -47,40 +96,30 @@ export function cleanNode(
     return;
   }
 
-  if (settings.restoreRightClick) {
-    safeRemoveAttribute(node, 'oncontextmenu');
+  if (hasContextMenu) {
+    safeRemoveAttribute(node, SCRUB_CONTEXT_ATTR);
   }
 
-  if (settings.restoreSelection) {
-    for (let i = 0; i < SCRUB_ATTRS.length; i++) {
-      const attr = SCRUB_ATTRS[i];
-      if (attr !== 'oncontextmenu') {
-        safeRemoveAttribute(node, attr);
+  if (hasSelectionAttr) {
+    for (let i = 0; i < SCRUB_SELECTION_ATTRS.length; i++) {
+      safeRemoveAttribute(node, SCRUB_SELECTION_ATTRS[i]);
+    }
+  }
+
+  if (hasUserSelectStyle && style) {
+    try {
+      if (style.userSelect === 'none') style.userSelect = 'auto';
+      if ('webkitUserSelect' in style && style.webkitUserSelect === 'none') {
+        style.webkitUserSelect = 'auto';
       }
-    }
-    if (typeof HTMLElement !== 'undefined' && node instanceof HTMLElement) {
-      try {
-        const style = safeGetStyle(node);
-        if (style) {
-          if (style.userSelect === 'none') style.userSelect = 'auto';
-          if (
-            'webkitUserSelect' in style &&
-            style.webkitUserSelect === 'none'
-          ) {
-            style.webkitUserSelect = 'auto';
-          }
-        }
-      } catch (_e) {}
-    }
+    } catch (_e) {}
   }
 
-  // Traverse open shadow root if accessible
-  try {
-    const shadow = safeGetShadowRoot(node);
-    if (shadow) {
+  if (shadow) {
+    try {
       cleanDOMTree(shadow, settings);
-    }
-  } catch (_e) {}
+    } catch (_e) {}
+  }
 }
 
 export function cleanAddedNode(

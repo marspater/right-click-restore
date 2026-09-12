@@ -4,10 +4,12 @@ import {
   getUnshadowedGetter,
   getUnshadowedMethod,
   safeClosest,
+  safeGetElementById,
   safeGetShadowRoot,
   safeGetStyle,
   safeHasAttribute,
   safeMatches,
+  safeQuerySelectorAll,
   safeRemoveAttribute,
 } from './dom';
 
@@ -169,6 +171,73 @@ describe('shared DOM utilities', () => {
     test('retrieves shadowRoot safely', () => {
       const el = document.createElement('div');
       expect(safeGetShadowRoot(el)).toBeNull();
+    });
+  });
+
+  describe('safeGetElementById', () => {
+    test('retrieves element by ID', () => {
+      const div = document.createElement('div');
+      div.id = 'my-target';
+      document.body.appendChild(div);
+
+      expect(safeGetElementById(document, 'my-target')).toBe(div);
+      expect(safeGetElementById(document, 'nonexistent')).toBeNull();
+    });
+
+    test('resists DOM clobbering when getElementById property is overridden', () => {
+      const div = document.createElement('div');
+      div.id = 'my-target';
+      document.body.appendChild(div);
+
+      const form = document.createElement('form');
+      form.id = 'getElementById';
+      document.body.appendChild(form);
+
+      // Clobber getElementById on document
+      Object.defineProperty(document, 'getElementById', {
+        value: form,
+        configurable: true,
+      });
+
+      expect(safeGetElementById(document, 'my-target')).toBe(div);
+    });
+  });
+
+  describe('safeQuerySelectorAll', () => {
+    test('returns array of matching elements', () => {
+      const container = document.createElement('div');
+      const item1 = document.createElement('span');
+      item1.className = 'item';
+      const item2 = document.createElement('span');
+      item2.className = 'item';
+      container.appendChild(item1);
+      container.appendChild(item2);
+
+      const items = safeQuerySelectorAll(container, '.item');
+      expect(items.length).toBe(2);
+      expect(items[0]).toBe(item1);
+      expect(items[1]).toBe(item2);
+    });
+
+    test('resists DOM clobbering when querySelectorAll is overridden', () => {
+      const container = document.createElement('form');
+      const input = document.createElement('input');
+      input.setAttribute('name', 'querySelectorAll');
+      container.appendChild(input);
+
+      const target = document.createElement('div');
+      target.className = 'target';
+      container.appendChild(target);
+
+      // Clobber querySelectorAll property on container
+      Object.defineProperty(container, 'querySelectorAll', {
+        value: input,
+        configurable: true,
+      });
+
+      const results = safeQuerySelectorAll(container, '.target');
+      expect(results.length).toBe(1);
+      expect(results[0]).toBe(target);
     });
   });
 });

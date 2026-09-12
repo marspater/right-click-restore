@@ -10,6 +10,7 @@ import {
   cleanAddedNode as cleanAddedNodeBase,
   cleanDOMTree as cleanDOMTreeBase,
   cleanNode as cleanNodeBase,
+  safeGetElementById,
 } from './cleaner';
 
 export function handleContentMessage(
@@ -214,7 +215,8 @@ export function handleContentMessage(
   function updateInjectedStyles() {
     try {
       if (typeof document === 'undefined') return;
-      let styleEl = document.getElementById(
+      let styleEl = safeGetElementById(
+        document,
         STYLE_ID,
       ) as HTMLStyleElement | null;
       if (currentSettings.enabled && currentSettings.restoreSelection) {
@@ -315,7 +317,7 @@ export function handleContentMessage(
       if (unlockToastTimer) clearTimeout(unlockToastTimer);
       if (unlockToastRemoveTimer) clearTimeout(unlockToastRemoveTimer);
 
-      document.getElementById('__rcr_toast_host__')?.remove();
+      safeGetElementById(document, '__rcr_toast_host__')?.remove();
 
       const host = document.createElement('div');
       host.id = '__rcr_toast_host__';

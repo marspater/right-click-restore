@@ -224,8 +224,12 @@ async function forceUnlockPage() {
   <!-- Apple-Style Header -->
   <header class="flex items-center justify-between pb-3 select-none">
     <div class="flex items-center gap-2.5">
-      <div class="w-7 h-7 rounded-[8px] bg-gradient-to-b from-[#007AFF] to-[#0062CC] flex items-center justify-center shadow-sm">
-        <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <div class={`w-7 h-7 rounded-[8px] flex items-center justify-center shadow-sm transition-all duration-200 ${
+        settings.enabled
+          ? 'bg-gradient-to-b from-[#007AFF] to-[#0062CC] text-white'
+          : 'bg-[var(--bg-badge)] text-[var(--text-tertiary)]'
+      }`}>
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           <polyline points="9 12 11 14 15 10" />
         </svg>
@@ -248,42 +252,65 @@ async function forceUnlockPage() {
   </header>
 
   <!-- Active Domain Inset Card -->
-  <section class={`glass-card px-3 py-2.5 mb-2 flex items-center justify-between transition-all ${settings.enabled ? '' : 'dimmed'}`}>
-    <div class="flex items-center gap-2.5 min-w-0 pr-2">
-      <!-- Status Beacon -->
-      <div class="flex items-center justify-center flex-shrink-0" aria-hidden="true">
-        <span class="relative flex h-2.5 w-2.5 items-center justify-center">
-          {#if isSiteActive}
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--accent-green)] opacity-35"></span>
-          {/if}
-          <span class={`relative inline-flex rounded-full h-2 w-2 transition-all duration-200 ${
-            isSiteActive
-              ? 'bg-[var(--accent-green)] shadow-[0_0_6px_rgba(52,199,89,0.5)]'
-              : settings.enabled && isSiteDisabled
-                ? 'bg-[var(--accent-orange)] shadow-[0_0_6px_rgba(255,149,0,0.4)]'
-                : 'bg-[var(--text-tertiary)]'
-          }`}></span>
-        </span>
+  {#if isToggleableDomain}
+    <label
+      class={`glass-card domain-card-row px-3 py-2.5 mb-2 flex items-center justify-between transition-all ${
+        settings.enabled ? '' : 'dimmed is-disabled'
+      }`}
+      aria-disabled={!settings.enabled}
+    >
+      <div class="flex items-center gap-2.5 min-w-0 pr-2">
+        <!-- Status Beacon -->
+        <div class="flex items-center justify-center flex-shrink-0" aria-hidden="true">
+          <span class="relative flex h-2.5 w-2.5 items-center justify-center">
+            {#if isSiteActive}
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--accent-green)] opacity-35"></span>
+            {/if}
+            <span class={`relative inline-flex rounded-full h-2 w-2 transition-all duration-200 ${
+              isSiteActive
+                ? 'bg-[var(--accent-green)] shadow-[0_0_6px_rgba(52,199,89,0.5)]'
+                : settings.enabled && isSiteDisabled
+                  ? 'bg-[var(--accent-orange)] shadow-[0_0_6px_rgba(255,149,0,0.4)]'
+                  : 'bg-[var(--text-tertiary)]'
+            }`}></span>
+          </span>
+        </div>
+
+        <!-- Domain Labels Stack -->
+        <div class="min-w-0 flex flex-col justify-center">
+          <span class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
+            {!settings.enabled ? 'Extension Paused' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
+          </span>
+          <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-1" title={currentHostname}>
+            {currentHostname || 'Loading…'}
+          </span>
+        </div>
       </div>
 
-      <!-- Domain Labels Stack -->
-      <div class="min-w-0 flex flex-col justify-center">
-        <span class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
-          {!settings.enabled ? 'Extension Paused' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
-        </span>
-        <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-1" title={currentHostname}>
-          {currentHostname || 'Loading…'}
-        </span>
-      </div>
-    </div>
-
-    {#if isToggleableDomain}
-      <label class="apple-switch apple-switch-sm" title={`Toggle protection on ${currentHostname}`}>
+      <span class="apple-switch apple-switch-sm" title={`Toggle protection on ${currentHostname}`}>
         <input type="checkbox" role="switch" checked={!isSiteDisabled} aria-checked={!isSiteDisabled} disabled={!settings.enabled} onchange={toggleCurrentSite} aria-label={`Toggle protection on ${currentHostname}`} />
         <span class="apple-slider"></span>
-      </label>
-    {/if}
-  </section>
+      </span>
+    </label>
+  {:else}
+    <section class={`glass-card px-3 py-2.5 mb-2 flex items-center justify-between transition-all ${settings.enabled ? '' : 'dimmed'}`}>
+      <div class="flex items-center gap-2.5 min-w-0 pr-2">
+        <div class="flex items-center justify-center flex-shrink-0" aria-hidden="true">
+          <span class="relative flex h-2.5 w-2.5 items-center justify-center">
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-[var(--text-tertiary)]"></span>
+          </span>
+        </div>
+        <div class="min-w-0 flex flex-col justify-center">
+          <span class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
+            {!settings.enabled ? 'Extension Paused' : 'System / Protected Page'}
+          </span>
+          <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-1" title={currentHostname}>
+            {currentHostname || 'Loading…'}
+          </span>
+        </div>
+      </div>
+    </section>
+  {/if}
 
   <!-- Settings List Group -->
   <section class={`glass-card p-1 mb-2 flex flex-col ${isSiteActive ? '' : 'dimmed'}`}>

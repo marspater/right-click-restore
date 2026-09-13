@@ -33,17 +33,15 @@ describe('getSecureRandomString', () => {
     }
   });
 
-  test('handles missing crypto object gracefully and generates distinct values', () => {
+  test('throws error when crypto object is unavailable', () => {
     const originalCrypto = globalThis.crypto;
     // @ts-expect-error test simulation of environment without crypto
     globalThis.crypto = undefined;
 
     try {
-      const token1 = getSecureRandomString();
-      const token2 = getSecureRandomString();
-      expect(typeof token1).toBe('string');
-      expect(token1.length).toBeGreaterThan(0);
-      expect(token1).not.toBe(token2);
+      expect(() => getSecureRandomString()).toThrow(
+        'Cryptographically secure random number generator is unavailable',
+      );
     } finally {
       globalThis.crypto = originalCrypto;
     }

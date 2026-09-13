@@ -200,6 +200,10 @@ body {
   outline-offset: 2px;
 }
 
+button:focus:not(:focus-visible) {
+  outline: none;
+}
+
 button:focus-visible {
   outline: 2px solid var(--accent-blue);
   outline-offset: 2px;
@@ -279,13 +283,14 @@ kbd {
   justify-content: center;
   font-family: var(--font-sans);
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1;
   background: var(--bg-kbd);
-  color: var(--text-secondary);
+  color: var(--text-primary);
   border: 0.5px solid var(--border-kbd);
   border-radius: var(--radius-kbd);
   padding: 2px 4px;
+  box-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.08);
   vertical-align: middle;
 }
 

@@ -3,6 +3,7 @@ import {
   safeClosest,
   safeGetShadowRoot,
   safeGetStyle,
+  safeHasAttribute,
   safeRemoveAttribute,
 } from '../shared/dom';
 import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
@@ -39,6 +40,26 @@ export function cleanNode(
 ) {
   if (typeof Element === 'undefined' || !(node instanceof Element)) return;
 
+  // Fast-path: Skip expensive interactive parent selector traversal (safeClosest)
+  // if the node has no scrubbable attributes, no inline style attribute, and no open shadowRoot.
+  const hasStyleAttr = safeHasAttribute(node, 'style');
+  let hasScrubAttr = false;
+  for (let i = 0; i < SCRUB_ATTRS.length; i++) {
+    if (safeHasAttribute(node, SCRUB_ATTRS[i])) {
+      hasScrubAttr = true;
+      break;
+    }
+  }
+
+  let shadow: ShadowRoot | null = null;
+  try {
+    shadow = safeGetShadowRoot(node);
+  } catch (_e) {}
+
+  if (!hasStyleAttr && !hasScrubAttr && !shadow) {
+    return;
+  }
+
   try {
     if (safeClosest(node, ALL_INTERACTIVE_SELECTORS)) {
       return;
@@ -58,7 +79,11 @@ export function cleanNode(
         safeRemoveAttribute(node, attr);
       }
     }
-    if (typeof HTMLElement !== 'undefined' && node instanceof HTMLElement) {
+    if (
+      hasStyleAttr &&
+      typeof HTMLElement !== 'undefined' &&
+      node instanceof HTMLElement
+    ) {
       try {
         const style = safeGetStyle(node);
         if (style) {
@@ -75,12 +100,11 @@ export function cleanNode(
   }
 
   // Traverse open shadow root if accessible
-  try {
-    const shadow = safeGetShadowRoot(node);
-    if (shadow) {
+  if (shadow) {
+    try {
       cleanDOMTree(shadow, settings);
-    }
-  } catch (_e) {}
+    } catch (_e) {}
+  }
 }
 
 export function cleanAddedNode(

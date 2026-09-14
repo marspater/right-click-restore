@@ -1,5 +1,30 @@
 import { describe, expect, test } from 'bun:test';
-import { getSecureRandomString } from './crypto';
+import { getSecureRandomString, safeCompareStrings } from './crypto';
+
+describe('safeCompareStrings', () => {
+  test('returns true for matching strings', () => {
+    expect(safeCompareStrings('abc123nonce', 'abc123nonce')).toBe(true);
+    expect(safeCompareStrings('', '')).toBe(true);
+  });
+
+  test('returns false for mismatched strings of same length', () => {
+    expect(safeCompareStrings('abc123nonce', 'abc123noncX')).toBe(false);
+    expect(safeCompareStrings('Xbc123nonce', 'abc123nonce')).toBe(false);
+  });
+
+  test('returns false for mismatched strings of different lengths', () => {
+    expect(safeCompareStrings('abc123nonce', 'abc123nonce123')).toBe(false);
+    expect(safeCompareStrings('abc123nonce123', 'abc123nonce')).toBe(false);
+    expect(safeCompareStrings('', 'a')).toBe(false);
+  });
+
+  test('returns false for non-string inputs safely', () => {
+    expect(safeCompareStrings(null, 'abc')).toBe(false);
+    expect(safeCompareStrings('abc', undefined)).toBe(false);
+    expect(safeCompareStrings(123, 123)).toBe(false);
+    expect(safeCompareStrings({}, {})).toBe(false);
+  });
+});
 
 describe('getSecureRandomString', () => {
   test('generates non-empty unique tokens using crypto.randomUUID when available', () => {

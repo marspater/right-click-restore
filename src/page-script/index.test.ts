@@ -225,6 +225,32 @@ describe('page-script helpers', () => {
       expect(nonStringAccepted).toBe(false);
     });
 
+    test('rejects messages with partial prefix matches or differing lengths safely via constant-time comparison', () => {
+      let updated = false;
+      const acceptedPrefix = handlePageScriptMessage(
+        { nonce: 'secret-nonc', type: 'UPDATE', config: { enabled: false } },
+        'secret-nonce',
+        () => {
+          updated = true;
+        },
+      );
+      expect(acceptedPrefix).toBe(false);
+
+      const acceptedExtra = handlePageScriptMessage(
+        {
+          nonce: 'secret-nonce-extra',
+          type: 'UPDATE',
+          config: { enabled: false },
+        },
+        'secret-nonce',
+        () => {
+          updated = true;
+        },
+      );
+      expect(acceptedExtra).toBe(false);
+      expect(updated).toBe(false);
+    });
+
     test('accepts valid UPDATE message with matching nonce', () => {
       let newConfig: Settings | null = null;
       const accepted = handlePageScriptMessage(

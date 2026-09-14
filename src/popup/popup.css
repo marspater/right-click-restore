@@ -272,6 +272,61 @@ button:focus-visible {
     cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Force Unlock Action Button Styles */
+.unlock-btn {
+  transition:
+    background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.2s ease;
+}
+
+.unlock-btn-active {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 0.5px solid var(--border-subtle);
+  box-shadow: var(--shadow-btn);
+}
+
+.unlock-btn-active:hover {
+  background: var(--bg-card-hover);
+}
+
+.unlock-btn-active:active {
+  transform: scale(0.985);
+}
+
+.unlock-btn-busy {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 0.5px solid var(--border-subtle);
+  box-shadow: var(--shadow-btn);
+  opacity: 0.85;
+}
+
+.unlock-btn-success {
+  background: var(--accent-green);
+  color: #ffffff;
+  border: 0.5px solid transparent;
+  box-shadow: 0 1px 3px rgba(52, 199, 89, 0.3);
+}
+
+.unlock-btn-error {
+  background: var(--accent-red);
+  color: #ffffff;
+  border: 0.5px solid transparent;
+  box-shadow: 0 1px 3px rgba(255, 59, 48, 0.3);
+}
+
+.unlock-btn-disabled {
+  background: var(--bg-card);
+  color: var(--text-tertiary);
+  border: 0.5px solid var(--border-subtle);
+  opacity: 0.5;
+}
+
 /* Styled Keycap Badge */
 kbd {
   display: inline-flex;

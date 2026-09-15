@@ -1,0 +1,3 @@
+## 2025-05-18 - Event Listener Short-Circuiting Order
+**Learning:** Checking DOM element paths and interactive selectors via `isInteractiveEvent(event)` is far more expensive than reading primitive boolean flags from `activeConfig`. In `shouldBlockEvent()`, checking feature flags (`isRightClickActive()` and `isSelectionActive()`) before `isInteractiveEvent(event)` avoids unnecessary `composedPath()` calls and `Element.matches()` DOM traversals when features are toggled off.
+**Action:** Always evaluate cheap boolean flags and configuration settings before invoking functions that inspect the DOM tree or perform selector matching.

@@ -265,6 +265,13 @@ if (typeof window !== 'undefined') {
         return false;
       }
 
+      // Early exit: Check whether feature setting is active for event type before DOM inspection
+      const isRightClick = isContextMenu && isRightClickActive();
+      const isSelect = isSelection && isSelectionActive();
+      if (!isRightClick && !isSelect) {
+        return false;
+      }
+
       if (isInteractiveEvent(event)) {
         return false;
       }
@@ -272,13 +279,7 @@ if (typeof window !== 'undefined') {
       if (isModifierBypassActive() && isModifierPressed(event)) {
         return true;
       }
-      if (isContextMenu && isRightClickActive()) {
-        return true;
-      }
-      if (isSelection && isSelectionActive()) {
-        return true;
-      }
-      return false;
+      return true;
     }
 
     Event.prototype.preventDefault = function (this: Event): void {

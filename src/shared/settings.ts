@@ -57,16 +57,21 @@ export function normalizeHostname(hostname: string): string {
     clean = clean.split('/')[0].split('?')[0].split('#')[0];
   }
 
-  // 3. Strip port if present (e.g. host:8080)
+  // 3. Strip user credentials (userInfo) if present (e.g. user:pass@host)
+  if (clean.includes('@')) {
+    clean = clean.slice(clean.lastIndexOf('@') + 1);
+  }
+
+  // 4. Strip port if present (e.g. host:8080)
   clean = clean.replace(/:\d+$/, '');
 
-  // 4. Strip www. prefix and trailing dots
+  // 5. Strip www. prefix and trailing dots
   clean = clean
     .slice(0, MAX_HOSTNAME_LENGTH)
     .replace(/^www\./, '')
     .replace(/\.+$/, '');
 
-  // 5. Validate DNS characters (RFC 1123 compliant: a-z, 0-9, hyphens, dots)
+  // 6. Validate DNS characters (RFC 1123 compliant: a-z, 0-9, hyphens, dots)
   if (
     !clean ||
     !HOSTNAME_VALID_CHARS.test(clean) ||

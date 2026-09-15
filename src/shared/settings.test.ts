@@ -20,9 +20,13 @@ describe('settings & domain matching', () => {
     expect(normalizeHostname(123 as unknown as string)).toBe('');
   });
 
-  test('sanitizes hostnames containing schemes, ports, and invalid characters', () => {
+  test('sanitizes hostnames containing schemes, ports, userInfo, and invalid characters', () => {
     expect(normalizeHostname('https://evil.com/path')).toBe('evil.com');
     expect(normalizeHostname('http://sub.evil.com:8080')).toBe('sub.evil.com');
+    expect(normalizeHostname('user:pass@evil.com')).toBe('evil.com');
+    expect(
+      normalizeHostname('https://admin:secret@sub.evil.com:8080/path'),
+    ).toBe('sub.evil.com');
     expect(normalizeHostname('evil.com\0extra')).toBe('evil.comextra');
     expect(normalizeHostname('bad_domain!@#$')).toBe('');
   });

@@ -2,10 +2,7 @@
 import {
   DEFAULT_SETTINGS,
   type Settings,
-  getDomainStatusLabel,
   isDomainDisabled,
-  isLocalFileHost,
-  isSystemPageHost,
   normalizeHostname,
   validateSettings,
 } from '../shared/settings';
@@ -14,11 +11,6 @@ let settings = $state<Settings>({ ...DEFAULT_SETTINGS });
 let currentHostname = $state<string>('');
 let activeTabId = $state<number | null>(null);
 let unlockStatus = $state<'idle' | 'unlocking' | 'success' | 'error'>('idle');
-let copiedHostname = $state(false);
-let copyTimeout: ReturnType<typeof setTimeout> | null = null;
-
-const isSystemPage = $derived(isSystemPageHost(currentHostname));
-const isLocalFile = $derived(isLocalFileHost(currentHostname));
 
 const isToggleableDomain = $derived(
   Boolean(currentHostname && normalizeHostname(currentHostname)),
@@ -31,17 +23,7 @@ const isSiteDisabled = $derived(
   ),
 );
 
-const isSiteActive = $derived(
-  settings.enabled && !isSiteDisabled && !isSystemPage,
-);
-
-const statusLabel = $derived(
-  getDomainStatusLabel(
-    settings.enabled,
-    currentHostname,
-    settings.disabledDomains,
-  ),
-);
+const isSiteActive = $derived(settings.enabled && !isSiteDisabled);
 
 // Load state and active tab on mount
 $effect(() => {
@@ -179,9 +161,7 @@ const statusAnnouncement = $derived(
       ? 'Page unlocked successfully'
       : unlockStatus === 'error'
         ? 'Unable to unlock current page'
-        : copiedHostname
-          ? 'Domain copied to clipboard'
-          : '',
+        : '',
 );
 
 $effect(() => {
@@ -190,36 +170,8 @@ $effect(() => {
       clearTimeout(unlockTimeout);
       unlockTimeout = null;
     }
-    if (copyTimeout) {
-      clearTimeout(copyTimeout);
-      copyTimeout = null;
-    }
   };
 });
-
-async function copyHostnameToClipboard() {
-  if (!currentHostname || currentHostname === 'Loading…' || copiedHostname) {
-    return;
-  }
-  try {
-    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(currentHostname);
-      copiedHostname = true;
-      if (copyTimeout) clearTimeout(copyTimeout);
-      copyTimeout = setTimeout(() => {
-        copiedHostname = false;
-        copyTimeout = null;
-      }, 1200);
-    }
-  } catch (_e) {}
-}
-
-function handleHostnameKeyDown(e: KeyboardEvent) {
-  if (e.key === 'Enter' || e.key === ' ') {
-    e.preventDefault();
-    copyHostnameToClipboard();
-  }
-}
 
 async function forceUnlockPage() {
   if (!activeTabId || unlockStatus === 'unlocking') return;
@@ -301,11 +253,11 @@ async function forceUnlockPage() {
       <!-- Status Beacon -->
       <div class="flex items-center justify-center flex-shrink-0" aria-hidden="true">
         <span class="relative flex h-2.5 w-2.5 items-center justify-center">
-          {#if isSiteActive || (settings.enabled && isLocalFile)}
+          {#if isSiteActive}
             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--accent-green)] opacity-35"></span>
           {/if}
           <span class={`relative inline-flex rounded-full h-2 w-2 transition-all duration-200 ${
-            isSiteActive || (settings.enabled && isLocalFile)
+            isSiteActive
               ? 'bg-[var(--accent-green)] shadow-[0_0_6px_rgba(52,199,89,0.5)]'
               : settings.enabled && isSiteDisabled
                 ? 'bg-[var(--accent-orange)] shadow-[0_0_6px_rgba(255,149,0,0.4)]'
@@ -317,30 +269,11 @@ async function forceUnlockPage() {
       <!-- Domain Labels Stack -->
       <div class="min-w-0 flex flex-col justify-center">
         <span class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
-          {statusLabel}
+          {!settings.enabled ? 'Extension Paused' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
         </span>
-        <button
-          type="button"
-          onclick={copyHostnameToClipboard}
-          onkeydown={handleHostnameKeyDown}
-          title={copiedHostname ? 'Copied to clipboard!' : `Click to copy ${currentHostname}`}
-          aria-label={copiedHostname ? 'Copied to clipboard' : `Copy ${currentHostname} to clipboard`}
-          class="group flex items-center gap-1.5 mt-0.5 text-left bg-transparent border-0 p-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-[var(--accent-blue)] focus-visible:outline-offset-1 rounded-[3px] select-none"
-        >
-          <span class="text-[12.5px] font-semibold text-[var(--text-primary)] group-hover:text-[var(--accent-blue)] transition-colors truncate leading-snug">
-            {copiedHostname ? 'Copied!' : currentHostname || 'Loading…'}
-          </span>
-          {#if copiedHostname}
-            <svg class="w-3 h-3 text-[var(--accent-green)] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          {:else if currentHostname && currentHostname !== 'Loading…'}
-            <svg class="w-3 h-3 text-[var(--text-tertiary)] opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-            </svg>
-          {/if}
-        </button>
+        <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-1" title={currentHostname}>
+          {currentHostname || 'Loading…'}
+        </span>
       </div>
     </div>
 
@@ -444,14 +377,7 @@ async function forceUnlockPage() {
           </svg>
         </div>
         <div class="min-w-0">
-          <div class="flex items-center gap-1.5">
-            <span class="text-[12px] font-medium text-[var(--text-primary)] leading-tight">Absolute Force Mode</span>
-            {#if settings.absoluteForce && isSiteActive}
-              <span class="inline-flex items-center px-1.5 py-0.25 rounded-[4px] text-[8.5px] font-semibold uppercase tracking-wider bg-[var(--bg-badge-active)] text-[var(--accent-blue)] border border-[rgba(0,122,255,0.2)] leading-tight">
-                Deep Mode
-              </span>
-            {/if}
-          </div>
+          <div class="text-[12px] font-medium text-[var(--text-primary)] leading-tight">Absolute Force Mode</div>
           <div class="text-[10px] text-[var(--text-secondary)] leading-tight">Overrides capture-phase event traps</div>
         </div>
       </div>
@@ -499,8 +425,8 @@ async function forceUnlockPage() {
       type="button"
       onclick={forceUnlockPage}
       disabled={unlockStatus !== 'idle' || !isSiteActive}
-      title={isSystemPage ? 'Force unlock is unavailable on system pages' : isSiteActive ? 'Force unlock context menu and selection on active page' : 'Protection is inactive on this page'}
-      aria-label={isSystemPage ? 'Force unlock is unavailable on system pages' : 'Force unlock context menu and selection on active page'}
+      title={isSiteActive ? 'Force unlock context menu and selection on active page' : 'Protection is inactive on this page'}
+      aria-label="Force unlock context menu and selection on active page"
       class={`w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none disabled:cursor-not-allowed ${
         isSiteActive && unlockStatus === 'idle' ? 'active:scale-[0.985]' : ''
       } ${

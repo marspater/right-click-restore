@@ -302,11 +302,11 @@ async function forceUnlockPage() {
         </div>
         <div class="min-w-0">
           <div class="text-[12px] font-medium text-[var(--text-primary)] leading-tight">Restore Right Click</div>
-          <div class="text-[10px] text-[var(--text-secondary)] leading-tight">Unblocks native context menus</div>
+          <div id="desc-restore-right-click" class="text-[10px] text-[var(--text-secondary)] leading-tight">Unblocks native context menus</div>
         </div>
       </div>
       <span class="apple-switch apple-switch-sm">
-        <input type="checkbox" role="switch" checked={settings.restoreRightClick} aria-checked={settings.restoreRightClick} disabled={!isSiteActive} onchange={() => toggleFeature('restoreRightClick')} aria-label="Restore Right Click" />
+        <input type="checkbox" role="switch" checked={settings.restoreRightClick} aria-checked={settings.restoreRightClick} aria-describedby="desc-restore-right-click" disabled={!isSiteActive} onchange={() => toggleFeature('restoreRightClick')} aria-label="Restore Right Click" />
         <span class="apple-slider"></span>
       </span>
     </label>
@@ -328,11 +328,11 @@ async function forceUnlockPage() {
         </div>
         <div class="min-w-0">
           <div class="text-[12px] font-medium text-[var(--text-primary)] leading-tight">Allow Selection & Copy</div>
-          <div class="text-[10px] text-[var(--text-secondary)] leading-tight">Enables text highlight and ⌘C</div>
+          <div id="desc-restore-selection" class="text-[10px] text-[var(--text-secondary)] leading-tight">Enables text highlight and ⌘C</div>
         </div>
       </div>
       <span class="apple-switch apple-switch-sm">
-        <input type="checkbox" role="switch" checked={settings.restoreSelection} aria-checked={settings.restoreSelection} disabled={!isSiteActive} onchange={() => toggleFeature('restoreSelection')} aria-label="Allow Selection & Copy" />
+        <input type="checkbox" role="switch" checked={settings.restoreSelection} aria-checked={settings.restoreSelection} aria-describedby="desc-restore-selection" disabled={!isSiteActive} onchange={() => toggleFeature('restoreSelection')} aria-label="Allow Selection & Copy" />
         <span class="apple-slider"></span>
       </span>
     </label>
@@ -353,11 +353,11 @@ async function forceUnlockPage() {
         </div>
         <div class="min-w-0">
           <div class="text-[12px] font-medium text-[var(--text-primary)] leading-tight">Anti-Shield Overlay</div>
-          <div class="text-[10px] text-[var(--text-secondary)] leading-tight">Pierces transparent click covers</div>
+          <div id="desc-anti-shield" class="text-[10px] text-[var(--text-secondary)] leading-tight">Pierces transparent click covers</div>
         </div>
       </div>
       <span class="apple-switch apple-switch-sm">
-        <input type="checkbox" role="switch" checked={settings.antiShield} aria-checked={settings.antiShield} disabled={!isSiteActive} onchange={() => toggleFeature('antiShield')} aria-label="Anti-Shield Overlay" />
+        <input type="checkbox" role="switch" checked={settings.antiShield} aria-checked={settings.antiShield} aria-describedby="desc-anti-shield" disabled={!isSiteActive} onchange={() => toggleFeature('antiShield')} aria-label="Anti-Shield Overlay" />
         <span class="apple-slider"></span>
       </span>
     </label>
@@ -378,11 +378,11 @@ async function forceUnlockPage() {
         </div>
         <div class="min-w-0">
           <div class="text-[12px] font-medium text-[var(--text-primary)] leading-tight">Absolute Force Mode</div>
-          <div class="text-[10px] text-[var(--text-secondary)] leading-tight">Overrides capture-phase event traps</div>
+          <div id="desc-absolute-force" class="text-[10px] text-[var(--text-secondary)] leading-tight">Overrides capture-phase event traps</div>
         </div>
       </div>
       <span class="apple-switch apple-switch-sm">
-        <input type="checkbox" role="switch" checked={settings.absoluteForce} aria-checked={settings.absoluteForce} disabled={!isSiteActive} onchange={() => toggleFeature('absoluteForce')} aria-label="Absolute Force Mode" />
+        <input type="checkbox" role="switch" checked={settings.absoluteForce} aria-checked={settings.absoluteForce} aria-describedby="desc-absolute-force" disabled={!isSiteActive} onchange={() => toggleFeature('absoluteForce')} aria-label="Absolute Force Mode" />
         <span class="apple-slider"></span>
       </span>
     </label>
@@ -404,11 +404,11 @@ async function forceUnlockPage() {
         </div>
         <div class="min-w-0">
           <div class="text-[12px] font-medium text-[var(--text-primary)] leading-tight">Modifier Key Bypass</div>
-          <div class="text-[10px] text-[var(--text-secondary)] leading-tight">Bypass with ⇧ Shift or ⌥ Option</div>
+          <div id="desc-bypass-modifier-key" class="text-[10px] text-[var(--text-secondary)] leading-tight">Bypass with ⇧ Shift or ⌥ Option</div>
         </div>
       </div>
       <span class="apple-switch apple-switch-sm">
-        <input type="checkbox" role="switch" checked={settings.bypassModifierKey} aria-checked={settings.bypassModifierKey} disabled={!isSiteActive} onchange={() => toggleFeature('bypassModifierKey')} aria-label="Modifier Key Bypass" />
+        <input type="checkbox" role="switch" checked={settings.bypassModifierKey} aria-checked={settings.bypassModifierKey} aria-describedby="desc-bypass-modifier-key" disabled={!isSiteActive} onchange={() => toggleFeature('bypassModifierKey')} aria-label="Modifier Key Bypass" />
         <span class="apple-slider"></span>
       </span>
     </label>

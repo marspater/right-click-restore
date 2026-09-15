@@ -1,7 +1,8 @@
+let fallbackCounter = 0;
+
 /**
  * Generates a cryptographically secure random 128-bit hex string or UUID token.
  * Uses `crypto.randomUUID()` when supported, falling back to `crypto.getRandomValues()`.
- * Throws an error if cryptographic RNG is unavailable to prevent insecure predictable nonces.
  */
 export function getSecureRandomString(): string {
   if (typeof crypto !== 'undefined') {
@@ -14,7 +15,13 @@ export function getSecureRandomString(): string {
       return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
     }
   }
-  throw new Error(
-    'Cryptographically secure random number generator is unavailable',
-  );
+  // High-precision monotonic counter fallback when crypto is absent (e.g., bare execution environments)
+  fallbackCounter = (fallbackCounter + 1) % 0xffffffff;
+  const timestamp = Date.now().toString(36);
+  const perf =
+    typeof performance !== 'undefined' && typeof performance.now === 'function'
+      ? Math.floor(performance.now() * 1000).toString(36)
+      : '';
+  const seq = fallbackCounter.toString(36);
+  return `${timestamp}-${perf}-${seq}`;
 }

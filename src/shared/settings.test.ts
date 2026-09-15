@@ -2,7 +2,10 @@ import { describe, expect, test } from 'bun:test';
 import {
   DEFAULT_SETTINGS,
   effectiveSettings,
+  getDomainStatusLabel,
   isDomainDisabled,
+  isLocalFileHost,
+  isSystemPageHost,
   normalizeHostname,
   validateSettings,
 } from './settings';
@@ -124,5 +127,31 @@ describe('settings & domain matching', () => {
       (Object.prototype as unknown as Record<string, unknown>).polluted,
     ).toBeUndefined();
     expect(validated.enabled).toBe(DEFAULT_SETTINGS.enabled);
+  });
+
+  test('identifies system pages and local files correctly', () => {
+    expect(isSystemPageHost('Safari Page')).toBe(true);
+    expect(isSystemPageHost('Active Page')).toBe(true);
+    expect(isSystemPageHost('example.com')).toBe(false);
+
+    expect(isLocalFileHost('Local Test Page')).toBe(true);
+    expect(isLocalFileHost('file:///Users/test/index.html')).toBe(true);
+    expect(isLocalFileHost('example.com')).toBe(false);
+  });
+
+  test('computes domain status labels accurately', () => {
+    expect(getDomainStatusLabel(false, 'example.com', [])).toBe(
+      'Extension Paused',
+    );
+    expect(getDomainStatusLabel(true, 'Safari Page', [])).toBe('System Page');
+    expect(getDomainStatusLabel(true, 'Local Test Page', [])).toBe(
+      'Active on Local Page',
+    );
+    expect(getDomainStatusLabel(true, 'example.com', ['example.com'])).toBe(
+      'Disabled on Domain',
+    );
+    expect(getDomainStatusLabel(true, 'example.com', [])).toBe(
+      'Active on Domain',
+    );
   });
 });

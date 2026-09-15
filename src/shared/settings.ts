@@ -182,3 +182,34 @@ export function effectiveSettings(
       !isDomainDisabled(hostname, validated.disabledDomains),
   };
 }
+
+export function isSystemPageHost(hostname: string): boolean {
+  if (!hostname) return false;
+  const lower = hostname.toLowerCase().trim();
+  return lower === 'safari page' || lower === 'active page';
+}
+
+export function isLocalFileHost(hostname: string): boolean {
+  if (!hostname) return false;
+  const lower = hostname.toLowerCase().trim();
+  return lower === 'local test page' || lower.startsWith('file://');
+}
+
+export type DomainStatus =
+  | 'Extension Paused'
+  | 'System Page'
+  | 'Active on Local Page'
+  | 'Disabled on Domain'
+  | 'Active on Domain';
+
+export function getDomainStatusLabel(
+  enabled: boolean,
+  hostname: string,
+  disabledDomains: string[],
+): DomainStatus {
+  if (!enabled) return 'Extension Paused';
+  if (isSystemPageHost(hostname)) return 'System Page';
+  if (isLocalFileHost(hostname)) return 'Active on Local Page';
+  if (isDomainDisabled(hostname, disabledDomains)) return 'Disabled on Domain';
+  return 'Active on Domain';
+}

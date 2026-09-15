@@ -39,6 +39,11 @@ export function cleanNode(
 ) {
   if (typeof Element === 'undefined' || !(node instanceof Element)) return;
 
+  // Early return if both restoration settings are disabled to avoid unnecessary DOM traversals & selector checks
+  if (!settings.restoreRightClick && !settings.restoreSelection) {
+    return;
+  }
+
   try {
     if (safeClosest(node, ALL_INTERACTIVE_SELECTORS)) {
       return;
@@ -100,6 +105,11 @@ export function cleanDOMTree(
   root: ParentNode = document,
   settings: Settings = DEFAULT_SETTINGS,
 ) {
+  // Early return if both restoration features are turned off to avoid scanning the entire DOM tree with querySelectorAll
+  if (!settings.restoreRightClick && !settings.restoreSelection) {
+    return;
+  }
+
   if (typeof Element !== 'undefined' && root instanceof Element) {
     cleanNode(root, settings);
   }

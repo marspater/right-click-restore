@@ -88,6 +88,36 @@ export function safeClosest(
   }
 }
 
+export function safeGetElementById(
+  doc: Document,
+  id: string,
+): HTMLElement | null {
+  try {
+    const fn = getUnshadowedMethod(doc, 'getElementById');
+    if (fn) {
+      return fn.call(doc, id) as HTMLElement | null;
+    }
+    return doc.getElementById(id);
+  } catch (_e) {
+    return null;
+  }
+}
+
+export function safeQuerySelectorAll(
+  root: ParentNode,
+  selector: string,
+): Element[] {
+  try {
+    const fn = getUnshadowedMethod(root, 'querySelectorAll');
+    if (fn) {
+      return Array.from(fn.call(root, selector) as NodeListOf<Element>);
+    }
+    return Array.from(root.querySelectorAll(selector));
+  } catch (_e) {
+    return [];
+  }
+}
+
 export function safeHasAttribute(element: Element, attr: string): boolean {
   try {
     const fn = getUnshadowedMethod(element, 'hasAttribute');

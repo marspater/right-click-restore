@@ -3,6 +3,7 @@ import {
   safeClosest,
   safeGetShadowRoot,
   safeGetStyle,
+  safeQuerySelectorAll,
   safeRemoveAttribute,
 } from '../shared/dom';
 import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
@@ -11,10 +12,12 @@ export {
   getUnshadowedGetter,
   getUnshadowedMethod,
   safeClosest,
+  safeGetElementById,
   safeGetShadowRoot,
   safeGetStyle,
   safeHasAttribute,
   safeMatches,
+  safeQuerySelectorAll,
   safeRemoveAttribute,
 } from '../shared/dom';
 
@@ -95,7 +98,7 @@ export function cleanAddedNode(
   if (typeof Element === 'undefined' || !(node instanceof Element)) return;
   cleanNode(node, settings);
   try {
-    for (const child of node.querySelectorAll(SCRUB_SELECTOR)) {
+    for (const child of safeQuerySelectorAll(node, SCRUB_SELECTOR)) {
       cleanNode(child, settings);
     }
   } catch (_e) {}
@@ -114,7 +117,7 @@ export function cleanDOMTree(
     cleanNode(root, settings);
   }
   try {
-    for (const node of root.querySelectorAll(SCRUB_SELECTOR)) {
+    for (const node of safeQuerySelectorAll(root, SCRUB_SELECTOR)) {
       cleanNode(node, settings);
     }
   } catch (_e) {}

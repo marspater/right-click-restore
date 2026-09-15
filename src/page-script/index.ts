@@ -1,5 +1,5 @@
 import { ALL_INTERACTIVE_SELECTORS } from '../shared/constants';
-import { getSecureRandomString, safeCompareStrings } from '../shared/crypto';
+import { getSecureRandomString } from '../shared/crypto';
 import { getUnshadowedMethod, safeClosest, safeMatches } from '../shared/dom';
 import {
   DEFAULT_SETTINGS,
@@ -85,11 +85,12 @@ export function handlePageScriptMessage(
     config?: unknown;
   };
 
-  // Cryptographic nonce validation using constant-time comparison
+  // Cryptographic nonce validation
   if (
     typeof expectedNonce !== 'string' ||
     expectedNonce.length === 0 ||
-    !safeCompareStrings(payload.nonce, expectedNonce)
+    typeof payload.nonce !== 'string' ||
+    payload.nonce !== expectedNonce
   ) {
     return false;
   }

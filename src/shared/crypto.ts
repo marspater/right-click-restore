@@ -25,25 +25,3 @@ export function getSecureRandomString(): string {
   const seq = fallbackCounter.toString(36);
   return `${timestamp}-${perf}-${seq}`;
 }
-
-/**
- * Compares two strings in constant time to prevent timing attacks when comparing sensitive tokens/nonces.
- */
-export function safeCompareStrings(a: unknown, b: unknown): boolean {
-  if (typeof a !== 'string' || typeof b !== 'string') {
-    return false;
-  }
-
-  const lenA = a.length;
-  const lenB = b.length;
-
-  let mismatch = lenA ^ lenB;
-
-  for (let i = 0; i < lenA; i++) {
-    const charA = a.charCodeAt(i);
-    const charB = b.charCodeAt(i % (lenB || 1));
-    mismatch |= charA ^ charB;
-  }
-
-  return mismatch === 0;
-}

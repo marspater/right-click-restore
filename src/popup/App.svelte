@@ -427,38 +427,38 @@ async function forceUnlockPage() {
       disabled={unlockStatus !== 'idle' || !isSiteActive}
       title={isSiteActive ? 'Force unlock context menu and selection on active page' : 'Protection is inactive on this page'}
       aria-label="Force unlock context menu and selection on active page"
-      class={`w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none disabled:cursor-not-allowed ${
-        isSiteActive && unlockStatus === 'idle' ? 'active:scale-[0.985]' : ''
-      } ${
+      class={`unlock-btn w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] flex items-center justify-center gap-1.5 cursor-pointer select-none disabled:cursor-not-allowed ${
         unlockStatus === 'success'
-          ? 'bg-[var(--accent-green)] text-white shadow-sm border border-transparent'
+          ? 'unlock-btn-success'
           : unlockStatus === 'error'
-            ? 'bg-[var(--accent-red)] text-white shadow-sm border border-transparent'
-            : isSiteActive
-              ? 'bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] text-[var(--text-primary)] border border-[var(--border-subtle)] shadow-[var(--shadow-btn)]'
-              : 'bg-[var(--bg-card)] text-[var(--text-tertiary)] border border-[var(--border-subtle)] opacity-50'
+            ? 'unlock-btn-error'
+            : unlockStatus === 'unlocking'
+              ? 'unlock-btn-busy'
+              : isSiteActive
+                ? 'unlock-btn-active'
+                : 'unlock-btn-disabled'
       }`}
     >
       {#if unlockStatus === 'unlocking'}
-        <svg class="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+        <svg class="w-3.5 h-3.5 animate-spin transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
           <circle cx="12" cy="12" r="10" stroke-opacity="0.25" stroke="currentColor" />
           <path d="M12 2a10 10 0 0 1 10 10" />
         </svg>
         <span>Unlocking Current Page…</span>
       {:else if unlockStatus === 'success'}
-        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <svg class="w-3.5 h-3.5 text-white transition-transform duration-200 scale-105" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <polyline points="20 6 9 17 4 12" />
         </svg>
         <span>Page Unlocked</span>
       {:else if unlockStatus === 'error'}
-        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <svg class="w-3.5 h-3.5 text-white transition-transform duration-200 scale-105" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="12" cy="12" r="10" />
           <line x1="12" y1="8" x2="12" y2="12" />
           <line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
         <span>Unable to Unlock Page</span>
       {:else}
-        <svg class="w-3.5 h-3.5 text-[var(--accent-blue)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <svg class="w-3.5 h-3.5 text-[var(--accent-blue)] transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
         </svg>
         <span>Force Unlock Page</span>

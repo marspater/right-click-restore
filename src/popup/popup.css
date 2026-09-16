@@ -233,7 +233,6 @@ button:focus-visible {
   cursor: not-allowed;
 }
 
-.settings-row:focus-within:not(.is-disabled),
 .settings-row:has(input:focus-visible):not(.is-disabled) {
   background-color: var(--bg-row-hover);
   outline: 2px solid var(--accent-blue);

@@ -6,7 +6,8 @@
    - Ensures screen reader users hear feature context and functionality details when navigating toggles.
 
 2. **Keyboard & Interaction Focus States (`src/popup/popup.css`)**:
-   - Refined `button:focus:not(:focus-visible)` rules to prevent awkward focus outlines on mouse clicks while retaining high-visibility `:focus-visible` ring indicators for keyboard navigation.
+   - Refined `.settings-row` focus rules to use `:has(input:focus-visible)` instead of `:focus-within`, eliminating flash focus outlines on pointer clicks while preserving clean focus-visible rings for keyboard navigation.
 
-3. **Visual Polish for Keycap Badges (`src/popup/popup.css`)**:
-   - Enhanced `<kbd>` keycap styling with `font-weight: 600`, elevated contrast using `var(--text-primary)`, and subtle drop-shadow `0 1px 1.5px rgba(0, 0, 0, 0.08)` to present keycaps clearly across both light and dark themes.
+3. **Footer Shortcut Hint & Keycap Polish (`src/popup/App.svelte`)**:
+   - Expanded the footer footnote tip to explicitly include both bypass keycaps (`<kbd>⇧ Shift</kbd> or <kbd>⌥ Option</kbd>`), ensuring consistency with the "Modifier Key Bypass" setting description and improving shortcut discoverability.
+   - Refined tip wording to fit single-line horizontal layout perfectly inside the fixed-width popup popover.

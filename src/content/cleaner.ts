@@ -3,6 +3,7 @@ import {
   safeClosest,
   safeGetShadowRoot,
   safeGetStyle,
+  safeHasAttribute,
   safeQuerySelectorAll,
   safeRemoveAttribute,
 } from '../shared/dom';
@@ -36,6 +37,44 @@ export const SCRUB_SELECTOR = [
   '[style*="UserSelect"]',
 ].join(',');
 
+/**
+ * Fast O(1) attribute and style check to determine if an element actually needs cleaning
+ * before executing expensive ancestor DOM hierarchy traversals against interactive selectors.
+ */
+function hasScrubbableProperties(node: Element, settings: Settings): boolean {
+  if (settings.restoreRightClick && safeHasAttribute(node, 'oncontextmenu')) {
+    return true;
+  }
+
+  if (settings.restoreSelection) {
+    for (let i = 0; i < SCRUB_ATTRS.length; i++) {
+      const attr = SCRUB_ATTRS[i];
+      if (attr !== 'oncontextmenu' && safeHasAttribute(node, attr)) {
+        return true;
+      }
+    }
+    if (typeof HTMLElement !== 'undefined' && node instanceof HTMLElement) {
+      try {
+        const style = safeGetStyle(node);
+        if (style) {
+          if (
+            style.userSelect === 'none' ||
+            ('webkitUserSelect' in style && style.webkitUserSelect === 'none')
+          ) {
+            return true;
+          }
+        }
+      } catch (_e) {}
+    }
+  }
+
+  if (safeGetShadowRoot(node)) {
+    return true;
+  }
+
+  return false;
+}
+
 export function cleanNode(
   node: unknown,
   settings: Settings = DEFAULT_SETTINGS,
@@ -44,6 +83,14 @@ export function cleanNode(
 
   // Early return if both restoration settings are disabled to avoid unnecessary DOM traversals & selector checks
   if (!settings.restoreRightClick && !settings.restoreSelection) {
+    return;
+  }
+
+  // Performance Optimization: Short-circuit early if the element has no scrubbable
+  // event attributes, user-select inline styles, or open shadow roots.
+  // This avoids calling safeClosest(node, ALL_INTERACTIVE_SELECTORS) - which performs
+  // expensive DOM tree ancestor traversal against 18 selectors - on 99%+ of DOM elements.
+  if (!hasScrubbableProperties(node, settings)) {
     return;
   }
 

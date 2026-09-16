@@ -188,7 +188,7 @@ if (typeof window !== 'undefined') {
     } catch (_e) {}
   });
 
-  window.addEventListener('__rcr_handshake_req__', () => {
+  function sendHandshake(): void {
     try {
       window.dispatchEvent(
         new CustomEvent('__rcr_handshake__', {
@@ -196,11 +196,8 @@ if (typeof window !== 'undefined') {
         }),
       );
     } catch (_e) {}
-  });
+  }
 
-  window.dispatchEvent(
-    new CustomEvent('__rcr_handshake__', {
-      detail: { channel: bridgeChannel, nonce: bridgeNonce },
-    }),
-  );
+  window.addEventListener('__rcr_handshake_req__', sendHandshake);
+  sendHandshake();
 }

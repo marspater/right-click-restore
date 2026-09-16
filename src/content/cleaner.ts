@@ -31,48 +31,62 @@ export const SCRUB_ATTRS = [
   'onbeforecopy',
 ];
 
+const SELECTION_ATTRS = SCRUB_ATTRS.filter((attr) => attr !== 'oncontextmenu');
+
 export const SCRUB_SELECTOR = [
   ...SCRUB_ATTRS.map((attr) => `[${attr}]`),
   '[style*="user-select"]',
   '[style*="UserSelect"]',
 ].join(',');
 
+function hasScrubbableAttribute(node: Element, settings: Settings): boolean {
+  if (settings.restoreRightClick && safeHasAttribute(node, 'oncontextmenu')) {
+    return true;
+  }
+  if (settings.restoreSelection) {
+    return SELECTION_ATTRS.some((attr) => safeHasAttribute(node, attr));
+  }
+  return false;
+}
+
+function hasUserSelectNone(node: Element): boolean {
+  if (typeof HTMLElement === 'undefined' || !(node instanceof HTMLElement)) {
+    return false;
+  }
+  try {
+    const style = safeGetStyle(node);
+    if (!style) return false;
+    return (
+      style.userSelect === 'none' ||
+      ('webkitUserSelect' in style && style.webkitUserSelect === 'none')
+    );
+  } catch (_e) {
+    return false;
+  }
+}
+
 /**
  * Fast O(1) attribute and style check to determine if an element actually needs cleaning
  * before executing expensive ancestor DOM hierarchy traversals against interactive selectors.
  */
 function hasScrubbableProperties(node: Element, settings: Settings): boolean {
-  if (settings.restoreRightClick && safeHasAttribute(node, 'oncontextmenu')) {
-    return true;
-  }
+  if (hasScrubbableAttribute(node, settings)) return true;
+  if (settings.restoreSelection && hasUserSelectNone(node)) return true;
+  return Boolean(safeGetShadowRoot(node));
+}
 
-  if (settings.restoreSelection) {
-    for (let i = 0; i < SCRUB_ATTRS.length; i++) {
-      const attr = SCRUB_ATTRS[i];
-      if (attr !== 'oncontextmenu' && safeHasAttribute(node, attr)) {
-        return true;
-      }
+function cleanSelectionStyles(node: Element): void {
+  if (typeof HTMLElement === 'undefined' || !(node instanceof HTMLElement)) {
+    return;
+  }
+  try {
+    const style = safeGetStyle(node);
+    if (!style) return;
+    if (style.userSelect === 'none') style.userSelect = 'auto';
+    if ('webkitUserSelect' in style && style.webkitUserSelect === 'none') {
+      style.webkitUserSelect = 'auto';
     }
-    if (typeof HTMLElement !== 'undefined' && node instanceof HTMLElement) {
-      try {
-        const style = safeGetStyle(node);
-        if (style) {
-          if (
-            style.userSelect === 'none' ||
-            ('webkitUserSelect' in style && style.webkitUserSelect === 'none')
-          ) {
-            return true;
-          }
-        }
-      } catch (_e) {}
-    }
-  }
-
-  if (safeGetShadowRoot(node)) {
-    return true;
-  }
-
-  return false;
+  } catch (_e) {}
 }
 
 export function cleanNode(
@@ -107,26 +121,10 @@ export function cleanNode(
   }
 
   if (settings.restoreSelection) {
-    for (let i = 0; i < SCRUB_ATTRS.length; i++) {
-      const attr = SCRUB_ATTRS[i];
-      if (attr !== 'oncontextmenu') {
-        safeRemoveAttribute(node, attr);
-      }
+    for (const attr of SELECTION_ATTRS) {
+      safeRemoveAttribute(node, attr);
     }
-    if (typeof HTMLElement !== 'undefined' && node instanceof HTMLElement) {
-      try {
-        const style = safeGetStyle(node);
-        if (style) {
-          if (style.userSelect === 'none') style.userSelect = 'auto';
-          if (
-            'webkitUserSelect' in style &&
-            style.webkitUserSelect === 'none'
-          ) {
-            style.webkitUserSelect = 'auto';
-          }
-        }
-      } catch (_e) {}
-    }
+    cleanSelectionStyles(node);
   }
 
   // Traverse open shadow root if accessible

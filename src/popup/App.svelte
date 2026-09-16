@@ -469,7 +469,7 @@ async function forceUnlockPage() {
   <!-- Footnote Tip with High-Contrast Keycap -->
   <footer class="pt-0.5 text-center select-none">
     <p class="text-[10px] text-[var(--text-tertiary)] leading-tight m-0 inline">
-      Tip: Hold <kbd>⇧ Shift</kbd> to summon native menu anywhere
+      Tip: Hold <kbd>⇧ Shift</kbd> or <kbd>⌥ Option</kbd> for native menu
     </p>
   </footer>
 </main>

@@ -201,24 +201,20 @@ if (typeof window !== 'undefined') {
     return true;
   }
 
-  Event.prototype.preventDefault = function (this: Event): void {
-    if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
-    try {
-      originalPreventDefault.call(this);
-    } catch (_e) {}
-  };
+  function wrapEventMethod<T extends (...args: unknown[]) => void>(
+    originalFn: T,
+  ) {
+    return function (this: Event, ...args: unknown[]): void {
+      if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
+      try {
+        originalFn.apply(this, args);
+      } catch (_e) {}
+    };
+  }
 
-  Event.prototype.stopPropagation = function (this: Event): void {
-    if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
-    try {
-      originalStopPropagation.call(this);
-    } catch (_e) {}
-  };
-
-  Event.prototype.stopImmediatePropagation = function (this: Event): void {
-    if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
-    try {
-      originalStopImmediatePropagation.call(this);
-    } catch (_e) {}
-  };
+  Event.prototype.preventDefault = wrapEventMethod(originalPreventDefault);
+  Event.prototype.stopPropagation = wrapEventMethod(originalStopPropagation);
+  Event.prototype.stopImmediatePropagation = wrapEventMethod(
+    originalStopImmediatePropagation,
+  );
 }

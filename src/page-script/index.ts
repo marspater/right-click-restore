@@ -204,21 +204,21 @@ if (typeof window !== 'undefined') {
   Event.prototype.preventDefault = function (this: Event): void {
     if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
     try {
-      originalPreventDefault.apply(this);
+      originalPreventDefault.call(this);
     } catch (_e) {}
   };
 
   Event.prototype.stopPropagation = function (this: Event): void {
     if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
     try {
-      originalStopPropagation.apply(this);
+      originalStopPropagation.call(this);
     } catch (_e) {}
   };
 
   Event.prototype.stopImmediatePropagation = function (this: Event): void {
     if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
     try {
-      originalStopImmediatePropagation.apply(this);
+      originalStopImmediatePropagation.call(this);
     } catch (_e) {}
   };
 }

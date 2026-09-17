@@ -3,6 +3,7 @@ import {
   safeClosest,
   safeGetShadowRoot,
   safeGetStyle,
+  safeMatches,
   safeQuerySelectorAll,
   safeRemoveAttribute,
 } from '../shared/dom';
@@ -47,6 +48,19 @@ export function cleanNode(
     return;
   }
 
+  // Traverse open shadow root if accessible
+  try {
+    const shadow = safeGetShadowRoot(node);
+    if (shadow) {
+      cleanDOMTree(shadow, settings);
+    }
+  } catch (_e) {}
+
+  // Fast-path: Skip ancestor DOM hierarchy traversal if the node has no scrubbable attributes or inline user-select styles
+  if (!safeMatches(node, SCRUB_SELECTOR)) {
+    return;
+  }
+
   try {
     if (safeClosest(node, ALL_INTERACTIVE_SELECTORS)) {
       return;
@@ -81,14 +95,6 @@ export function cleanNode(
       } catch (_e) {}
     }
   }
-
-  // Traverse open shadow root if accessible
-  try {
-    const shadow = safeGetShadowRoot(node);
-    if (shadow) {
-      cleanDOMTree(shadow, settings);
-    }
-  } catch (_e) {}
 }
 
 export function cleanAddedNode(

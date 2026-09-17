@@ -11,6 +11,7 @@ let settings = $state<Settings>({ ...DEFAULT_SETTINGS });
 let currentHostname = $state<string>('');
 let activeTabId = $state<number | null>(null);
 let unlockStatus = $state<'idle' | 'unlocking' | 'success' | 'error'>('idle');
+let liveAnnouncement = $state<string>('');
 
 const isToggleableDomain = $derived(
   Boolean(currentHostname && normalizeHostname(currentHostname)),
@@ -120,7 +121,11 @@ async function saveSettings(newSettings: Settings) {
 }
 
 function toggleGlobal() {
-  saveSettings({ ...settings, enabled: !settings.enabled });
+  const nextState = !settings.enabled;
+  liveAnnouncement = nextState
+    ? 'Extension protection enabled globally'
+    : 'Extension protection paused globally';
+  saveSettings({ ...settings, enabled: nextState });
 }
 
 function toggleCurrentSite() {
@@ -138,17 +143,29 @@ function toggleCurrentSite() {
       const norm = normalizeHostname(d);
       return norm !== host && !host.endsWith(`.${norm}`);
     });
+    liveAnnouncement = `Protection enabled on ${host}`;
   } else {
     if (!list.some((d) => normalizeHostname(d) === host)) {
       list.push(host);
     }
+    liveAnnouncement = `Protection disabled on ${host}`;
   }
   saveSettings({ ...settings, disabledDomains: list });
 }
 
 function toggleFeature(key: keyof Settings) {
   if (typeof settings[key] === 'boolean') {
-    saveSettings({ ...settings, [key]: !settings[key] });
+    const nextVal = !settings[key];
+    const featureLabels: Record<string, string> = {
+      restoreRightClick: 'Restore Right Click',
+      restoreSelection: 'Allow Selection & Copy',
+      antiShield: 'Anti-Shield Overlay',
+      absoluteForce: 'Absolute Force Mode',
+      bypassModifierKey: 'Modifier Key Bypass',
+    };
+    const label = featureLabels[key] ?? String(key);
+    liveAnnouncement = `${label} ${nextVal ? 'enabled' : 'disabled'}`;
+    saveSettings({ ...settings, [key]: nextVal });
   }
 }
 
@@ -161,7 +178,7 @@ const statusAnnouncement = $derived(
       ? 'Page unlocked successfully'
       : unlockStatus === 'error'
         ? 'Unable to unlock current page'
-        : '',
+        : liveAnnouncement,
 );
 
 $effect(() => {
@@ -224,8 +241,12 @@ async function forceUnlockPage() {
   <!-- Apple-Style Header -->
   <header class="flex items-center justify-between pb-3 select-none">
     <div class="flex items-center gap-2.5">
-      <div class="w-7 h-7 rounded-[8px] bg-gradient-to-b from-[#007AFF] to-[#0062CC] flex items-center justify-center shadow-sm">
-        <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <div class={`w-7 h-7 rounded-[8px] flex items-center justify-center shadow-sm transition-all duration-200 ${
+        settings.enabled
+          ? 'bg-gradient-to-b from-[#007AFF] to-[#0062CC] text-white shadow-[#007AFF]/20'
+          : 'bg-gradient-to-b from-[#8E8E93] to-[#636366] text-white/85 opacity-70'
+      }`}>
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           <polyline points="9 12 11 14 15 10" />
         </svg>
@@ -473,4 +494,3 @@ async function forceUnlockPage() {
     </p>
   </footer>
 </main>
-

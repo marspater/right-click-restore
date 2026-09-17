@@ -168,6 +168,15 @@ body {
   width: 21px;
 }
 
+.apple-switch input:disabled + .apple-slider {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.apple-switch input:disabled {
+  pointer-events: none;
+}
+
 /* Small Variant for List Items */
 .apple-switch-sm {
   width: 32px;
@@ -207,6 +216,10 @@ button:focus:not(:focus-visible) {
 button:focus-visible {
   outline: 2px solid var(--accent-blue);
   outline-offset: 2px;
+}
+
+button:disabled {
+  cursor: not-allowed;
 }
 
 /* Inset Settings Row */

@@ -1,5 +1,4 @@
 import { ALL_INTERACTIVE_SELECTORS } from '../shared/constants';
-import { getSecureRandomString } from '../shared/crypto';
 import { getUnshadowedMethod, safeClosest, safeMatches } from '../shared/dom';
 import {
   DEFAULT_SETTINGS,
@@ -8,6 +7,14 @@ import {
 } from '../shared/settings';
 
 export { getUnshadowedMethod, safeClosest, safeMatches } from '../shared/dom';
+
+const SELECTION_EVENTS = new Set([
+  'selectstart',
+  'dragstart',
+  'copy',
+  'cut',
+  'beforecopy',
+]);
 
 export function isInteractiveNode(node: Node | null): boolean {
   if (!node) return false;
@@ -48,8 +55,6 @@ export function isModifierPressed(event: Event): boolean {
 }
 
 let activeConfig: Settings = { ...DEFAULT_SETTINGS };
-let bridgeChannel: string | null = null;
-let bridgeNonce: string | null = null;
 
 function isShieldActive(): boolean {
   return activeConfig.enabled;
@@ -65,21 +70,6 @@ function isSelectionActive(): boolean {
 
 function isModifierBypassActive(): boolean {
   return activeConfig.bypassModifierKey;
-}
-
-export function notifyContentScript(type: string, config: Settings): void {
-  if (bridgeChannel === null || bridgeNonce === null) return;
-  try {
-    window.dispatchEvent(
-      new CustomEvent(bridgeChannel, {
-        detail: {
-          nonce: bridgeNonce,
-          type,
-          config,
-        },
-      }),
-    );
-  } catch (_e) {}
 }
 
 export function handlePageScriptMessage(
@@ -125,34 +115,6 @@ export function handlePageScriptMessage(
 }
 
 if (typeof window !== 'undefined') {
-  try {
-    const channel = `__rcr_channel_${getSecureRandomString()}`;
-    const nonce = getSecureRandomString();
-    bridgeChannel = channel;
-    bridgeNonce = nonce;
-
-    window.addEventListener(channel, (e: Event) => {
-      try {
-        const detail = (e as CustomEvent)?.detail;
-        handlePageScriptMessage(detail, nonce, (config) => {
-          activeConfig = config;
-        });
-      } catch (_e) {}
-    });
-
-    window.addEventListener('__rcr_handshake_req__', () => {
-      if (bridgeChannel !== null && bridgeNonce !== null) {
-        notifyContentScript('UPDATE', activeConfig);
-      }
-    });
-
-    window.dispatchEvent(
-      new CustomEvent('__rcr_handshake__', {
-        detail: { channel, nonce },
-      }),
-    );
-  } catch (_e) {}
-
   const originalPreventDefault = Event.prototype.preventDefault;
   const originalStopPropagation = Event.prototype.stopPropagation;
   const originalStopImmediatePropagation =
@@ -164,12 +126,7 @@ if (typeof window !== 'undefined') {
     }
 
     const isContextMenu = event.type === 'contextmenu';
-    const isSelection =
-      event.type === 'selectstart' ||
-      event.type === 'dragstart' ||
-      event.type === 'copy' ||
-      event.type === 'cut' ||
-      event.type === 'beforecopy';
+    const isSelection = SELECTION_EVENTS.has(event.type);
 
     if (!isContextMenu && !isSelection) {
       return false;
@@ -191,24 +148,20 @@ if (typeof window !== 'undefined') {
     return true;
   }
 
-  Event.prototype.preventDefault = function (this: Event): void {
-    if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
-    try {
-      originalPreventDefault.apply(this);
-    } catch (_e) {}
-  };
+  function wrapEventMethod(
+    originalMethod: (this: Event) => void,
+  ): (this: Event) => void {
+    return function (this: Event): void {
+      if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
+      try {
+        originalMethod.apply(this);
+      } catch (_e) {}
+    };
+  }
 
-  Event.prototype.stopPropagation = function (this: Event): void {
-    if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
-    try {
-      originalStopPropagation.apply(this);
-    } catch (_e) {}
-  };
-
-  Event.prototype.stopImmediatePropagation = function (this: Event): void {
-    if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
-    try {
-      originalStopImmediatePropagation.apply(this);
-    } catch (_e) {}
-  };
+  Event.prototype.preventDefault = wrapEventMethod(originalPreventDefault);
+  Event.prototype.stopPropagation = wrapEventMethod(originalStopPropagation);
+  Event.prototype.stopImmediatePropagation = wrapEventMethod(
+    originalStopImmediatePropagation,
+  );
 }

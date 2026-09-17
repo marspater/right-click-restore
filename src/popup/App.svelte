@@ -73,7 +73,9 @@ $effect(() => {
         settings = loadedSettings;
       });
     }
-  } catch (_e) {}
+  } catch (_e) {
+    /* ignore storage access error */
+  }
 });
 
 async function saveSettings(newSettings: Settings) {
@@ -87,7 +89,9 @@ async function saveSettings(newSettings: Settings) {
         shieldEnabled: validated.enabled,
       });
     }
-  } catch (_err) {}
+  } catch (_err) {
+    /* ignore storage save error */
+  }
 
   try {
     if (typeof chrome !== 'undefined' && chrome.action) {
@@ -96,7 +100,9 @@ async function saveSettings(newSettings: Settings) {
         color: validated.enabled ? '#007AFF' : '#8E8E93',
       });
     }
-  } catch (_err) {}
+  } catch (_err) {
+    /* ignore action badge error */
+  }
 
   if (
     activeTabId &&
@@ -116,7 +122,9 @@ async function saveSettings(newSettings: Settings) {
           }
         },
       );
-    } catch (_e) {}
+    } catch (_e) {
+      /* ignore message tab dispatch error */
+    }
   }
 }
 

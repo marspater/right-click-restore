@@ -27,7 +27,9 @@ export function isInteractiveNode(node: Node | null): boolean {
     if (curr instanceof Element) {
       if (safeClosest(curr, ALL_INTERACTIVE_SELECTORS)) return true;
     }
-  } catch (_e) {}
+  } catch (_e) {
+    /* ignore DOM access errors */
+  }
   return false;
 }
 
@@ -46,7 +48,9 @@ export function isInteractiveEvent(event: Event): boolean {
         );
       }
     }
-  } catch (_e) {}
+  } catch (_e) {
+    /* ignore event composition inspection errors */
+  }
   return isInteractiveNode(event?.target as Node | null);
 }
 
@@ -87,7 +91,9 @@ export function notifyContentScript(type: string, config: Settings): void {
         },
       }),
     );
-  } catch (_e) {}
+  } catch (_e) {
+    /* ignore dispatch errors */
+  }
 }
 
 export function handlePageScriptMessage(
@@ -146,7 +152,9 @@ function initHandshake() {
             detail: { channel, nonce },
           }),
         );
-      } catch (_e) {}
+      } catch (_e) {
+        /* ignore handshake dispatch errors */
+      }
     };
 
     window.addEventListener('__rcr_handshake_req__', dispatchHandshake);
@@ -159,11 +167,15 @@ function initHandshake() {
             activeConfig = cfg;
           });
         }
-      } catch (_e) {}
+      } catch (_e) {
+        /* ignore message event handling errors */
+      }
     });
 
     dispatchHandshake();
-  } catch (_e) {}
+  } catch (_e) {
+    /* ignore handshake initialization errors */
+  }
 }
 
 initHandshake();
@@ -208,7 +220,9 @@ if (typeof window !== 'undefined') {
       if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
       try {
         originalFn.apply(this, args);
-      } catch (_e) {}
+      } catch (_e) {
+        /* ignore event override invocation errors */
+      }
     };
   }
 

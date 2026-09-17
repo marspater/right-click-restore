@@ -9,6 +9,14 @@ import {
 
 export { getUnshadowedMethod, safeClosest, safeMatches } from '../shared/dom';
 
+const SELECTION_EVENTS = new Set([
+  'selectstart',
+  'selectionchange',
+  'copy',
+  'cut',
+  'dragstart',
+]);
+
 export function isInteractiveNode(node: Node | null): boolean {
   if (!node) return false;
   try {
@@ -19,7 +27,9 @@ export function isInteractiveNode(node: Node | null): boolean {
     if (curr instanceof Element) {
       if (safeClosest(curr, ALL_INTERACTIVE_SELECTORS)) return true;
     }
-  } catch (_e) {}
+  } catch (_e) {
+    /* ignore DOM access errors */
+  }
   return false;
 }
 
@@ -38,11 +48,13 @@ export function isInteractiveEvent(event: Event): boolean {
         );
       }
     }
-  } catch (_e) {}
+  } catch (_e) {
+    /* ignore event composition inspection errors */
+  }
   return isInteractiveNode(event?.target as Node | null);
 }
 
-function isModifierPressed(event: Event): boolean {
+export function isModifierPressed(event: Event): boolean {
   const e = event as KeyboardEvent | MouseEvent;
   return Boolean(e.shiftKey || e.altKey);
 }
@@ -67,7 +79,7 @@ function isModifierBypassActive(): boolean {
   return activeConfig.bypassModifierKey;
 }
 
-function notifyContentScript(type: string, config: Settings): void {
+export function notifyContentScript(type: string, config: Settings): void {
   if (bridgeChannel === null || bridgeNonce === null) return;
   try {
     window.dispatchEvent(
@@ -79,13 +91,16 @@ function notifyContentScript(type: string, config: Settings): void {
         },
       }),
     );
-  } catch (_e) {}
+  } catch (_e) {
+    /* ignore dispatch errors */
+  }
 }
 
-function handlePageScriptMessage(
+export function handlePageScriptMessage(
   payload: unknown,
   expectedNonce: string,
-  onUpdate: (config: Settings) => void,
+  onUpdate?: (config: Settings) => void,
+  onUnlock?: () => void,
 ): boolean {
   if (!payload || typeof payload !== 'object') return false;
   const data = payload as {
@@ -103,23 +118,73 @@ function handlePageScriptMessage(
     return false;
   }
 
+  if (data.type === 'UNLOCK') {
+    onUnlock?.();
+    return true;
+  }
+
   if (data.type !== 'UPDATE') return false;
   if (!data.config || typeof data.config !== 'object') return false;
 
   try {
     const validated = validateSettings(data.config as Partial<Settings>);
     activeConfig = validated;
-    onUpdate(validated);
+    onUpdate?.(validated);
     return true;
   } catch (_e) {
     return false;
   }
 }
 
+function initHandshake() {
+  if (typeof window === 'undefined') return;
+  try {
+    bridgeChannel = `__rcr_channel_${getSecureRandomString()}`;
+    bridgeNonce = getSecureRandomString();
+
+    const channel = bridgeChannel;
+    const nonce = bridgeNonce;
+
+    const dispatchHandshake = () => {
+      try {
+        window.dispatchEvent(
+          new CustomEvent('__rcr_handshake__', {
+            detail: { channel, nonce },
+          }),
+        );
+      } catch (_e) {
+        /* ignore handshake dispatch errors */
+      }
+    };
+
+    window.addEventListener('__rcr_handshake_req__', dispatchHandshake);
+
+    window.addEventListener(channel, (e: Event) => {
+      try {
+        const detail = (e as CustomEvent)?.detail;
+        if (detail && nonce) {
+          handlePageScriptMessage(detail, nonce, (cfg) => {
+            activeConfig = cfg;
+          });
+        }
+      } catch (_e) {
+        /* ignore message event handling errors */
+      }
+    });
+
+    dispatchHandshake();
+  } catch (_e) {
+    /* ignore handshake initialization errors */
+  }
+}
+
+initHandshake();
+
 if (typeof window !== 'undefined') {
   const originalPreventDefault = Event.prototype.preventDefault;
   const originalStopPropagation = Event.prototype.stopPropagation;
-  const originalStopImmediatePropagation = Event.prototype.stopImmediatePropagation;
+  const originalStopImmediatePropagation =
+    Event.prototype.stopImmediatePropagation;
 
   function shouldBlockEvent(event: Event): boolean {
     if (!event || !isShieldActive()) {
@@ -143,17 +208,27 @@ if (typeof window !== 'undefined') {
     }
 
     if (isModifierBypassActive() && isModifierPressed(event)) {
-      return true;
+      return false;
     }
     return true;
   }
 
-  Event.prototype.preventDefault = function (this: Event): void {
-    if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
-    try {
-      originalPreventDefault.apply(this);
-    } catch (_e) {}
-  };
+  function wrapEventMethod<T extends (...args: unknown[]) => void>(
+    originalFn: T,
+  ) {
+    return function (this: Event, ...args: unknown[]): void {
+      if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
+      try {
+        originalFn.apply(this, args);
+      } catch (_e) {
+        /* ignore event override invocation errors */
+      }
+    };
+  }
 
-  // ...rest of file unchanged...
+  Event.prototype.preventDefault = wrapEventMethod(originalPreventDefault);
+  Event.prototype.stopPropagation = wrapEventMethod(originalStopPropagation);
+  Event.prototype.stopImmediatePropagation = wrapEventMethod(
+    originalStopImmediatePropagation,
+  );
 }

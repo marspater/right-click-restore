@@ -282,16 +282,16 @@ kbd {
   align-items: center;
   justify-content: center;
   font-family: var(--font-sans);
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 600;
   line-height: 1;
   background: var(--bg-kbd);
   color: var(--text-primary);
   border: 0.5px solid var(--border-kbd);
   border-radius: var(--radius-kbd);
-  padding: 2px 4px;
+  padding: 1.5px 3.5px;
   box-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.08);
-  vertical-align: middle;
+  vertical-align: baseline;
 }
 
 /* Reduced Motion Support */

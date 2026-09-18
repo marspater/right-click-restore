@@ -3,6 +3,7 @@ import {
   safeClosest,
   safeGetShadowRoot,
   safeGetStyle,
+  safeHasAttribute,
   safeQuerySelectorAll,
   safeRemoveAttribute,
 } from '../shared/dom';
@@ -47,6 +48,52 @@ export function cleanNode(
     return;
   }
 
+  // Fast-path: Skip expensive safeClosest ancestor hierarchy traversal if the node has
+  // no scrubbable event attributes, no inline user-select:none style, and no open shadow root.
+  const hasRightClickAttr =
+    settings.restoreRightClick && safeHasAttribute(node, 'oncontextmenu');
+
+  let hasSelectionAttr = false;
+  let hasUserSelectStyle = false;
+
+  if (settings.restoreSelection) {
+    for (let i = 0; i < SCRUB_ATTRS.length; i++) {
+      const attr = SCRUB_ATTRS[i];
+      if (attr !== 'oncontextmenu' && safeHasAttribute(node, attr)) {
+        hasSelectionAttr = true;
+        break;
+      }
+    }
+    if (typeof HTMLElement !== 'undefined' && node instanceof HTMLElement) {
+      try {
+        const style = safeGetStyle(node);
+        if (style) {
+          if (
+            style.userSelect === 'none' ||
+            ('webkitUserSelect' in style && style.webkitUserSelect === 'none')
+          ) {
+            hasUserSelectStyle = true;
+          }
+        }
+      } catch (_e) {}
+    }
+  }
+
+  let shadow: ShadowRoot | null = null;
+  try {
+    shadow = safeGetShadowRoot(node);
+  } catch (_e) {}
+
+  // If node has nothing to scrub or traverse, short-circuit immediately without safeClosest DOM traversal
+  if (
+    !hasRightClickAttr &&
+    !hasSelectionAttr &&
+    !hasUserSelectStyle &&
+    !shadow
+  ) {
+    return;
+  }
+
   try {
     if (safeClosest(node, ALL_INTERACTIVE_SELECTORS)) {
       return;
@@ -55,18 +102,24 @@ export function cleanNode(
     return;
   }
 
-  if (settings.restoreRightClick) {
+  if (hasRightClickAttr) {
     safeRemoveAttribute(node, 'oncontextmenu');
   }
 
   if (settings.restoreSelection) {
-    for (let i = 0; i < SCRUB_ATTRS.length; i++) {
-      const attr = SCRUB_ATTRS[i];
-      if (attr !== 'oncontextmenu') {
-        safeRemoveAttribute(node, attr);
+    if (hasSelectionAttr) {
+      for (let i = 0; i < SCRUB_ATTRS.length; i++) {
+        const attr = SCRUB_ATTRS[i];
+        if (attr !== 'oncontextmenu') {
+          safeRemoveAttribute(node, attr);
+        }
       }
     }
-    if (typeof HTMLElement !== 'undefined' && node instanceof HTMLElement) {
+    if (
+      hasUserSelectStyle &&
+      typeof HTMLElement !== 'undefined' &&
+      node instanceof HTMLElement
+    ) {
       try {
         const style = safeGetStyle(node);
         if (style) {
@@ -83,12 +136,11 @@ export function cleanNode(
   }
 
   // Traverse open shadow root if accessible
-  try {
-    const shadow = safeGetShadowRoot(node);
-    if (shadow) {
+  if (shadow) {
+    try {
       cleanDOMTree(shadow, settings);
-    }
-  } catch (_e) {}
+    } catch (_e) {}
+  }
 }
 
 export function cleanAddedNode(

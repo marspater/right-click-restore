@@ -249,9 +249,9 @@ async function forceUnlockPage() {
 
   <!-- Active Domain Inset Card -->
   <section class={`glass-card px-3 py-2.5 mb-2 flex items-center justify-between transition-all ${settings.enabled ? '' : 'dimmed'}`}>
-    <div class="flex items-center gap-2.5 min-w-0 pr-2">
+    <div class="flex items-start gap-2.5 min-w-0 pr-2 pt-0.5">
       <!-- Status Beacon -->
-      <div class="flex items-center justify-center flex-shrink-0" aria-hidden="true">
+      <div class="flex items-center justify-center flex-shrink-0 mt-0.5" aria-hidden="true">
         <span class="relative flex h-2.5 w-2.5 items-center justify-center">
           {#if isSiteActive}
             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--accent-green)] opacity-35"></span>
@@ -328,7 +328,7 @@ async function forceUnlockPage() {
         </div>
         <div class="min-w-0">
           <div class="text-[12px] font-medium text-[var(--text-primary)] leading-tight">Allow Selection & Copy</div>
-          <div id="desc-restore-selection" class="text-[10px] text-[var(--text-secondary)] leading-tight">Enables text highlight and ⌘C</div>
+          <div id="desc-restore-selection" class="text-[10px] text-[var(--text-secondary)] leading-tight">Enables text highlight and <kbd>⌘C</kbd></div>
         </div>
       </div>
       <span class="apple-switch apple-switch-sm">
@@ -404,7 +404,7 @@ async function forceUnlockPage() {
         </div>
         <div class="min-w-0">
           <div class="text-[12px] font-medium text-[var(--text-primary)] leading-tight">Modifier Key Bypass</div>
-          <div id="desc-bypass-modifier-key" class="text-[10px] text-[var(--text-secondary)] leading-tight">Bypass with ⇧ Shift or ⌥ Option</div>
+          <div id="desc-bypass-modifier-key" class="text-[10px] text-[var(--text-secondary)] leading-tight">Bypass with <kbd>⇧ Shift</kbd> or <kbd>⌥ Option</kbd></div>
         </div>
       </div>
       <span class="apple-switch apple-switch-sm">

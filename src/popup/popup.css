@@ -294,6 +294,20 @@ kbd {
   vertical-align: middle;
 }
 
+@keyframes bounce-short {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+.animate-bounce-short {
+  animation: bounce-short 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
 /* Reduced Motion Support */
 @media (prefers-reduced-motion: reduce) {
   *,

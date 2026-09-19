@@ -47,6 +47,18 @@ export function cleanNode(
     return;
   }
 
+  // Fast-path: Standard form & canvas controls are always interactive; bypass safeClosest DOM hierarchy traversal
+  const tag = node.tagName;
+  if (
+    tag === 'INPUT' ||
+    tag === 'TEXTAREA' ||
+    tag === 'SELECT' ||
+    tag === 'BUTTON' ||
+    tag === 'CANVAS'
+  ) {
+    return;
+  }
+
   try {
     if (safeClosest(node, ALL_INTERACTIVE_SELECTORS)) {
       return;

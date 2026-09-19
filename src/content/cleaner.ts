@@ -47,8 +47,8 @@ export function cleanNode(
     return;
   }
 
-  const tag = node.tagName;
   // Fast-path: Standard form & canvas controls are always interactive; bypass safeClosest DOM hierarchy traversal
+  const tag = node.tagName;
   if (
     tag === 'INPUT' ||
     tag === 'TEXTAREA' ||

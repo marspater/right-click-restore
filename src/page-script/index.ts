@@ -51,11 +51,6 @@ let activeConfig: Settings = { ...DEFAULT_SETTINGS };
 let bridgeChannel: string | null = null;
 let bridgeNonce: string | null = null;
 
-export function setBridgeChannel(channel: string, nonce: string): void {
-  bridgeChannel = channel;
-  bridgeNonce = nonce;
-}
-
 function isShieldActive(): boolean {
   return activeConfig.enabled;
 }
@@ -72,7 +67,7 @@ function isModifierBypassActive(): boolean {
   return activeConfig.bypassModifierKey;
 }
 
-export function notifyContentScript(type: string, config: Settings): void {
+function notifyContentScript(type: string, config: Settings): void {
   if (bridgeChannel === null || bridgeNonce === null) return;
   try {
     window.dispatchEvent(
@@ -129,9 +124,8 @@ export function handlePageScriptMessage(
 
 if (typeof window !== 'undefined') {
   const originalPreventDefault = Event.prototype.preventDefault;
-  const _originalStopPropagation = Event.prototype.stopPropagation;
-  const _originalStopImmediatePropagation =
-    Event.prototype.stopImmediatePropagation;
+  const originalStopPropagation = Event.prototype.stopPropagation;
+  const originalStopImmediatePropagation = Event.prototype.stopImmediatePropagation;
 
   function shouldBlockEvent(event: Event): boolean {
     if (!event || !isShieldActive()) {

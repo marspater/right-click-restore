@@ -11,7 +11,6 @@ let settings = $state<Settings>({ ...DEFAULT_SETTINGS });
 let currentHostname = $state<string>('');
 let activeTabId = $state<number | null>(null);
 let unlockStatus = $state<'idle' | 'unlocking' | 'success' | 'error'>('idle');
-let isTabLoading = $state<boolean>(true);
 
 const isToggleableDomain = $derived(
   Boolean(currentHostname && normalizeHostname(currentHostname)),
@@ -31,7 +30,6 @@ $effect(() => {
   try {
     if (typeof chrome !== 'undefined' && chrome.tabs?.query) {
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        isTabLoading = false;
         if (chrome.runtime?.lastError || !tabs || tabs.length === 0) {
           currentHostname = 'Active Page';
           return;
@@ -55,12 +53,9 @@ $effect(() => {
           }
         }
       });
-    } else {
-      isTabLoading = false;
     }
   } catch (_e) {
     currentHostname = 'Active Page';
-    isTabLoading = false;
   }
 
   try {
@@ -179,7 +174,7 @@ $effect(() => {
 });
 
 async function forceUnlockPage() {
-  if (!activeTabId || unlockStatus !== 'idle' || !isSiteActive) return;
+  if (!activeTabId || unlockStatus === 'unlocking') return;
   unlockStatus = 'unlocking';
   if (unlockTimeout) {
     clearTimeout(unlockTimeout);
@@ -258,17 +253,15 @@ async function forceUnlockPage() {
       <!-- Status Beacon -->
       <div class="flex items-center justify-center flex-shrink-0" aria-hidden="true">
         <span class="relative flex h-2.5 w-2.5 items-center justify-center">
-          {#if !isTabLoading && isSiteActive}
+          {#if isSiteActive}
             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--accent-green)] opacity-35"></span>
           {/if}
           <span class={`relative inline-flex rounded-full h-2 w-2 transition-all duration-200 ${
-            isTabLoading
-              ? 'bg-[var(--text-tertiary)] animate-pulse'
-              : isSiteActive
-                ? 'bg-[var(--accent-green)] shadow-[0_0_6px_rgba(52,199,89,0.5)]'
-                : settings.enabled && isSiteDisabled
-                  ? 'bg-[var(--accent-orange)] shadow-[0_0_6px_rgba(255,149,0,0.4)]'
-                  : 'bg-[var(--text-tertiary)]'
+            isSiteActive
+              ? 'bg-[var(--accent-green)] shadow-[0_0_6px_rgba(52,199,89,0.5)]'
+              : settings.enabled && isSiteDisabled
+                ? 'bg-[var(--accent-orange)] shadow-[0_0_6px_rgba(255,149,0,0.4)]'
+                : 'bg-[var(--text-tertiary)]'
           }`}></span>
         </span>
       </div>
@@ -276,16 +269,10 @@ async function forceUnlockPage() {
       <!-- Domain Labels Stack -->
       <div class="min-w-0 flex flex-col justify-center">
         <span class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
-          {isTabLoading
-            ? 'Detecting Page'
-            : !settings.enabled
-              ? 'Extension Paused'
-              : isSiteDisabled
-                ? 'Disabled on Domain'
-                : 'Active on Domain'}
+          {!settings.enabled ? 'Extension Paused' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
         </span>
-        <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-1" title={currentHostname || 'Detecting page…'}>
-          {isTabLoading ? 'Detecting page…' : currentHostname || 'Active Page'}
+        <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-1" title={currentHostname}>
+          {currentHostname || 'Loading…'}
         </span>
       </div>
     </div>
@@ -437,11 +424,10 @@ async function forceUnlockPage() {
     <button
       type="button"
       onclick={forceUnlockPage}
-      disabled={!isSiteActive}
-      aria-disabled={unlockStatus !== 'idle' || !isSiteActive}
+      disabled={unlockStatus !== 'idle' || !isSiteActive}
       title={isSiteActive ? 'Force unlock context menu and selection on active page' : 'Protection is inactive on this page'}
       aria-label="Force unlock context menu and selection on active page"
-      class={`w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer select-none disabled:cursor-not-allowed ${
+      class={`w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none disabled:cursor-not-allowed ${
         isSiteActive && unlockStatus === 'idle' ? 'active:scale-[0.985]' : ''
       } ${
         unlockStatus === 'success'
@@ -460,7 +446,7 @@ async function forceUnlockPage() {
         </svg>
         <span>Unlocking Current Page…</span>
       {:else if unlockStatus === 'success'}
-        <svg class="w-3.5 h-3.5 animate-bounce-short" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <polyline points="20 6 9 17 4 12" />
         </svg>
         <span>Page Unlocked</span>
@@ -480,10 +466,10 @@ async function forceUnlockPage() {
     </button>
   </div>
 
-  <!-- Footnote Tip with High-Contrast Keycaps -->
+  <!-- Footnote Tip with High-Contrast Keycap -->
   <footer class="pt-0.5 text-center select-none">
-    <p class="text-[9.5px] text-[var(--text-tertiary)] leading-tight m-0 whitespace-nowrap tracking-tight">
-      Tip: Hold <kbd>⇧ Shift</kbd> or <kbd>⌥ Option</kbd> to summon native menu
+    <p class="text-[10px] text-[var(--text-tertiary)] leading-tight m-0 inline">
+      Tip: Hold <kbd>⇧ Shift</kbd> to summon native menu anywhere
     </p>
   </footer>
 </main>

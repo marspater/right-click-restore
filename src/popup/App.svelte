@@ -424,16 +424,17 @@ async function forceUnlockPage() {
     <button
       type="button"
       onclick={forceUnlockPage}
-      disabled={unlockStatus !== 'idle' || !isSiteActive}
+      disabled={unlockStatus === 'unlocking' || !isSiteActive}
+      aria-disabled={unlockStatus !== 'idle' || !isSiteActive}
       title={isSiteActive ? 'Force unlock context menu and selection on active page' : 'Protection is inactive on this page'}
       aria-label="Force unlock context menu and selection on active page"
       class={`w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none disabled:cursor-not-allowed ${
         isSiteActive && unlockStatus === 'idle' ? 'active:scale-[0.985]' : ''
       } ${
         unlockStatus === 'success'
-          ? 'bg-[var(--accent-green)] text-white shadow-sm border border-transparent'
+          ? 'bg-[var(--accent-green)] text-white shadow-sm border border-transparent font-semibold'
           : unlockStatus === 'error'
-            ? 'bg-[var(--accent-red)] text-white shadow-sm border border-transparent'
+            ? 'bg-[var(--accent-red)] text-white shadow-sm border border-transparent font-semibold'
             : isSiteActive
               ? 'bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] text-[var(--text-primary)] border border-[var(--border-subtle)] shadow-[var(--shadow-btn)]'
               : 'bg-[var(--bg-card)] text-[var(--text-tertiary)] border border-[var(--border-subtle)] opacity-50'
@@ -469,7 +470,7 @@ async function forceUnlockPage() {
   <!-- Footnote Tip with High-Contrast Keycap -->
   <footer class="pt-0.5 text-center select-none">
     <p class="text-[10px] text-[var(--text-tertiary)] leading-tight m-0 inline">
-      Tip: Hold <kbd>⇧ Shift</kbd> to summon native menu anywhere
+      Tip: Hold <kbd>⇧ Shift</kbd> or <kbd>⌥ Option</kbd> to bypass shield
     </p>
   </footer>
 </main>

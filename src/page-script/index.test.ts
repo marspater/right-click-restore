@@ -184,6 +184,20 @@ describe('page-script helpers', () => {
     });
   });
 
+  describe('isModifierPressed', () => {
+    test('returns true when Shift or Alt key is pressed', () => {
+      expect(
+        isModifierPressed({ shiftKey: true, altKey: false } as MouseEvent),
+      ).toBe(true);
+      expect(
+        isModifierPressed({ shiftKey: false, altKey: true } as MouseEvent),
+      ).toBe(true);
+      expect(
+        isModifierPressed({ shiftKey: false, altKey: false } as MouseEvent),
+      ).toBe(false);
+    });
+  });
+
   describe('isInteractiveNode DOM clobbering resistance', () => {
     test('resists DOM clobbering when child inputs shadow matches or closest', () => {
       const form = document.createElement('form');

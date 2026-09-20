@@ -1,5 +1,4 @@
 import { ALL_INTERACTIVE_SELECTORS } from '../shared/constants';
-import { getSecureRandomString } from '../shared/crypto';
 import { getUnshadowedMethod, safeClosest, safeMatches } from '../shared/dom';
 import {
   DEFAULT_SETTINGS,
@@ -8,6 +7,15 @@ import {
 } from '../shared/settings';
 
 export { getUnshadowedMethod, safeClosest, safeMatches } from '../shared/dom';
+
+const SELECTION_EVENTS = new Set([
+  'selectstart',
+  'copy',
+  'cut',
+  'dragstart',
+  'mousedown',
+  'mouseup',
+]);
 
 export function isInteractiveNode(node: Node | null): boolean {
   if (!node) return false;
@@ -42,14 +50,12 @@ export function isInteractiveEvent(event: Event): boolean {
   return isInteractiveNode(event?.target as Node | null);
 }
 
-function isModifierPressed(event: Event): boolean {
+export function isModifierPressed(event: Event): boolean {
   const e = event as KeyboardEvent | MouseEvent;
   return Boolean(e.shiftKey || e.altKey);
 }
 
 let activeConfig: Settings = { ...DEFAULT_SETTINGS };
-let bridgeChannel: string | null = null;
-let bridgeNonce: string | null = null;
 
 function isShieldActive(): boolean {
   return activeConfig.enabled;
@@ -67,25 +73,11 @@ function isModifierBypassActive(): boolean {
   return activeConfig.bypassModifierKey;
 }
 
-function notifyContentScript(type: string, config: Settings): void {
-  if (bridgeChannel === null || bridgeNonce === null) return;
-  try {
-    window.dispatchEvent(
-      new CustomEvent(bridgeChannel, {
-        detail: {
-          nonce: bridgeNonce,
-          type,
-          config,
-        },
-      }),
-    );
-  } catch (_e) {}
-}
-
-function handlePageScriptMessage(
+export function handlePageScriptMessage(
   payload: unknown,
   expectedNonce: string,
-  onUpdate: (config: Settings) => void,
+  onUpdate?: (config: Settings) => void,
+  onUnlock?: () => void,
 ): boolean {
   if (!payload || typeof payload !== 'object') return false;
   const data = payload as {
@@ -103,13 +95,22 @@ function handlePageScriptMessage(
     return false;
   }
 
+  if (data.type === 'UNLOCK') {
+    try {
+      onUnlock?.();
+      return true;
+    } catch (_e) {
+      return false;
+    }
+  }
+
   if (data.type !== 'UPDATE') return false;
   if (!data.config || typeof data.config !== 'object') return false;
 
   try {
     const validated = validateSettings(data.config as Partial<Settings>);
     activeConfig = validated;
-    onUpdate(validated);
+    onUpdate?.(validated);
     return true;
   } catch (_e) {
     return false;
@@ -119,7 +120,8 @@ function handlePageScriptMessage(
 if (typeof window !== 'undefined') {
   const originalPreventDefault = Event.prototype.preventDefault;
   const originalStopPropagation = Event.prototype.stopPropagation;
-  const originalStopImmediatePropagation = Event.prototype.stopImmediatePropagation;
+  const originalStopImmediatePropagation =
+    Event.prototype.stopImmediatePropagation;
 
   function shouldBlockEvent(event: Event): boolean {
     if (!event || !isShieldActive()) {
@@ -143,7 +145,7 @@ if (typeof window !== 'undefined') {
     }
 
     if (isModifierBypassActive() && isModifierPressed(event)) {
-      return true;
+      return false;
     }
     return true;
   }
@@ -155,5 +157,17 @@ if (typeof window !== 'undefined') {
     } catch (_e) {}
   };
 
-  // ...rest of file unchanged...
+  Event.prototype.stopPropagation = function (this: Event): void {
+    if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
+    try {
+      originalStopPropagation.apply(this);
+    } catch (_e) {}
+  };
+
+  Event.prototype.stopImmediatePropagation = function (this: Event): void {
+    if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
+    try {
+      originalStopImmediatePropagation.apply(this);
+    } catch (_e) {}
+  };
 }

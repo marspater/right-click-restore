@@ -1,6 +1,17 @@
+import { ALL_INTERACTIVE_SELECTORS } from './constants';
+
 const OBJECT_PROTO_METHODS = new Set(
   Object.getOwnPropertyNames(Object.prototype),
 );
+
+const INTERACTIVE_TAG_NAMES = new Set([
+  'input',
+  'textarea',
+  'select',
+  'button',
+  'canvas',
+  'ytd-app',
+]);
 
 export function getUnshadowedMethod(
   obj: object,
@@ -68,6 +79,25 @@ export function safeMatches(element: Element, selector: string): boolean {
       return Boolean(fn.call(element, selector));
     }
     return element.matches(selector);
+  } catch (_e) {
+    return false;
+  }
+}
+
+// Fast-path check for interactive elements:
+// 1. Instantly returns true for known interactive tag names.
+// 2. Short-circuits elements with 0 attributes (cannot match attribute/role/class selectors).
+// 3. Falls back to safeMatches for elements with attributes or unknown tags.
+export function isInteractiveElement(el: Element): boolean {
+  try {
+    const tag = el.localName || el.tagName?.toLowerCase();
+    if (tag && INTERACTIVE_TAG_NAMES.has(tag)) {
+      return true;
+    }
+    if (typeof el.hasAttributes === 'function' && !el.hasAttributes()) {
+      return false;
+    }
+    return safeMatches(el, ALL_INTERACTIVE_SELECTORS);
   } catch (_e) {
     return false;
   }

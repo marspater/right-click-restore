@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { Window } from 'happy-dom';
 import { DEFAULT_SETTINGS } from '../shared/settings';
-import { cleanAddedNode, cleanDOMTree, cleanNode } from './cleaner';
+import {
+  cleanAddedNode,
+  cleanDOMTree,
+  cleanNode,
+  getScrubSelector,
+} from './cleaner';
 
 describe('cleaner module', () => {
   let window: Window;
@@ -16,6 +21,48 @@ describe('cleaner module', () => {
       Node: window.Node,
       Element: window.Element,
       HTMLElement: window.HTMLElement,
+    });
+  });
+
+  describe('getScrubSelector', () => {
+    test('returns full selector when both restoreRightClick and restoreSelection are enabled', () => {
+      const selector = getScrubSelector({
+        ...DEFAULT_SETTINGS,
+        restoreRightClick: true,
+        restoreSelection: true,
+      });
+      expect(selector).toContain('[oncontextmenu]');
+      expect(selector).toContain('[onselectstart]');
+      expect(selector).toContain('[style*="user-select"]');
+    });
+
+    test('returns contextmenu selector only when restoreRightClick is enabled and restoreSelection is disabled', () => {
+      const selector = getScrubSelector({
+        ...DEFAULT_SETTINGS,
+        restoreRightClick: true,
+        restoreSelection: false,
+      });
+      expect(selector).toBe('[oncontextmenu]');
+    });
+
+    test('returns selection selectors only when restoreRightClick is disabled and restoreSelection is enabled', () => {
+      const selector = getScrubSelector({
+        ...DEFAULT_SETTINGS,
+        restoreRightClick: false,
+        restoreSelection: true,
+      });
+      expect(selector).not.toContain('[oncontextmenu]');
+      expect(selector).toContain('[onselectstart]');
+      expect(selector).toContain('[style*="user-select"]');
+    });
+
+    test('returns empty string when both restoration features are disabled', () => {
+      const selector = getScrubSelector({
+        ...DEFAULT_SETTINGS,
+        restoreRightClick: false,
+        restoreSelection: false,
+      });
+      expect(selector).toBe('');
     });
   });
 

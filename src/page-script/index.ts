@@ -1,13 +1,24 @@
 import { ALL_INTERACTIVE_SELECTORS } from '../shared/constants';
-import { getSecureRandomString } from '../shared/crypto';
-import { getUnshadowedMethod, safeClosest, safeMatches } from '../shared/dom';
+import {
+  getUnshadowedMethod,
+  isInteractiveElement,
+  safeClosest,
+  safeMatches,
+} from '../shared/dom';
 import {
   DEFAULT_SETTINGS,
   type Settings,
   validateSettings,
 } from '../shared/settings';
 
-export { getUnshadowedMethod, safeClosest, safeMatches } from '../shared/dom';
+export {
+  getUnshadowedMethod,
+  isInteractiveElement,
+  safeClosest,
+  safeMatches,
+} from '../shared/dom';
+
+const SELECTION_EVENTS = new Set(['selectstart', 'copy', 'cut', 'beforecopy']);
 
 export function isInteractiveNode(node: Node | null): boolean {
   if (!node) return false;
@@ -17,6 +28,7 @@ export function isInteractiveNode(node: Node | null): boolean {
       curr = curr.parentElement;
     }
     if (curr instanceof Element) {
+      if (isInteractiveElement(curr)) return true;
       if (safeClosest(curr, ALL_INTERACTIVE_SELECTORS)) return true;
     }
   } catch (_e) {}
@@ -32,9 +44,7 @@ export function isInteractiveEvent(event: Event): boolean {
       const path = composedPathFn.call(event) as unknown[];
       if (Array.isArray(path) && path.length > 0) {
         return path.some(
-          (item) =>
-            item instanceof Element &&
-            safeMatches(item, ALL_INTERACTIVE_SELECTORS),
+          (item) => item instanceof Element && isInteractiveElement(item),
         );
       }
     }
@@ -67,7 +77,7 @@ function isModifierBypassActive(): boolean {
   return activeConfig.bypassModifierKey;
 }
 
-function notifyContentScript(type: string, config: Settings): void {
+export function notifyContentScript(type: string, config: Settings): void {
   if (bridgeChannel === null || bridgeNonce === null) return;
   try {
     window.dispatchEvent(
@@ -82,10 +92,11 @@ function notifyContentScript(type: string, config: Settings): void {
   } catch (_e) {}
 }
 
-function handlePageScriptMessage(
+export function handlePageScriptMessage(
   payload: unknown,
   expectedNonce: string,
-  onUpdate: (config: Settings) => void,
+  onUpdate?: (config: Settings) => void,
+  onUnlock?: () => void,
 ): boolean {
   if (!payload || typeof payload !== 'object') return false;
   const data = payload as {
@@ -103,13 +114,18 @@ function handlePageScriptMessage(
     return false;
   }
 
+  if (data.type === 'UNLOCK') {
+    onUnlock?.();
+    return true;
+  }
+
   if (data.type !== 'UPDATE') return false;
   if (!data.config || typeof data.config !== 'object') return false;
 
   try {
     const validated = validateSettings(data.config as Partial<Settings>);
     activeConfig = validated;
-    onUpdate(validated);
+    onUpdate?.(validated);
     return true;
   } catch (_e) {
     return false;
@@ -119,7 +135,8 @@ function handlePageScriptMessage(
 if (typeof window !== 'undefined') {
   const originalPreventDefault = Event.prototype.preventDefault;
   const originalStopPropagation = Event.prototype.stopPropagation;
-  const originalStopImmediatePropagation = Event.prototype.stopImmediatePropagation;
+  const originalStopImmediatePropagation =
+    Event.prototype.stopImmediatePropagation;
 
   function shouldBlockEvent(event: Event): boolean {
     if (!event || !isShieldActive()) {
@@ -143,7 +160,7 @@ if (typeof window !== 'undefined') {
     }
 
     if (isModifierBypassActive() && isModifierPressed(event)) {
-      return true;
+      return false;
     }
     return true;
   }
@@ -155,5 +172,29 @@ if (typeof window !== 'undefined') {
     } catch (_e) {}
   };
 
-  // ...rest of file unchanged...
+  Event.prototype.stopPropagation = function (this: Event): void {
+    if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
+    try {
+      originalStopPropagation.apply(this);
+    } catch (_e) {}
+  };
+
+  Event.prototype.stopImmediatePropagation = function (this: Event): void {
+    if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
+    try {
+      originalStopImmediatePropagation.apply(this);
+    } catch (_e) {}
+  };
+
+  window.addEventListener('__rcr_handshake_req__', () => {
+    if (bridgeChannel === null) {
+      bridgeChannel = `__rcr_channel_${Math.random().toString(36).substring(2)}`;
+      bridgeNonce = `__rcr_nonce_${Math.random().toString(36).substring(2)}`;
+      window.dispatchEvent(
+        new CustomEvent('__rcr_handshake__', {
+          detail: { channel: bridgeChannel, nonce: bridgeNonce },
+        }),
+      );
+    }
+  });
 }

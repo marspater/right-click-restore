@@ -11,7 +11,6 @@ import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
 export {
   getUnshadowedGetter,
   getUnshadowedMethod,
-  isInteractiveElement,
   safeClosest,
   safeGetElementById,
   safeGetShadowRoot,
@@ -36,26 +35,6 @@ export const SCRUB_SELECTOR = [
   '[style*="user-select"]',
   '[style*="UserSelect"]',
 ].join(',');
-
-// Dynamically generate targeted scrub query selector based on active feature flags
-export function getScrubSelector(settings: Settings): string {
-  const parts: string[] = [];
-  if (settings.restoreRightClick) {
-    parts.push('[oncontextmenu]');
-  }
-  if (settings.restoreSelection) {
-    parts.push(
-      '[onselectstart]',
-      '[ondragstart]',
-      '[oncopy]',
-      '[oncut]',
-      '[onbeforecopy]',
-      '[style*="user-select"]',
-      '[style*="UserSelect"]',
-    );
-  }
-  return parts.join(',');
-}
 
 export function cleanNode(
   node: unknown,
@@ -118,10 +97,8 @@ export function cleanAddedNode(
 ) {
   if (typeof Element === 'undefined' || !(node instanceof Element)) return;
   cleanNode(node, settings);
-  const selector = getScrubSelector(settings);
-  if (!selector) return;
   try {
-    for (const child of safeQuerySelectorAll(node, selector)) {
+    for (const child of safeQuerySelectorAll(node, SCRUB_SELECTOR)) {
       cleanNode(child, settings);
     }
   } catch (_e) {}
@@ -136,14 +113,11 @@ export function cleanDOMTree(
     return;
   }
 
-  const selector = getScrubSelector(settings);
-  if (!selector) return;
-
   if (typeof Element !== 'undefined' && root instanceof Element) {
     cleanNode(root, settings);
   }
   try {
-    for (const node of safeQuerySelectorAll(root, selector)) {
+    for (const node of safeQuerySelectorAll(root, SCRUB_SELECTOR)) {
       cleanNode(node, settings);
     }
   } catch (_e) {}

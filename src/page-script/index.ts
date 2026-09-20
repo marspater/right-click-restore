@@ -1,4 +1,5 @@
 import { ALL_INTERACTIVE_SELECTORS } from '../shared/constants';
+import { getSecureRandomString } from '../shared/crypto';
 import {
   getUnshadowedMethod,
   isInteractiveElement,
@@ -28,7 +29,6 @@ export function isInteractiveNode(node: Node | null): boolean {
       curr = curr.parentElement;
     }
     if (curr instanceof Element) {
-      if (isInteractiveElement(curr)) return true;
       if (safeClosest(curr, ALL_INTERACTIVE_SELECTORS)) return true;
     }
   } catch (_e) {}
@@ -188,8 +188,8 @@ if (typeof window !== 'undefined') {
 
   window.addEventListener('__rcr_handshake_req__', () => {
     if (bridgeChannel === null) {
-      bridgeChannel = `__rcr_channel_${Math.random().toString(36).substring(2)}`;
-      bridgeNonce = `__rcr_nonce_${Math.random().toString(36).substring(2)}`;
+      bridgeChannel = `__rcr_channel_${getSecureRandomString()}`;
+      bridgeNonce = `__rcr_nonce_${getSecureRandomString()}`;
       window.dispatchEvent(
         new CustomEvent('__rcr_handshake__', {
           detail: { channel: bridgeChannel, nonce: bridgeNonce },

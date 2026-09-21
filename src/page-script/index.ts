@@ -13,8 +13,10 @@ const SELECTION_EVENTS = new Set([
   'selectstart',
   'copy',
   'cut',
+  'paste',
   'dragstart',
-  'beforecopy',
+  'mousedown',
+  'select',
 ]);
 
 export function isInteractiveNode(node: Node | null): boolean {
@@ -56,6 +58,8 @@ export function isModifierPressed(event: Event): boolean {
 }
 
 let activeConfig: Settings = { ...DEFAULT_SETTINGS };
+let bridgeChannel: string | null = null;
+let bridgeNonce: string | null = null;
 
 function isShieldActive(): boolean {
   return activeConfig.enabled;
@@ -71,6 +75,21 @@ function isSelectionActive(): boolean {
 
 function isModifierBypassActive(): boolean {
   return activeConfig.bypassModifierKey;
+}
+
+export function notifyContentScript(type: string, config: Settings): void {
+  if (bridgeChannel === null || bridgeNonce === null) return;
+  try {
+    window.dispatchEvent(
+      new CustomEvent(bridgeChannel, {
+        detail: {
+          nonce: bridgeNonce,
+          type,
+          config,
+        },
+      }),
+    );
+  } catch (_e) {}
 }
 
 export function handlePageScriptMessage(
@@ -96,12 +115,12 @@ export function handlePageScriptMessage(
   }
 
   if (data.type === 'UNLOCK') {
-    try {
-      onUnlock?.();
-      return true;
-    } catch (_e) {
-      return false;
+    if (onUnlock) {
+      try {
+        onUnlock();
+      } catch (_e) {}
     }
+    return true;
   }
 
   if (data.type !== 'UPDATE') return false;
@@ -110,7 +129,7 @@ export function handlePageScriptMessage(
   try {
     const validated = validateSettings(data.config as Partial<Settings>);
     activeConfig = validated;
-    onUpdate?.(validated);
+    if (onUpdate) onUpdate(validated);
     return true;
   } catch (_e) {
     return false;
@@ -171,30 +190,31 @@ if (typeof window !== 'undefined') {
     } catch (_e) {}
   };
 
-  try {
-    const channel = `__rcr_bridge_${getSecureRandomString()}`;
-    const nonce = getSecureRandomString();
+  const setupHandshake = () => {
+    if (bridgeChannel === null || bridgeNonce === null) {
+      bridgeChannel = `__rcr_channel_${getSecureRandomString()}`;
+      bridgeNonce = getSecureRandomString();
 
-    window.addEventListener(channel, (e: Event) => {
-      try {
-        const detail = (e as CustomEvent)?.detail;
-        handlePageScriptMessage(detail, nonce, (newSettings) => {
-          activeConfig = newSettings;
-        });
-      } catch (_e) {}
-    });
+      window.addEventListener(bridgeChannel, (e: Event) => {
+        try {
+          const detail = (e as CustomEvent)?.detail;
+          handlePageScriptMessage(detail, bridgeNonce ?? '', (config) => {
+            activeConfig = config;
+          });
+        } catch (_e) {}
+      });
 
-    const sendHandshake = () => {
-      try {
-        window.dispatchEvent(
-          new CustomEvent('__rcr_handshake__', {
-            detail: { channel, nonce },
-          }),
-        );
-      } catch (_e) {}
-    };
+      window.dispatchEvent(
+        new CustomEvent('__rcr_handshake__', {
+          detail: {
+            channel: bridgeChannel,
+            nonce: bridgeNonce,
+          },
+        }),
+      );
+    }
+  };
 
-    window.addEventListener('__rcr_handshake_req__', sendHandshake);
-    sendHandshake();
-  } catch (_e) {}
+  window.addEventListener('__rcr_handshake_req__', setupHandshake);
+  setupHandshake();
 }

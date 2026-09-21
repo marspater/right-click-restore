@@ -37,44 +37,53 @@ export const SCRUB_SELECTOR = [
   '[style*="UserSelect"]',
 ].join(',');
 
+function hasScrubbableStyle(element: Element): boolean {
+  if (typeof HTMLElement === 'undefined' || !(element instanceof HTMLElement)) {
+    return false;
+  }
+  const style = safeGetStyle(element);
+  if (!style) return false;
+
+  return (
+    style.userSelect === 'none' ||
+    ('webkitUserSelect' in style && style.webkitUserSelect === 'none')
+  );
+}
+
+function cleanSelectionStyle(element: HTMLElement): void {
+  try {
+    const style = safeGetStyle(element);
+    if (!style) return;
+
+    if (style.userSelect === 'none') {
+      style.userSelect = 'auto';
+    }
+    if ('webkitUserSelect' in style && style.webkitUserSelect === 'none') {
+      style.webkitUserSelect = 'auto';
+    }
+  } catch (_e) {}
+}
+
 // Fast O(1) pre-check to determine if an element has any scrubbable attributes, inline styles, or shadow root.
 // Skipping safeClosest for the 95%+ of DOM nodes that are already clean avoids expensive ancestor traversals.
 function hasScrubbableState(element: Element, settings: Settings): boolean {
-  try {
-    if (
-      settings.restoreRightClick &&
-      safeHasAttribute(element, 'oncontextmenu')
-    ) {
+  if (
+    settings.restoreRightClick &&
+    safeHasAttribute(element, 'oncontextmenu')
+  ) {
+    return true;
+  }
+
+  if (settings.restoreSelection) {
+    const hasSelectionAttr = SCRUB_ATTRS.some(
+      (attr) => attr !== 'oncontextmenu' && safeHasAttribute(element, attr),
+    );
+    if (hasSelectionAttr || hasScrubbableStyle(element)) {
       return true;
     }
-    if (settings.restoreSelection) {
-      for (let i = 0; i < SCRUB_ATTRS.length; i++) {
-        const attr = SCRUB_ATTRS[i];
-        if (attr !== 'oncontextmenu' && safeHasAttribute(element, attr)) {
-          return true;
-        }
-      }
-      if (
-        typeof HTMLElement !== 'undefined' &&
-        element instanceof HTMLElement
-      ) {
-        const style = safeGetStyle(element);
-        if (style) {
-          if (style.userSelect === 'none') return true;
-          if (
-            'webkitUserSelect' in style &&
-            style.webkitUserSelect === 'none'
-          ) {
-            return true;
-          }
-        }
-      }
-    }
-    if (safeGetShadowRoot(element)) {
-      return true;
-    }
-  } catch (_e) {}
-  return false;
+  }
+
+  return Boolean(safeGetShadowRoot(element));
 }
 
 export function cleanNode(
@@ -106,25 +115,13 @@ export function cleanNode(
   }
 
   if (settings.restoreSelection) {
-    for (let i = 0; i < SCRUB_ATTRS.length; i++) {
-      const attr = SCRUB_ATTRS[i];
+    for (const attr of SCRUB_ATTRS) {
       if (attr !== 'oncontextmenu') {
         safeRemoveAttribute(node, attr);
       }
     }
     if (typeof HTMLElement !== 'undefined' && node instanceof HTMLElement) {
-      try {
-        const style = safeGetStyle(node);
-        if (style) {
-          if (style.userSelect === 'none') style.userSelect = 'auto';
-          if (
-            'webkitUserSelect' in style &&
-            style.webkitUserSelect === 'none'
-          ) {
-            style.webkitUserSelect = 'auto';
-          }
-        }
-      } catch (_e) {}
+      cleanSelectionStyle(node);
     }
   }
 

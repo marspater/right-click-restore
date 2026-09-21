@@ -3,6 +3,7 @@ import {
   safeClosest,
   safeGetShadowRoot,
   safeGetStyle,
+  safeHasAttribute,
   safeQuerySelectorAll,
   safeRemoveAttribute,
 } from '../shared/dom';
@@ -36,6 +37,45 @@ export const SCRUB_SELECTOR = [
   '[style*="UserSelect"]',
 ].join(',');
 
+function hasScrubbableStyle(element: Element): boolean {
+  if (typeof HTMLElement === 'undefined' || !(element instanceof HTMLElement)) {
+    return false;
+  }
+  const style = safeGetStyle(element);
+  if (!style) return false;
+
+  return (
+    style.userSelect === 'none' ||
+    ('webkitUserSelect' in style && style.webkitUserSelect === 'none')
+  );
+}
+
+function cleanSelectionStyle(element: HTMLElement): void {
+  try {
+    const style = safeGetStyle(element);
+    if (!style) return;
+
+    if (style.userSelect === 'none') {
+      style.userSelect = 'auto';
+    }
+    if ('webkitUserSelect' in style && style.webkitUserSelect === 'none') {
+      style.webkitUserSelect = 'auto';
+    }
+  } catch (_e) {}
+}
+
+// Fast O(1) pre-check to determine if an element has any scrubbable attributes, inline styles, or shadow root.
+// Skipping safeClosest for the 95%+ of DOM nodes that are already clean avoids expensive ancestor traversals.
+function hasScrubbableState(element: Element): boolean {
+  if (SCRUB_ATTRS.some((attr) => safeHasAttribute(element, attr))) {
+    return true;
+  }
+  if (hasScrubbableStyle(element)) {
+    return true;
+  }
+  return Boolean(safeGetShadowRoot(element));
+}
+
 export function cleanNode(
   node: unknown,
   settings: Settings = DEFAULT_SETTINGS,
@@ -44,6 +84,11 @@ export function cleanNode(
 
   // Early return if both restoration settings are disabled to avoid unnecessary DOM traversals & selector checks
   if (!settings.restoreRightClick && !settings.restoreSelection) {
+    return;
+  }
+
+  // Fast-path: skip expensive safeClosest ancestor matching if element has no scrubbable state or shadow root
+  if (!hasScrubbableState(node)) {
     return;
   }
 
@@ -60,25 +105,13 @@ export function cleanNode(
   }
 
   if (settings.restoreSelection) {
-    for (let i = 0; i < SCRUB_ATTRS.length; i++) {
-      const attr = SCRUB_ATTRS[i];
+    for (const attr of SCRUB_ATTRS) {
       if (attr !== 'oncontextmenu') {
         safeRemoveAttribute(node, attr);
       }
     }
     if (typeof HTMLElement !== 'undefined' && node instanceof HTMLElement) {
-      try {
-        const style = safeGetStyle(node);
-        if (style) {
-          if (style.userSelect === 'none') style.userSelect = 'auto';
-          if (
-            'webkitUserSelect' in style &&
-            style.webkitUserSelect === 'none'
-          ) {
-            style.webkitUserSelect = 'auto';
-          }
-        }
-      } catch (_e) {}
+      cleanSelectionStyle(node);
     }
   }
 

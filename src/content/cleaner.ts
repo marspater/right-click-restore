@@ -66,23 +66,13 @@ function cleanSelectionStyle(element: HTMLElement): void {
 
 // Fast O(1) pre-check to determine if an element has any scrubbable attributes, inline styles, or shadow root.
 // Skipping safeClosest for the 95%+ of DOM nodes that are already clean avoids expensive ancestor traversals.
-function hasScrubbableState(element: Element, settings: Settings): boolean {
-  if (
-    settings.restoreRightClick &&
-    safeHasAttribute(element, 'oncontextmenu')
-  ) {
+function hasScrubbableState(element: Element): boolean {
+  if (SCRUB_ATTRS.some((attr) => safeHasAttribute(element, attr))) {
     return true;
   }
-
-  if (settings.restoreSelection) {
-    const hasSelectionAttr = SCRUB_ATTRS.some(
-      (attr) => attr !== 'oncontextmenu' && safeHasAttribute(element, attr),
-    );
-    if (hasSelectionAttr || hasScrubbableStyle(element)) {
-      return true;
-    }
+  if (hasScrubbableStyle(element)) {
+    return true;
   }
-
   return Boolean(safeGetShadowRoot(element));
 }
 
@@ -98,7 +88,7 @@ export function cleanNode(
   }
 
   // Fast-path: skip expensive safeClosest ancestor matching if element has no scrubbable state or shadow root
-  if (!hasScrubbableState(node, settings)) {
+  if (!hasScrubbableState(node)) {
     return;
   }
 

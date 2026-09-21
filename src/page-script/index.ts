@@ -27,7 +27,9 @@ export function isInteractiveNode(node: Node | null): boolean {
     if (curr instanceof Element) {
       if (safeClosest(curr, ALL_INTERACTIVE_SELECTORS)) return true;
     }
-  } catch (_e) {}
+  } catch (_e) {
+    // Return false if element lookup or closest check fails
+  }
   return false;
 }
 
@@ -46,7 +48,9 @@ export function isInteractiveEvent(event: Event): boolean {
         );
       }
     }
-  } catch (_e) {}
+  } catch (_e) {
+    // Fall back to target element check if composedPath fails
+  }
   return isInteractiveNode(event?.target as Node | null);
 }
 
@@ -56,6 +60,7 @@ export function isModifierPressed(event: Event): boolean {
     const e = event as KeyboardEvent | MouseEvent;
     return Boolean(e.shiftKey || e.altKey);
   } catch (_e) {
+    // Return false if event property access throws
     return false;
   }
 }
@@ -92,7 +97,9 @@ export function notifyContentScript(type: string, config: Settings): void {
         },
       }),
     );
-  } catch (_e) {}
+  } catch (_e) {
+    // Ignore custom event dispatch errors on restricted window objects
+  }
 }
 
 export function handlePageScriptMessage(
@@ -122,6 +129,7 @@ export function handlePageScriptMessage(
       onUnlock?.();
       return true;
     } catch (_e) {
+      // Return false if unlock callback throws
       return false;
     }
   }
@@ -135,6 +143,7 @@ export function handlePageScriptMessage(
     onUpdate?.(validated);
     return true;
   } catch (_e) {
+    // Return false if settings parsing or validation fails
     return false;
   }
 }
@@ -150,7 +159,9 @@ function initBridge(): void {
       handlePageScriptMessage(detail, bridgeNonce as string, (newSettings) => {
         activeConfig = newSettings;
       });
-    } catch (_e) {}
+    } catch (_e) {
+      // Ignore errors when handling bridge messages in web page context
+    }
   };
 
   try {
@@ -163,7 +174,9 @@ function initBridge(): void {
         },
       }),
     );
-  } catch (_e) {}
+  } catch (_e) {
+    // Ignore custom event dispatch errors on restricted window objects
+  }
 }
 
 if (typeof window !== 'undefined') {
@@ -203,7 +216,9 @@ if (typeof window !== 'undefined') {
     if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
     try {
       originalPreventDefault.apply(this);
-    } catch (_e) {}
+    } catch (_e) {
+      // Fallback if calling original method throws
+    }
   };
 
   Event.prototype.stopPropagation = function (this: Event): void {
@@ -217,7 +232,9 @@ if (typeof window !== 'undefined') {
     }
     try {
       originalStopPropagation.apply(this);
-    } catch (_e) {}
+    } catch (_e) {
+      // Fallback if calling original method throws
+    }
   };
 
   Event.prototype.stopImmediatePropagation = function (this: Event): void {
@@ -231,7 +248,9 @@ if (typeof window !== 'undefined') {
     }
     try {
       originalStopImmediatePropagation.apply(this);
-    } catch (_e) {}
+    } catch (_e) {
+      // Fallback if calling original method throws
+    }
   };
 
   initBridge();

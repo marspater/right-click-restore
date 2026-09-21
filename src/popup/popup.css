@@ -107,6 +107,24 @@ body {
     cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
 }
 
+.domain-card:hover:not(.dimmed) {
+  background-color: var(--bg-card-hover);
+}
+
+.domain-card:focus-within:not(.dimmed),
+.domain-card:has(input:focus-visible):not(.dimmed) {
+  background-color: var(--bg-card-hover);
+  outline: 2px solid var(--accent-blue);
+  outline-offset: -1px;
+}
+
+.domain-card:has(input:focus-visible)
+  .apple-switch
+  input:focus-visible
+  + .apple-slider {
+  outline: none;
+}
+
 /* Master Apple Toggle Switch */
 .apple-switch {
   position: relative;

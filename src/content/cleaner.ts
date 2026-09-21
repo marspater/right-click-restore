@@ -3,6 +3,7 @@ import {
   safeClosest,
   safeGetShadowRoot,
   safeGetStyle,
+  safeHasAttribute,
   safeQuerySelectorAll,
   safeRemoveAttribute,
 } from '../shared/dom';
@@ -36,6 +37,46 @@ export const SCRUB_SELECTOR = [
   '[style*="UserSelect"]',
 ].join(',');
 
+// Fast O(1) pre-check to determine if an element has any scrubbable attributes, inline styles, or shadow root.
+// Skipping safeClosest for the 95%+ of DOM nodes that are already clean avoids expensive ancestor traversals.
+function hasScrubbableState(element: Element, settings: Settings): boolean {
+  try {
+    if (
+      settings.restoreRightClick &&
+      safeHasAttribute(element, 'oncontextmenu')
+    ) {
+      return true;
+    }
+    if (settings.restoreSelection) {
+      for (let i = 0; i < SCRUB_ATTRS.length; i++) {
+        const attr = SCRUB_ATTRS[i];
+        if (attr !== 'oncontextmenu' && safeHasAttribute(element, attr)) {
+          return true;
+        }
+      }
+      if (
+        typeof HTMLElement !== 'undefined' &&
+        element instanceof HTMLElement
+      ) {
+        const style = safeGetStyle(element);
+        if (style) {
+          if (style.userSelect === 'none') return true;
+          if (
+            'webkitUserSelect' in style &&
+            style.webkitUserSelect === 'none'
+          ) {
+            return true;
+          }
+        }
+      }
+    }
+    if (safeGetShadowRoot(element)) {
+      return true;
+    }
+  } catch (_e) {}
+  return false;
+}
+
 export function cleanNode(
   node: unknown,
   settings: Settings = DEFAULT_SETTINGS,
@@ -44,6 +85,11 @@ export function cleanNode(
 
   // Early return if both restoration settings are disabled to avoid unnecessary DOM traversals & selector checks
   if (!settings.restoreRightClick && !settings.restoreSelection) {
+    return;
+  }
+
+  // Fast-path: skip expensive safeClosest ancestor matching if element has no scrubbable state or shadow root
+  if (!hasScrubbableState(node, settings)) {
     return;
   }
 

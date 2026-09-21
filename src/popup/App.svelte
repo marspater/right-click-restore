@@ -224,8 +224,12 @@ async function forceUnlockPage() {
   <!-- Apple-Style Header -->
   <header class="flex items-center justify-between pb-3 select-none">
     <div class="flex items-center gap-2.5">
-      <div class="w-7 h-7 rounded-[8px] bg-gradient-to-b from-[#007AFF] to-[#0062CC] flex items-center justify-center shadow-sm">
-        <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <div class={`w-7 h-7 rounded-[8px] flex items-center justify-center shadow-sm transition-all duration-200 ${
+        settings.enabled
+          ? 'bg-gradient-to-b from-[#007AFF] to-[#0062CC] text-white'
+          : 'bg-[var(--bg-badge)] text-[var(--text-tertiary)] border border-[var(--border-subtle)]'
+      }`}>
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           <polyline points="9 12 11 14 15 10" />
         </svg>
@@ -248,7 +252,13 @@ async function forceUnlockPage() {
   </header>
 
   <!-- Active Domain Inset Card -->
-  <section class={`glass-card px-3 py-2.5 mb-2 flex items-center justify-between transition-all ${settings.enabled ? '' : 'dimmed'}`}>
+  <svelte:element
+    this={isToggleableDomain ? 'label' : 'section'}
+    class={`glass-card domain-card px-3 py-2.5 mb-2 flex items-center justify-between transition-all select-none ${
+      isToggleableDomain && settings.enabled ? 'cursor-pointer' : ''
+    } ${settings.enabled ? '' : 'dimmed'}`}
+    aria-disabled={!settings.enabled}
+  >
     <div class="flex items-center gap-2.5 min-w-0 pr-2">
       <!-- Status Beacon -->
       <div class="flex items-center justify-center flex-shrink-0" aria-hidden="true">
@@ -278,12 +288,12 @@ async function forceUnlockPage() {
     </div>
 
     {#if isToggleableDomain}
-      <label class="apple-switch apple-switch-sm" title={`Toggle protection on ${currentHostname}`}>
+      <span class="apple-switch apple-switch-sm" title={`Toggle protection on ${currentHostname}`}>
         <input type="checkbox" role="switch" checked={!isSiteDisabled} aria-checked={!isSiteDisabled} disabled={!settings.enabled} onchange={toggleCurrentSite} aria-label={`Toggle protection on ${currentHostname}`} />
         <span class="apple-slider"></span>
-      </label>
+      </span>
     {/if}
-  </section>
+  </svelte:element>
 
   <!-- Settings List Group -->
   <section class={`glass-card p-1 mb-2 flex flex-col ${isSiteActive ? '' : 'dimmed'}`}>
@@ -469,7 +479,7 @@ async function forceUnlockPage() {
   <!-- Footnote Tip with High-Contrast Keycap -->
   <footer class="pt-0.5 text-center select-none">
     <p class="text-[10px] text-[var(--text-tertiary)] leading-tight m-0 inline">
-      Tip: Hold <kbd>⇧ Shift</kbd> to summon native menu anywhere
+      Tip: Hold <kbd>⇧ Shift</kbd> or <kbd>⌥ Option</kbd> to summon native menu anywhere
     </p>
   </footer>
 </main>

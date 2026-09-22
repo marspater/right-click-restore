@@ -10,3 +10,7 @@
 
 3. **Visual Polish for Keycap Badges (`src/popup/popup.css`)**:
    - Enhanced `<kbd>` keycap styling with `font-weight: 600`, elevated contrast using `var(--text-primary)`, and subtle drop-shadow `0 1px 1.5px rgba(0, 0, 0, 0.08)` to present keycaps clearly across both light and dark themes.
+
+4. **Dynamic ARIA Feedback & Footer Keycap Affordances (`src/popup/App.svelte`)**:
+   - Added dynamic `aria-label` and `aria-busy` attributes to the "Force Unlock Page" action button reflecting real-time state (`unlocking`, `success`, `error`, `idle`) for screen reader clarity.
+   - Updated footer shortcut footnote tip to present both `<kbd>⇧ Shift</kbd>` and `<kbd>⌥ Option</kbd>` keycaps, aligning with feature 5 modifier key bypass behavior.

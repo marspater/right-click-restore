@@ -425,8 +425,19 @@ async function forceUnlockPage() {
       type="button"
       onclick={forceUnlockPage}
       disabled={unlockStatus !== 'idle' || !isSiteActive}
+      aria-busy={unlockStatus === 'unlocking'}
       title={isSiteActive ? 'Force unlock context menu and selection on active page' : 'Protection is inactive on this page'}
-      aria-label="Force unlock context menu and selection on active page"
+      aria-label={
+        unlockStatus === 'unlocking'
+          ? 'Unlocking current page…'
+          : unlockStatus === 'success'
+            ? 'Page unlocked successfully'
+            : unlockStatus === 'error'
+              ? 'Unable to unlock current page'
+              : isSiteActive
+                ? 'Force unlock context menu and selection on active page'
+                : 'Protection is inactive on this page'
+      }
       class={`w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none disabled:cursor-not-allowed ${
         isSiteActive && unlockStatus === 'idle' ? 'active:scale-[0.985]' : ''
       } ${
@@ -469,7 +480,7 @@ async function forceUnlockPage() {
   <!-- Footnote Tip with High-Contrast Keycap -->
   <footer class="pt-0.5 text-center select-none">
     <p class="text-[10px] text-[var(--text-tertiary)] leading-tight m-0 inline">
-      Tip: Hold <kbd>⇧ Shift</kbd> to summon native menu anywhere
+      Tip: Hold <kbd>⇧ Shift</kbd> or <kbd>⌥ Option</kbd> for native menu
     </p>
   </footer>
 </main>

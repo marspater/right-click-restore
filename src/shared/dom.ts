@@ -1,6 +1,25 @@
+import { ALL_INTERACTIVE_SELECTORS } from './constants';
+
 const OBJECT_PROTO_METHODS = new Set(
   Object.getOwnPropertyNames(Object.prototype),
 );
+
+const INTERACTIVE_TAG_NAMES = new Set([
+  'INPUT',
+  'TEXTAREA',
+  'SELECT',
+  'BUTTON',
+  'CANVAS',
+  'YTD-APP',
+]);
+
+const INTERACTIVE_CLASS_SUBSTRINGS = [
+  'ProseMirror',
+  'monaco-editor',
+  'html5-video-player',
+  'ytp-',
+  'player-',
+];
 
 export function getUnshadowedMethod(
   obj: object,
@@ -73,6 +92,66 @@ export function safeMatches(element: Element, selector: string): boolean {
   }
 }
 
+export function safeHasAttribute(element: Element, attr: string): boolean {
+  try {
+    const fn = getUnshadowedMethod(element, 'hasAttribute');
+    if (fn) {
+      return Boolean(fn.call(element, attr));
+    }
+    return element.hasAttribute(attr);
+  } catch (_e) {
+    return false;
+  }
+}
+
+/**
+ * Fast-path pre-filtering for interactive DOM elements.
+ * Bypasses expensive browser CSS selector matching on standard non-interactive
+ * DOM elements (div, span, p, section, li, etc.) during high-frequency event handling
+ * and DOM cleaning traversals.
+ */
+export function isInteractiveElement(element: Element): boolean {
+  try {
+    const tagName = element.tagName;
+    if (tagName && INTERACTIVE_TAG_NAMES.has(tagName)) {
+      return true;
+    }
+
+    // Fast structural check: if the element has no interactive attributes (role, contenteditable)
+    // or class indicators, it cannot match ALL_INTERACTIVE_SELECTORS.
+    const hasRole = safeHasAttribute(element, 'role');
+    const hasContentEditable =
+      safeHasAttribute(element, 'contenteditable') ||
+      Boolean((element as HTMLElement).isContentEditable);
+
+    let hasInteractiveClass = false;
+    let classNameStr = '';
+    const className = element.className;
+    if (typeof className === 'string') {
+      classNameStr = className;
+    } else if (
+      className &&
+      typeof (className as { baseVal?: unknown }).baseVal === 'string'
+    ) {
+      classNameStr = (className as { baseVal: string }).baseVal;
+    }
+
+    if (classNameStr.length > 0) {
+      hasInteractiveClass = INTERACTIVE_CLASS_SUBSTRINGS.some((sub) =>
+        classNameStr.includes(sub),
+      );
+    }
+
+    if (!hasRole && !hasContentEditable && !hasInteractiveClass) {
+      return false;
+    }
+  } catch (_e) {
+    // Fall back to full selector check on unexpected property access error
+  }
+
+  return safeMatches(element, ALL_INTERACTIVE_SELECTORS);
+}
+
 export function safeClosest(
   element: Element,
   selector: string,
@@ -115,18 +194,6 @@ export function safeQuerySelectorAll(
     return Array.from(root.querySelectorAll(selector));
   } catch (_e) {
     return [];
-  }
-}
-
-export function safeHasAttribute(element: Element, attr: string): boolean {
-  try {
-    const fn = getUnshadowedMethod(element, 'hasAttribute');
-    if (fn) {
-      return Boolean(fn.call(element, attr));
-    }
-    return element.hasAttribute(attr);
-  } catch (_e) {
-    return false;
   }
 }
 

@@ -3,6 +3,7 @@ import { Window } from 'happy-dom';
 import {
   getUnshadowedGetter,
   getUnshadowedMethod,
+  isInteractiveElement,
   safeClosest,
   safeGetElementById,
   safeGetShadowRoot,
@@ -26,6 +27,62 @@ describe('shared DOM utilities', () => {
       Node: window.Node,
       Element: window.Element,
       HTMLElement: window.HTMLElement,
+    });
+  });
+
+  describe('isInteractiveElement', () => {
+    test('returns false for standard non-interactive elements without attributes or special classes', () => {
+      const div = document.createElement('div');
+      const span = document.createElement('span');
+      span.className = 'container card-body';
+      const p = document.createElement('p');
+
+      expect(isInteractiveElement(div)).toBe(false);
+      expect(isInteractiveElement(span)).toBe(false);
+      expect(isInteractiveElement(p)).toBe(false);
+    });
+
+    test('returns true for interactive HTML tags directly', () => {
+      const input = document.createElement('input');
+      const button = document.createElement('button');
+      const select = document.createElement('select');
+      const canvas = document.createElement('canvas');
+      const ytdApp = document.createElement('ytd-app');
+
+      expect(isInteractiveElement(input)).toBe(true);
+      expect(isInteractiveElement(button)).toBe(true);
+      expect(isInteractiveElement(select)).toBe(true);
+      expect(isInteractiveElement(canvas)).toBe(true);
+      expect(isInteractiveElement(ytdApp)).toBe(true);
+    });
+
+    test('returns true for elements with interactive roles', () => {
+      const divBtn = document.createElement('div');
+      divBtn.setAttribute('role', 'button');
+
+      const divBox = document.createElement('div');
+      divBox.setAttribute('role', 'textbox');
+
+      expect(isInteractiveElement(divBtn)).toBe(true);
+      expect(isInteractiveElement(divBox)).toBe(true);
+    });
+
+    test('returns true for elements with contenteditable', () => {
+      const div = document.createElement('div');
+      div.setAttribute('contenteditable', 'true');
+
+      expect(isInteractiveElement(div)).toBe(true);
+    });
+
+    test('returns true for elements with interactive class names', () => {
+      const monaco = document.createElement('div');
+      monaco.className = 'monaco-editor my-custom-class';
+
+      const ytPlayer = document.createElement('div');
+      ytPlayer.className = 'ytp-chrome-bottom';
+
+      expect(isInteractiveElement(monaco)).toBe(true);
+      expect(isInteractiveElement(ytPlayer)).toBe(true);
     });
   });
 

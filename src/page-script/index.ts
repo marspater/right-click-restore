@@ -21,7 +21,9 @@ export function isInteractiveNode(node: Node | null): boolean {
     if (curr instanceof Element) {
       if (safeClosest(curr, ALL_INTERACTIVE_SELECTORS)) return true;
     }
-  } catch (_e) {}
+  } catch (_e) {
+    // Ignore DOM inspection errors
+  }
   return false;
 }
 
@@ -40,11 +42,13 @@ export function isInteractiveEvent(event: Event): boolean {
         );
       }
     }
-  } catch (_e) {}
+  } catch (_e) {
+    // Ignore path inspection errors
+  }
   return isInteractiveNode(event?.target as Node | null);
 }
 
-export function isModifierPressed(event: Event): boolean {
+function isModifierPressed(event: Event): boolean {
   const e = event as KeyboardEvent | MouseEvent;
   return Boolean(e.shiftKey || e.altKey);
 }
@@ -75,22 +79,19 @@ export function handlePageScriptMessage(
   onUpdate?: (config: Settings) => void,
   onUnlock?: () => void,
 ): boolean {
-  if (
-    !payload ||
-    typeof payload !== 'object' ||
-    typeof expectedNonce !== 'string' ||
-    !expectedNonce
-  ) {
-    return false;
-  }
-
+  if (!payload || typeof payload !== 'object') return false;
   const data = payload as {
     nonce?: unknown;
     type?: unknown;
     config?: unknown;
   };
 
-  if (data.nonce !== expectedNonce) {
+  if (
+    typeof expectedNonce !== 'string' ||
+    expectedNonce.length === 0 ||
+    typeof data.nonce !== 'string' ||
+    data.nonce !== expectedNonce
+  ) {
     return false;
   }
 
@@ -99,53 +100,23 @@ export function handlePageScriptMessage(
       onUnlock?.();
       return true;
     } catch (_e) {
+      // Ignore unlock callback error
       return false;
     }
   }
 
-  if (
-    data.type === 'UPDATE' &&
-    data.config &&
-    typeof data.config === 'object'
-  ) {
-    try {
-      const validated = validateSettings(data.config as Partial<Settings>);
-      activeConfig = validated;
-      onUpdate?.(validated);
-      return true;
-    } catch (_e) {
-      return false;
-    }
-  }
+  if (data.type !== 'UPDATE') return false;
+  if (!data.config || typeof data.config !== 'object') return false;
 
-  return false;
-}
-
-function shouldBlockEvent(event: Event): boolean {
-  if (!event || !isShieldActive()) {
+  try {
+    const validated = validateSettings(data.config as Partial<Settings>);
+    activeConfig = validated;
+    onUpdate?.(validated);
+    return true;
+  } catch (_e) {
+    // Ignore settings update error
     return false;
   }
-
-  const isContextMenu = event.type === 'contextmenu';
-  const isSelection = SELECTION_EVENTS.has(event.type);
-  if (!isContextMenu && !isSelection) {
-    return false;
-  }
-
-  const isRightClick = isContextMenu && isRightClickActive();
-  const isSelect = isSelection && isSelectionActive();
-  if (!isRightClick && !isSelect) {
-    return false;
-  }
-
-  if (isInteractiveEvent(event)) {
-    return false;
-  }
-
-  if (isModifierBypassActive() && isModifierPressed(event)) {
-    return false;
-  }
-  return true;
 }
 
 if (typeof window !== 'undefined') {
@@ -154,25 +125,58 @@ if (typeof window !== 'undefined') {
   const originalStopImmediatePropagation =
     Event.prototype.stopImmediatePropagation;
 
+  function shouldBlockEvent(event: Event): boolean {
+    if (!event || !isShieldActive()) {
+      return false;
+    }
+
+    const isContextMenu = event.type === 'contextmenu';
+    const isSelection = SELECTION_EVENTS.has(event.type);
+    if (!isContextMenu && !isSelection) {
+      return false;
+    }
+
+    const isRightClick = isContextMenu && isRightClickActive();
+    const isSelect = isSelection && isSelectionActive();
+    if (!isRightClick && !isSelect) {
+      return false;
+    }
+
+    if (isInteractiveEvent(event)) {
+      return false;
+    }
+
+    if (isModifierBypassActive() && isModifierPressed(event)) {
+      return false;
+    }
+    return true;
+  }
+
   Event.prototype.preventDefault = function (this: Event): void {
     if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
     try {
       originalPreventDefault.apply(this);
-    } catch (_e) {}
+    } catch (_e) {
+      // Ignore preventDefault apply error
+    }
   };
 
   Event.prototype.stopPropagation = function (this: Event): void {
     if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
     try {
       originalStopPropagation.apply(this);
-    } catch (_e) {}
+    } catch (_e) {
+      // Ignore stopPropagation apply error
+    }
   };
 
   Event.prototype.stopImmediatePropagation = function (this: Event): void {
     if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
     try {
       originalStopImmediatePropagation.apply(this);
-    } catch (_e) {}
+    } catch (_e) {
+      // Ignore stopImmediatePropagation apply error
+    }
   };
 
   bridgeChannel = `__rcr_bridge_${getSecureRandomString()}`;
@@ -186,7 +190,9 @@ if (typeof window !== 'undefined') {
           detail: { channel: bridgeChannel, nonce: bridgeNonce },
         }),
       );
-    } catch (_e) {}
+    } catch (_e) {
+      // Ignore handshake error
+    }
   };
 
   window.addEventListener(bridgeChannel, (e: Event) => {
@@ -195,7 +201,9 @@ if (typeof window !== 'undefined') {
       if (bridgeNonce) {
         handlePageScriptMessage(detail, bridgeNonce);
       }
-    } catch (_e) {}
+    } catch (_e) {
+      // Ignore bridge message handling error
+    }
   });
 
   window.addEventListener('__rcr_handshake_req__', sendHandshake);

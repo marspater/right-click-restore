@@ -75,19 +75,22 @@ export function handlePageScriptMessage(
   onUpdate?: (config: Settings) => void,
   onUnlock?: () => void,
 ): boolean {
-  if (!payload || typeof payload !== 'object') return false;
+  if (
+    !payload ||
+    typeof payload !== 'object' ||
+    typeof expectedNonce !== 'string' ||
+    !expectedNonce
+  ) {
+    return false;
+  }
+
   const data = payload as {
     nonce?: unknown;
     type?: unknown;
     config?: unknown;
   };
 
-  if (
-    typeof expectedNonce !== 'string' ||
-    expectedNonce.length === 0 ||
-    typeof data.nonce !== 'string' ||
-    data.nonce !== expectedNonce
-  ) {
+  if (data.nonce !== expectedNonce) {
     return false;
   }
 
@@ -100,17 +103,22 @@ export function handlePageScriptMessage(
     }
   }
 
-  if (data.type !== 'UPDATE') return false;
-  if (!data.config || typeof data.config !== 'object') return false;
-
-  try {
-    const validated = validateSettings(data.config as Partial<Settings>);
-    activeConfig = validated;
-    onUpdate?.(validated);
-    return true;
-  } catch (_e) {
-    return false;
+  if (
+    data.type === 'UPDATE' &&
+    data.config &&
+    typeof data.config === 'object'
+  ) {
+    try {
+      const validated = validateSettings(data.config as Partial<Settings>);
+      activeConfig = validated;
+      onUpdate?.(validated);
+      return true;
+    } catch (_e) {
+      return false;
+    }
   }
+
+  return false;
 }
 
 function shouldBlockEvent(event: Event): boolean {
@@ -189,9 +197,7 @@ if (typeof window !== 'undefined') {
     } catch (_e) {}
   });
 
-  window.addEventListener('__rcr_handshake_req__', () => {
-    sendHandshake();
-  });
+  window.addEventListener('__rcr_handshake_req__', sendHandshake);
 
   sendHandshake();
 }

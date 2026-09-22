@@ -179,22 +179,18 @@ if (typeof window !== 'undefined') {
   bridgeNonce = getSecureRandomString();
 
   const sendHandshake = () => {
-    try {
-      window.dispatchEvent(
-        new CustomEvent('__rcr_handshake__', {
-          detail: { channel: bridgeChannel, nonce: bridgeNonce },
-        }),
-      );
-    } catch (_e) {}
+    window.dispatchEvent(
+      new CustomEvent('__rcr_handshake__', {
+        detail: { channel: bridgeChannel, nonce: bridgeNonce },
+      }),
+    );
   };
 
   window.addEventListener(bridgeChannel, (e: Event) => {
-    try {
-      const detail = (e as CustomEvent)?.detail;
-      if (bridgeNonce) {
-        handlePageScriptMessage(detail, bridgeNonce);
-      }
-    } catch (_e) {}
+    const detail = (e as CustomEvent)?.detail;
+    if (bridgeNonce) {
+      handlePageScriptMessage(detail, bridgeNonce);
+    }
   });
 
   window.addEventListener('__rcr_handshake_req__', sendHandshake);

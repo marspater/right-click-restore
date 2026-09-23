@@ -47,6 +47,18 @@ export function cleanNode(
     return;
   }
 
+  // O(1) Fast-path: Standard form and canvas interactive elements should never be scrubbed
+  const tag = node.tagName ? node.tagName.toUpperCase() : '';
+  if (
+    tag === 'INPUT' ||
+    tag === 'TEXTAREA' ||
+    tag === 'SELECT' ||
+    tag === 'BUTTON' ||
+    tag === 'CANVAS'
+  ) {
+    return;
+  }
+
   try {
     if (safeClosest(node, ALL_INTERACTIVE_SELECTORS)) {
       return;

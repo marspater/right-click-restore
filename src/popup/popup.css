@@ -93,6 +93,7 @@ body {
   backdrop-filter: blur(32px) saturate(190%);
   -webkit-backdrop-filter: blur(32px) saturate(190%);
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 /* Apple Inset Grouped Glass Cards */

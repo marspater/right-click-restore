@@ -11,6 +11,7 @@ let settings = $state<Settings>({ ...DEFAULT_SETTINGS });
 let currentHostname = $state<string>('');
 let activeTabId = $state<number | null>(null);
 let unlockStatus = $state<'idle' | 'unlocking' | 'success' | 'error'>('idle');
+let announceMessage = $state<string>('');
 
 const isToggleableDomain = $derived(
   Boolean(currentHostname && normalizeHostname(currentHostname)),
@@ -120,7 +121,11 @@ async function saveSettings(newSettings: Settings) {
 }
 
 function toggleGlobal() {
-  saveSettings({ ...settings, enabled: !settings.enabled });
+  const next = !settings.enabled;
+  announceMessage = next
+    ? 'Protection enabled globally'
+    : 'Protection paused globally';
+  saveSettings({ ...settings, enabled: next });
 }
 
 function toggleCurrentSite() {
@@ -138,30 +143,43 @@ function toggleCurrentSite() {
       const norm = normalizeHostname(d);
       return norm !== host && !host.endsWith(`.${norm}`);
     });
+    announceMessage = `Protection enabled on ${currentHostname}`;
   } else {
     if (!list.some((d) => normalizeHostname(d) === host)) {
       list.push(host);
     }
+    announceMessage = `Protection disabled on ${currentHostname}`;
   }
   saveSettings({ ...settings, disabledDomains: list });
 }
 
 function toggleFeature(key: keyof Settings) {
   if (typeof settings[key] === 'boolean') {
-    saveSettings({ ...settings, [key]: !settings[key] });
+    const next = !settings[key];
+    const featureLabels: Record<string, string> = {
+      restoreRightClick: 'Restore Right Click',
+      restoreSelection: 'Allow Selection & Copy',
+      antiShield: 'Anti-Shield Overlay',
+      absoluteForce: 'Absolute Force Mode',
+      bypassModifierKey: 'Modifier Key Bypass',
+    };
+    const label = featureLabels[key] || String(key);
+    announceMessage = `${label} ${next ? 'enabled' : 'disabled'}`;
+    saveSettings({ ...settings, [key]: next });
   }
 }
 
 let unlockTimeout: ReturnType<typeof setTimeout> | null = null;
 
 const statusAnnouncement = $derived(
-  unlockStatus === 'unlocking'
-    ? 'Unlocking current page…'
-    : unlockStatus === 'success'
-      ? 'Page unlocked successfully'
-      : unlockStatus === 'error'
-        ? 'Unable to unlock current page'
-        : '',
+  announceMessage ||
+    (unlockStatus === 'unlocking'
+      ? 'Unlocking current page…'
+      : unlockStatus === 'success'
+        ? 'Page unlocked successfully'
+        : unlockStatus === 'error'
+          ? 'Unable to unlock current page'
+          : ''),
 );
 
 $effect(() => {
@@ -176,6 +194,8 @@ $effect(() => {
 async function forceUnlockPage() {
   if (!activeTabId || unlockStatus === 'unlocking') return;
   unlockStatus = 'unlocking';
+  announceMessage = '';
+
   if (unlockTimeout) {
     clearTimeout(unlockTimeout);
     unlockTimeout = null;
@@ -399,7 +419,7 @@ async function forceUnlockPage() {
         }`} aria-hidden="true">
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="2" y="4" width="20" height="16" rx="2" />
-            <path d="M6 8h.001M10 8h.001M14 8h.001M18 8h.001M8 12h.001M12 12h.001M16 12h.001M7 16h10" />
+            <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10" />
           </svg>
         </div>
         <div class="min-w-0">
@@ -466,11 +486,20 @@ async function forceUnlockPage() {
     </button>
   </div>
 
-  <!-- Footnote Tip with High-Contrast Keycap -->
+  <!-- Contextual Footnote Tip with High-Contrast Keycap Badges -->
   <footer class="pt-0.5 text-center select-none">
-    <p class="text-[10px] text-[var(--text-tertiary)] leading-tight m-0 inline">
-      Tip: Hold <kbd>⇧ Shift</kbd> to summon native menu anywhere
-    </p>
+    {#if !isSiteActive}
+      <p class="text-[10px] text-[var(--text-tertiary)] leading-tight m-0 inline-flex items-center justify-center gap-1 opacity-80">
+        <span>Protection is inactive on this page</span>
+      </p>
+    {:else if !settings.bypassModifierKey}
+      <p class="text-[10px] text-[var(--text-secondary)] leading-tight m-0 inline-flex items-center justify-center gap-1 transition-opacity">
+        <span>Tip: Enable <kbd>Modifier Key Bypass</kbd> for shortcuts</span>
+      </p>
+    {:else}
+      <p class="text-[10px] text-[var(--text-tertiary)] leading-tight m-0 inline-flex items-center justify-center gap-1 transition-opacity">
+        <span>Tip: Hold <kbd>⇧ Shift</kbd> or <kbd>⌥ Option</kbd> to summon native menu</span>
+      </p>
+    {/if}
   </footer>
 </main>
-

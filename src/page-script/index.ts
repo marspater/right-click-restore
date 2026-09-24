@@ -158,15 +158,22 @@ function shouldBlockEvent(event: Event): boolean {
   return true;
 }
 
-function wrapEventMethod(
-  originalMethod: (this: Event) => void,
-): (this: Event) => void {
-  return function (this: Event): void {
-    if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
-    try {
-      originalMethod.apply(this);
-    } catch (_e) {}
-  };
+function patchEventMethod(
+  methodName: 'preventDefault' | 'stopPropagation' | 'stopImmediatePropagation',
+): void {
+  if (typeof Event === 'undefined' || !Event.prototype) return;
+  const original = Event.prototype[methodName];
+  if (typeof original === 'function') {
+    Event.prototype[methodName] = function (
+      this: Event,
+      ...args: unknown[]
+    ): void {
+      if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
+      try {
+        original.apply(this, args);
+      } catch (_e) {}
+    };
+  }
 }
 
 if (typeof window !== 'undefined') {
@@ -213,14 +220,7 @@ if (typeof window !== 'undefined') {
     }
   } catch (_e) {}
 
-  const originalPreventDefault = Event.prototype.preventDefault;
-  const originalStopPropagation = Event.prototype.stopPropagation;
-  const originalStopImmediatePropagation =
-    Event.prototype.stopImmediatePropagation;
-
-  Event.prototype.preventDefault = wrapEventMethod(originalPreventDefault);
-  Event.prototype.stopPropagation = wrapEventMethod(originalStopPropagation);
-  Event.prototype.stopImmediatePropagation = wrapEventMethod(
-    originalStopImmediatePropagation,
-  );
+  patchEventMethod('preventDefault');
+  patchEventMethod('stopPropagation');
+  patchEventMethod('stopImmediatePropagation');
 }

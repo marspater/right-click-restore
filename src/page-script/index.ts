@@ -1,4 +1,7 @@
-import { ALL_INTERACTIVE_SELECTORS } from '../shared/constants';
+import {
+  ALL_INTERACTIVE_SELECTORS,
+  isNativeInteractiveTag,
+} from '../shared/constants';
 import { getSecureRandomString } from '../shared/crypto';
 import { getUnshadowedMethod, safeClosest, safeMatches } from '../shared/dom';
 import {
@@ -19,14 +22,7 @@ export function isInteractiveNode(node: Node | null): boolean {
     if (curr instanceof Element) {
       // Fast-path: local tag check for native interactive form & canvas elements
       // skips expensive selector matching (ALL_INTERACTIVE_SELECTORS) and tree climbing.
-      const tag = curr.localName;
-      if (
-        tag === 'input' ||
-        tag === 'button' ||
-        tag === 'textarea' ||
-        tag === 'select' ||
-        tag === 'canvas'
-      ) {
+      if (isNativeInteractiveTag(curr.localName)) {
         return true;
       }
       if (safeClosest(curr, ALL_INTERACTIVE_SELECTORS)) return true;
@@ -46,14 +42,7 @@ export function isInteractiveEvent(event: Event): boolean {
         return path.some((item) => {
           if (!(item instanceof Element)) return false;
           // Fast-path: local tag check short-circuits safeMatches against ALL_INTERACTIVE_SELECTORS
-          const tag = item.localName;
-          if (
-            tag === 'input' ||
-            tag === 'button' ||
-            tag === 'textarea' ||
-            tag === 'select' ||
-            tag === 'canvas'
-          ) {
+          if (isNativeInteractiveTag(item.localName)) {
             return true;
           }
           return safeMatches(item, ALL_INTERACTIVE_SELECTORS);

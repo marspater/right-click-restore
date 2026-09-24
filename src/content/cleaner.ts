@@ -1,4 +1,7 @@
-import { ALL_INTERACTIVE_SELECTORS } from '../shared/constants';
+import {
+  ALL_INTERACTIVE_SELECTORS,
+  isNativeInteractiveTag,
+} from '../shared/constants';
 import {
   safeClosest,
   safeGetShadowRoot,
@@ -49,14 +52,7 @@ export function cleanNode(
 
   try {
     // Fast-path: short-circuit safeClosest and CSS selector evaluation for standard interactive form & canvas elements
-    const tag = (node as Element).localName;
-    if (
-      tag === 'input' ||
-      tag === 'button' ||
-      tag === 'textarea' ||
-      tag === 'select' ||
-      tag === 'canvas'
-    ) {
+    if (isNativeInteractiveTag((node as Element).localName)) {
       return;
     }
     if (safeClosest(node, ALL_INTERACTIVE_SELECTORS)) {

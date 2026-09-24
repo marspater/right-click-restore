@@ -5,3 +5,17 @@ export const INTERACTIVE_ELEMENTS =
   'input, textarea, select, button, [contenteditable], [contenteditable="true"], [role="textbox"], [role="combobox"], [role="button"], [role="menuitem"], [role="dialog"], canvas';
 
 export const ALL_INTERACTIVE_SELECTORS = `${INTERACTIVE_ELEMENTS}, ${INTERACTIVE_CONTAINERS}`;
+
+export const NATIVE_INTERACTIVE_TAGS = new Set([
+  'input',
+  'button',
+  'textarea',
+  'select',
+  'canvas',
+]);
+
+export function isNativeInteractiveTag(
+  tag: string | null | undefined,
+): boolean {
+  return Boolean(tag && NATIVE_INTERACTIVE_TAGS.has(tag));
+}

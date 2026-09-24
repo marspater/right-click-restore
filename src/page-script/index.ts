@@ -120,9 +120,6 @@ export function handlePageScriptMessage(
 
 if (typeof window !== 'undefined') {
   const originalPreventDefault = Event.prototype.preventDefault;
-  const originalStopPropagation = Event.prototype.stopPropagation;
-  const originalStopImmediatePropagation =
-    Event.prototype.stopImmediatePropagation;
 
   function shouldBlockEvent(event: Event): boolean {
     if (!event || !isShieldActive()) {
@@ -157,22 +154,12 @@ if (typeof window !== 'undefined') {
     return true;
   }
 
-  function wrapEventMethod(
-    originalFn: (this: Event, ...args: unknown[]) => void,
-  ) {
-    return function (this: Event, ...args: unknown[]): void {
-      if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
-      try {
-        originalFn.apply(this, args);
-      } catch (_e) {}
-    };
-  }
-
-  Event.prototype.preventDefault = wrapEventMethod(originalPreventDefault);
-  Event.prototype.stopPropagation = wrapEventMethod(originalStopPropagation);
-  Event.prototype.stopImmediatePropagation = wrapEventMethod(
-    originalStopImmediatePropagation,
-  );
+  Event.prototype.preventDefault = function (this: Event): void {
+    if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
+    try {
+      originalPreventDefault.apply(this);
+    } catch (_e) {}
+  };
 
   bridgeChannel = `__rcr_bridge_${getSecureRandomString()}`;
   bridgeNonce = getSecureRandomString();

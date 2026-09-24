@@ -40,6 +40,19 @@ export const SCRUB_SELECTOR = [
   '[style*="UserSelect"]',
 ].join(',');
 
+function resetUserSelectStyle(element: HTMLElement): void {
+  try {
+    const style = safeGetStyle(element);
+    if (!style) return;
+    if (style.userSelect === 'none') {
+      style.userSelect = 'auto';
+    }
+    if ('webkitUserSelect' in style && style.webkitUserSelect === 'none') {
+      style.webkitUserSelect = 'auto';
+    }
+  } catch (_e) {}
+}
+
 export function cleanNode(
   node: unknown,
   settings: Settings = DEFAULT_SETTINGS,
@@ -72,18 +85,7 @@ export function cleanNode(
       safeRemoveAttribute(node, SELECTION_ATTRS[i]);
     }
     if (typeof HTMLElement !== 'undefined' && node instanceof HTMLElement) {
-      try {
-        const style = safeGetStyle(node);
-        if (style) {
-          if (style.userSelect === 'none') style.userSelect = 'auto';
-          if (
-            'webkitUserSelect' in style &&
-            style.webkitUserSelect === 'none'
-          ) {
-            style.webkitUserSelect = 'auto';
-          }
-        }
-      } catch (_e) {}
+      resetUserSelectStyle(node);
     }
   }
 

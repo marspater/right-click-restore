@@ -24,14 +24,15 @@ export {
   safeRemoveAttribute,
 } from '../shared/dom';
 
-export const SCRUB_ATTRS = [
-  'oncontextmenu',
+export const SELECTION_ATTRS = [
   'onselectstart',
   'ondragstart',
   'oncopy',
   'oncut',
   'onbeforecopy',
 ];
+
+export const SCRUB_ATTRS = ['oncontextmenu', ...SELECTION_ATTRS];
 
 export const SCRUB_SELECTOR = [
   ...SCRUB_ATTRS.map((attr) => `[${attr}]`),
@@ -67,11 +68,8 @@ export function cleanNode(
   }
 
   if (settings.restoreSelection) {
-    for (let i = 0; i < SCRUB_ATTRS.length; i++) {
-      const attr = SCRUB_ATTRS[i];
-      if (attr !== 'oncontextmenu') {
-        safeRemoveAttribute(node, attr);
-      }
+    for (let i = 0; i < SELECTION_ATTRS.length; i++) {
+      safeRemoveAttribute(node, SELECTION_ATTRS[i]);
     }
     if (typeof HTMLElement !== 'undefined' && node instanceof HTMLElement) {
       try {

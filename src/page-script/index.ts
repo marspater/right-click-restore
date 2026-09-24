@@ -131,6 +131,44 @@ export function handlePageScriptMessage(
   }
 }
 
+function shouldBlockEvent(event: Event): boolean {
+  if (!event || !isShieldActive()) {
+    return false;
+  }
+
+  const isContextMenu = event.type === 'contextmenu';
+  const isSelection = SELECTION_EVENTS.has(event.type);
+  if (!isContextMenu && !isSelection) {
+    return false;
+  }
+
+  const isRightClick = isContextMenu && isRightClickActive();
+  const isSelect = isSelection && isSelectionActive();
+  if (!isRightClick && !isSelect) {
+    return false;
+  }
+
+  if (isInteractiveEvent(event)) {
+    return false;
+  }
+
+  if (isModifierBypassActive() && isModifierPressed(event)) {
+    return false;
+  }
+  return true;
+}
+
+function wrapEventMethod(
+  originalMethod: (this: Event) => void,
+): (this: Event) => void {
+  return function (this: Event): void {
+    if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
+    try {
+      originalMethod.apply(this);
+    } catch (_e) {}
+  };
+}
+
 if (typeof window !== 'undefined') {
   bridgeChannel = `__rcr_bridge_${getSecureRandomString()}`;
   bridgeNonce = getSecureRandomString();
@@ -159,9 +197,16 @@ if (typeof window !== 'undefined') {
         try {
           const detail = (e as CustomEvent)?.detail;
           if (bridgeNonce) {
-            handlePageScriptMessage(detail, bridgeNonce, (config) => {
-              activeConfig = config;
-            });
+            handlePageScriptMessage(
+              detail,
+              bridgeNonce,
+              (config) => {
+                activeConfig = config;
+              },
+              () => {
+                activeConfig.enabled = false;
+              },
+            );
           }
         } catch (_e) {}
       });
@@ -172,44 +217,6 @@ if (typeof window !== 'undefined') {
   const originalStopPropagation = Event.prototype.stopPropagation;
   const originalStopImmediatePropagation =
     Event.prototype.stopImmediatePropagation;
-
-  function shouldBlockEvent(event: Event): boolean {
-    if (!event || !isShieldActive()) {
-      return false;
-    }
-
-    const isContextMenu = event.type === 'contextmenu';
-    const isSelection = SELECTION_EVENTS.has(event.type);
-    if (!isContextMenu && !isSelection) {
-      return false;
-    }
-
-    const isRightClick = isContextMenu && isRightClickActive();
-    const isSelect = isSelection && isSelectionActive();
-    if (!isRightClick && !isSelect) {
-      return false;
-    }
-
-    if (isInteractiveEvent(event)) {
-      return false;
-    }
-
-    if (isModifierBypassActive() && isModifierPressed(event)) {
-      return false;
-    }
-    return true;
-  }
-
-  function wrapEventMethod(
-    originalMethod: (this: Event) => void,
-  ): (this: Event) => void {
-    return function (this: Event): void {
-      if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
-      try {
-        originalMethod.apply(this);
-      } catch (_e) {}
-    };
-  }
 
   Event.prototype.preventDefault = wrapEventMethod(originalPreventDefault);
   Event.prototype.stopPropagation = wrapEventMethod(originalStopPropagation);

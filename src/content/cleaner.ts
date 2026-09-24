@@ -48,6 +48,17 @@ export function cleanNode(
   }
 
   try {
+    // Fast-path: short-circuit safeClosest and CSS selector evaluation for standard interactive form & canvas elements
+    const tag = (node as Element).localName;
+    if (
+      tag === 'input' ||
+      tag === 'button' ||
+      tag === 'textarea' ||
+      tag === 'select' ||
+      tag === 'canvas'
+    ) {
+      return;
+    }
     if (safeClosest(node, ALL_INTERACTIVE_SELECTORS)) {
       return;
     }

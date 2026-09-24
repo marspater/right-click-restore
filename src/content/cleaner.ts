@@ -1,4 +1,7 @@
-import { ALL_INTERACTIVE_SELECTORS } from '../shared/constants';
+import {
+  ALL_INTERACTIVE_SELECTORS,
+  isNativeInteractiveTag,
+} from '../shared/constants';
 import {
   safeClosest,
   safeGetShadowRoot,
@@ -21,8 +24,7 @@ export {
   safeRemoveAttribute,
 } from '../shared/dom';
 
-export const SCRUB_ATTRS = [
-  'oncontextmenu',
+export const SELECTION_ATTRS = [
   'onselectstart',
   'ondragstart',
   'oncopy',
@@ -30,11 +32,26 @@ export const SCRUB_ATTRS = [
   'onbeforecopy',
 ];
 
+export const SCRUB_ATTRS = ['oncontextmenu', ...SELECTION_ATTRS];
+
 export const SCRUB_SELECTOR = [
   ...SCRUB_ATTRS.map((attr) => `[${attr}]`),
   '[style*="user-select"]',
   '[style*="UserSelect"]',
 ].join(',');
+
+function resetUserSelectStyle(element: HTMLElement): void {
+  try {
+    const style = safeGetStyle(element);
+    if (!style) return;
+    if (style.userSelect === 'none') {
+      style.userSelect = 'auto';
+    }
+    if ('webkitUserSelect' in style && style.webkitUserSelect === 'none') {
+      style.webkitUserSelect = 'auto';
+    }
+  } catch (_e) {}
+}
 
 export function cleanNode(
   node: unknown,
@@ -48,6 +65,10 @@ export function cleanNode(
   }
 
   try {
+    // Fast-path: short-circuit safeClosest and CSS selector evaluation for standard interactive form & canvas elements
+    if (isNativeInteractiveTag((node as Element).localName)) {
+      return;
+    }
     if (safeClosest(node, ALL_INTERACTIVE_SELECTORS)) {
       return;
     }
@@ -60,25 +81,11 @@ export function cleanNode(
   }
 
   if (settings.restoreSelection) {
-    for (let i = 0; i < SCRUB_ATTRS.length; i++) {
-      const attr = SCRUB_ATTRS[i];
-      if (attr !== 'oncontextmenu') {
-        safeRemoveAttribute(node, attr);
-      }
+    for (let i = 0; i < SELECTION_ATTRS.length; i++) {
+      safeRemoveAttribute(node, SELECTION_ATTRS[i]);
     }
     if (typeof HTMLElement !== 'undefined' && node instanceof HTMLElement) {
-      try {
-        const style = safeGetStyle(node);
-        if (style) {
-          if (style.userSelect === 'none') style.userSelect = 'auto';
-          if (
-            'webkitUserSelect' in style &&
-            style.webkitUserSelect === 'none'
-          ) {
-            style.webkitUserSelect = 'auto';
-          }
-        }
-      } catch (_e) {}
+      resetUserSelectStyle(node);
     }
   }
 

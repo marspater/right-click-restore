@@ -1,4 +1,7 @@
-import { ALL_INTERACTIVE_SELECTORS } from '../shared/constants';
+import {
+  ALL_INTERACTIVE_SELECTORS,
+  isNativeInteractiveTag,
+} from '../shared/constants';
 import { getSecureRandomString } from '../shared/crypto';
 import { getUnshadowedMethod, safeClosest, safeMatches } from '../shared/dom';
 import {
@@ -17,6 +20,11 @@ export function isInteractiveNode(node: Node | null): boolean {
       curr = curr.parentElement;
     }
     if (curr instanceof Element) {
+      // Fast-path: local tag check for native interactive form & canvas elements
+      // skips expensive selector matching (ALL_INTERACTIVE_SELECTORS) and tree climbing.
+      if (isNativeInteractiveTag(curr.localName)) {
+        return true;
+      }
       if (safeClosest(curr, ALL_INTERACTIVE_SELECTORS)) return true;
     }
   } catch (_e) {}
@@ -31,18 +39,21 @@ export function isInteractiveEvent(event: Event): boolean {
     if (composedPathFn) {
       const path = composedPathFn.call(event) as unknown[];
       if (Array.isArray(path) && path.length > 0) {
-        return path.some(
-          (item) =>
-            item instanceof Element &&
-            safeMatches(item, ALL_INTERACTIVE_SELECTORS),
-        );
+        return path.some((item) => {
+          if (!(item instanceof Element)) return false;
+          // Fast-path: local tag check short-circuits safeMatches against ALL_INTERACTIVE_SELECTORS
+          if (isNativeInteractiveTag(item.localName)) {
+            return true;
+          }
+          return safeMatches(item, ALL_INTERACTIVE_SELECTORS);
+        });
       }
     }
   } catch (_e) {}
   return isInteractiveNode(event?.target as Node | null);
 }
 
-function isModifierPressed(event: Event): boolean {
+export function isModifierPressed(event: Event): boolean {
   const e = event as KeyboardEvent | MouseEvent;
   return Boolean(e.shiftKey || e.altKey);
 }
@@ -67,25 +78,11 @@ function isModifierBypassActive(): boolean {
   return activeConfig.bypassModifierKey;
 }
 
-function notifyContentScript(type: string, config: Settings): void {
-  if (bridgeChannel === null || bridgeNonce === null) return;
-  try {
-    window.dispatchEvent(
-      new CustomEvent(bridgeChannel, {
-        detail: {
-          nonce: bridgeNonce,
-          type,
-          config,
-        },
-      }),
-    );
-  } catch (_e) {}
-}
-
-function handlePageScriptMessage(
+export function handlePageScriptMessage(
   payload: unknown,
   expectedNonce: string,
-  onUpdate: (config: Settings) => void,
+  onUpdate?: (config: Settings) => void,
+  onUnlock?: () => void,
 ): boolean {
   if (!payload || typeof payload !== 'object') return false;
   const data = payload as {
@@ -103,13 +100,18 @@ function handlePageScriptMessage(
     return false;
   }
 
+  if (data.type === 'UNLOCK') {
+    onUnlock?.();
+    return true;
+  }
+
   if (data.type !== 'UPDATE') return false;
   if (!data.config || typeof data.config !== 'object') return false;
 
   try {
     const validated = validateSettings(data.config as Partial<Settings>);
     activeConfig = validated;
-    onUpdate(validated);
+    onUpdate?.(validated);
     return true;
   } catch (_e) {
     return false;
@@ -118,8 +120,6 @@ function handlePageScriptMessage(
 
 if (typeof window !== 'undefined') {
   const originalPreventDefault = Event.prototype.preventDefault;
-  const originalStopPropagation = Event.prototype.stopPropagation;
-  const originalStopImmediatePropagation = Event.prototype.stopImmediatePropagation;
 
   function shouldBlockEvent(event: Event): boolean {
     if (!event || !isShieldActive()) {
@@ -127,7 +127,13 @@ if (typeof window !== 'undefined') {
     }
 
     const isContextMenu = event.type === 'contextmenu';
-    const isSelection = SELECTION_EVENTS.has(event.type);
+    const isSelection =
+      event.type === 'selectstart' ||
+      event.type === 'selectionchange' ||
+      event.type === 'copy' ||
+      event.type === 'cut' ||
+      event.type === 'dragstart';
+
     if (!isContextMenu && !isSelection) {
       return false;
     }
@@ -155,5 +161,35 @@ if (typeof window !== 'undefined') {
     } catch (_e) {}
   };
 
-  // ...rest of file unchanged...
+  bridgeChannel = `__rcr_bridge_${getSecureRandomString()}`;
+  bridgeNonce = getSecureRandomString();
+
+  function sendHandshake() {
+    try {
+      window.dispatchEvent(
+        new CustomEvent('__rcr_handshake__', {
+          detail: { channel: bridgeChannel, nonce: bridgeNonce },
+        }),
+      );
+    } catch (_e) {}
+  }
+
+  try {
+    if (bridgeChannel) {
+      const channel = bridgeChannel;
+      window.addEventListener(channel, (e: Event) => {
+        try {
+          const detail = (e as CustomEvent)?.detail;
+          if (bridgeNonce) {
+            handlePageScriptMessage(detail, bridgeNonce, (config) => {
+              activeConfig = config;
+            });
+          }
+        } catch (_e) {}
+      });
+    }
+
+    window.addEventListener('__rcr_handshake_req__', sendHandshake);
+    sendHandshake();
+  } catch (_e) {}
 }

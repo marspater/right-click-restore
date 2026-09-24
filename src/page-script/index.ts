@@ -200,24 +200,20 @@ if (typeof window !== 'undefined') {
     return true;
   }
 
-  Event.prototype.preventDefault = function (this: Event): void {
-    if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
-    try {
-      originalPreventDefault.apply(this);
-    } catch (_e) {}
-  };
+  function wrapEventMethod(
+    originalMethod: (this: Event) => void,
+  ): (this: Event) => void {
+    return function (this: Event): void {
+      if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
+      try {
+        originalMethod.apply(this);
+      } catch (_e) {}
+    };
+  }
 
-  Event.prototype.stopPropagation = function (this: Event): void {
-    if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
-    try {
-      originalStopPropagation.apply(this);
-    } catch (_e) {}
-  };
-
-  Event.prototype.stopImmediatePropagation = function (this: Event): void {
-    if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
-    try {
-      originalStopImmediatePropagation.apply(this);
-    } catch (_e) {}
-  };
+  Event.prototype.preventDefault = wrapEventMethod(originalPreventDefault);
+  Event.prototype.stopPropagation = wrapEventMethod(originalStopPropagation);
+  Event.prototype.stopImmediatePropagation = wrapEventMethod(
+    originalStopImmediatePropagation,
+  );
 }

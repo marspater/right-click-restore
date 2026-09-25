@@ -10,3 +10,8 @@
 
 3. **Visual Polish for Keycap Badges (`src/popup/popup.css`)**:
    - Enhanced `<kbd>` keycap styling with `font-weight: 600`, elevated contrast using `var(--text-primary)`, and subtle drop-shadow `0 1px 1.5px rgba(0, 0, 0, 0.08)` to present keycaps clearly across both light and dark themes.
+
+4. **Active Domain Card Interaction & Affordances (`src/popup/App.svelte`, `src/popup/popup.css`)**:
+   - Converted the Active Domain inset card into a full-row interactive control (`<label>`) when domain protection is toggleable, greatly increasing tap target size so users can click anywhere on the card row instead of aiming at a tiny 32x18px switch knob.
+   - Added hover state (`hover:bg-[var(--bg-card-hover)]`), press scale feedback (`active:scale-[0.99]`), cursor affordances (`cursor-pointer`), and focus-visible outline rings (`.domain-card:has(input:focus-visible)`).
+   - Dynamic `aria-label`s now explicitly reflect enable/disable state for the specific domain (e.g. "Disable protection on example.com"), linked to domain status via `aria-describedby="desc-domain-status"`.

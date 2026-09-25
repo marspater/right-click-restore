@@ -248,6 +248,23 @@ button:focus-visible {
   outline: none;
 }
 
+/* Interactive Domain Card Focus State */
+.domain-card {
+  user-select: none;
+}
+
+.domain-card:has(input:focus-visible):not(.dimmed) {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: -1px;
+}
+
+.domain-card:has(input:focus-visible)
+  .apple-switch
+  input:focus-visible
+  + .apple-slider {
+  outline: none;
+}
+
 /* Screen Reader Only Utility */
 .sr-only {
   position: absolute;

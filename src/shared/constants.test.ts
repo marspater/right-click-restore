@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import {
   ALL_INTERACTIVE_SELECTORS,
+  FAST_INTERACTIVE_TAGS,
   INTERACTIVE_CONTAINERS,
   INTERACTIVE_ELEMENTS,
 } from './constants';
@@ -26,5 +27,15 @@ describe('interactive element selectors', () => {
     expect(INTERACTIVE_ELEMENTS).toContain('[contenteditable]');
     expect(INTERACTIVE_ELEMENTS).toContain('[role="textbox"]');
     expect(INTERACTIVE_ELEMENTS).toContain('canvas');
+  });
+
+  test('FAST_INTERACTIVE_TAGS contains standard interactive tag names in uppercase', () => {
+    expect(FAST_INTERACTIVE_TAGS.has('INPUT')).toBe(true);
+    expect(FAST_INTERACTIVE_TAGS.has('TEXTAREA')).toBe(true);
+    expect(FAST_INTERACTIVE_TAGS.has('SELECT')).toBe(true);
+    expect(FAST_INTERACTIVE_TAGS.has('BUTTON')).toBe(true);
+    expect(FAST_INTERACTIVE_TAGS.has('CANVAS')).toBe(true);
+    expect(FAST_INTERACTIVE_TAGS.has('DIV')).toBe(false);
+    expect(FAST_INTERACTIVE_TAGS.has('SPAN')).toBe(false);
   });
 });

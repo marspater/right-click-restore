@@ -1,4 +1,7 @@
-import { ALL_INTERACTIVE_SELECTORS } from '../shared/constants';
+import {
+  ALL_INTERACTIVE_SELECTORS,
+  FAST_INTERACTIVE_TAGS,
+} from '../shared/constants';
 import {
   safeClosest,
   safeGetShadowRoot,
@@ -44,6 +47,11 @@ export function cleanNode(
 
   // Early return if both restoration settings are disabled to avoid unnecessary DOM traversals & selector checks
   if (!settings.restoreRightClick && !settings.restoreSelection) {
+    return;
+  }
+
+  // Fast O(1) check: native form controls and canvas elements are always interactive
+  if (FAST_INTERACTIVE_TAGS.has(node.tagName)) {
     return;
   }
 

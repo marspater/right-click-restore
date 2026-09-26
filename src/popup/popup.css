@@ -107,6 +107,24 @@ body {
     cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
 }
 
+.glass-card-interactive:hover:not(.dimmed) {
+  background: var(--bg-card-hover);
+}
+
+.glass-card-interactive:focus-within:not(.dimmed),
+.glass-card-interactive:has(input:focus-visible):not(.dimmed) {
+  background: var(--bg-card-hover);
+  outline: 2px solid var(--accent-blue);
+  outline-offset: -1px;
+}
+
+.glass-card-interactive:has(input:focus-visible)
+  .apple-switch
+  input:focus-visible
+  + .apple-slider {
+  outline: none;
+}
+
 /* Master Apple Toggle Switch */
 .apple-switch {
   position: relative;
@@ -198,6 +216,7 @@ body {
 .apple-switch input:focus-visible + .apple-slider {
   outline: 2px solid var(--accent-blue);
   outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--bg-popover), 0 0 0 4px var(--accent-blue);
 }
 
 button:focus:not(:focus-visible) {

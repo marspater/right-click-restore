@@ -10,3 +10,8 @@
 
 3. **Visual Polish for Keycap Badges (`src/popup/popup.css`)**:
    - Enhanced `<kbd>` keycap styling with `font-weight: 600`, elevated contrast using `var(--text-primary)`, and subtle drop-shadow `0 1px 1.5px rgba(0, 0, 0, 0.08)` to present keycaps clearly across both light and dark themes.
+
+4. **Active Domain Inset Card Interaction Affordance (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+   - Expanded active domain card hit target into a full-width interactive glass card (`glass-card-interactive`) with hover and focus-within feedback, enabling site domain protection toggling across the entire card area.
+   - Aligned footer shortcut tip with Feature 5 settings by displaying both `<kbd>⇧ Shift</kbd>` and `<kbd>⌥ Option</kbd>` keycaps.
+   - Enhanced switch focus state rings with dual-ring depth shadow matching WebKit design language.

@@ -248,42 +248,63 @@ async function forceUnlockPage() {
   </header>
 
   <!-- Active Domain Inset Card -->
-  <section class={`glass-card px-3 py-2.5 mb-2 flex items-center justify-between transition-all ${settings.enabled ? '' : 'dimmed'}`}>
-    <div class="flex items-center gap-2.5 min-w-0 pr-2">
-      <!-- Status Beacon -->
-      <div class="flex items-center justify-center flex-shrink-0" aria-hidden="true">
-        <span class="relative flex h-2.5 w-2.5 items-center justify-center">
-          {#if isSiteActive}
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--accent-green)] opacity-35"></span>
-          {/if}
-          <span class={`relative inline-flex rounded-full h-2 w-2 transition-all duration-200 ${
-            isSiteActive
-              ? 'bg-[var(--accent-green)] shadow-[0_0_6px_rgba(52,199,89,0.5)]'
-              : settings.enabled && isSiteDisabled
-                ? 'bg-[var(--accent-orange)] shadow-[0_0_6px_rgba(255,149,0,0.4)]'
-                : 'bg-[var(--text-tertiary)]'
-          }`}></span>
-        </span>
+  {#if isToggleableDomain}
+    <label class={`glass-card glass-card-interactive px-3 py-2.5 mb-2 flex items-center justify-between cursor-pointer select-none transition-all ${settings.enabled ? '' : 'dimmed'}`}>
+      <div class="flex items-center gap-2.5 min-w-0 pr-2">
+        <!-- Status Beacon -->
+        <div class="flex items-center justify-center flex-shrink-0" aria-hidden="true">
+          <span class="relative flex h-2.5 w-2.5 items-center justify-center">
+            {#if isSiteActive}
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--accent-green)] opacity-35"></span>
+            {/if}
+            <span class={`relative inline-flex rounded-full h-2 w-2 transition-all duration-200 ${
+              isSiteActive
+                ? 'bg-[var(--accent-green)] shadow-[0_0_6px_rgba(52,199,89,0.5)]'
+                : settings.enabled && isSiteDisabled
+                  ? 'bg-[var(--accent-orange)] shadow-[0_0_6px_rgba(255,149,0,0.4)]'
+                  : 'bg-[var(--text-tertiary)]'
+            }`}></span>
+          </span>
+        </div>
+
+        <!-- Domain Labels Stack -->
+        <div class="min-w-0 flex flex-col justify-center">
+          <span class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
+            {!settings.enabled ? 'Extension Paused' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
+          </span>
+          <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-1" title={currentHostname}>
+            {currentHostname || 'Loading…'}
+          </span>
+        </div>
       </div>
 
-      <!-- Domain Labels Stack -->
-      <div class="min-w-0 flex flex-col justify-center">
-        <span class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
-          {!settings.enabled ? 'Extension Paused' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
-        </span>
-        <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-1" title={currentHostname}>
-          {currentHostname || 'Loading…'}
-        </span>
-      </div>
-    </div>
-
-    {#if isToggleableDomain}
-      <label class="apple-switch apple-switch-sm" title={`Toggle protection on ${currentHostname}`}>
+      <span class="apple-switch apple-switch-sm">
         <input type="checkbox" role="switch" checked={!isSiteDisabled} aria-checked={!isSiteDisabled} disabled={!settings.enabled} onchange={toggleCurrentSite} aria-label={`Toggle protection on ${currentHostname}`} />
         <span class="apple-slider"></span>
-      </label>
-    {/if}
-  </section>
+      </span>
+    </label>
+  {:else}
+    <section class={`glass-card px-3 py-2.5 mb-2 flex items-center justify-between transition-all ${settings.enabled ? '' : 'dimmed'}`}>
+      <div class="flex items-center gap-2.5 min-w-0 pr-2">
+        <!-- Status Beacon -->
+        <div class="flex items-center justify-center flex-shrink-0" aria-hidden="true">
+          <span class="relative flex h-2.5 w-2.5 items-center justify-center">
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-[var(--text-tertiary)]"></span>
+          </span>
+        </div>
+
+        <!-- Domain Labels Stack -->
+        <div class="min-w-0 flex flex-col justify-center">
+          <span class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
+            {!settings.enabled ? 'Extension Paused' : 'System Page'}
+          </span>
+          <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-1" title={currentHostname}>
+            {currentHostname || 'Loading…'}
+          </span>
+        </div>
+      </div>
+    </section>
+  {/if}
 
   <!-- Settings List Group -->
   <section class={`glass-card p-1 mb-2 flex flex-col ${isSiteActive ? '' : 'dimmed'}`}>
@@ -466,10 +487,10 @@ async function forceUnlockPage() {
     </button>
   </div>
 
-  <!-- Footnote Tip with High-Contrast Keycap -->
+  <!-- Footnote Tip with High-Contrast Keycaps -->
   <footer class="pt-0.5 text-center select-none">
     <p class="text-[10px] text-[var(--text-tertiary)] leading-tight m-0 inline">
-      Tip: Hold <kbd>⇧ Shift</kbd> to summon native menu anywhere
+      Tip: Hold <kbd>⇧ Shift</kbd> or <kbd>⌥ Option</kbd> to summon native menu anywhere
     </p>
   </footer>
 </main>

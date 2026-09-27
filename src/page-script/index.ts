@@ -9,6 +9,16 @@ import {
 
 export { getUnshadowedMethod, safeClosest, safeMatches } from '../shared/dom';
 
+const SELECTION_EVENTS = new Set([
+  'selectstart',
+  'copy',
+  'cut',
+  'paste',
+  'dragstart',
+  'mousedown',
+  'mouseup',
+]);
+
 export function isInteractiveNode(node: Node | null): boolean {
   if (!node) return false;
   try {
@@ -23,8 +33,6 @@ export function isInteractiveNode(node: Node | null): boolean {
   return false;
 }
 
-// Fast-path interactive event check. When composedPath is available and non-empty,
-// iterating over path elements already inspects target and all parent ancestors.
 export function isInteractiveEvent(event: Event): boolean {
   try {
     const composedPathFn = getUnshadowedMethod(event, 'composedPath');
@@ -42,7 +50,7 @@ export function isInteractiveEvent(event: Event): boolean {
   return isInteractiveNode(event?.target as Node | null);
 }
 
-function isModifierPressed(event: Event): boolean {
+export function isModifierPressed(event: Event): boolean {
   const e = event as KeyboardEvent | MouseEvent;
   return Boolean(e.shiftKey || e.altKey);
 }
@@ -67,7 +75,7 @@ function isModifierBypassActive(): boolean {
   return activeConfig.bypassModifierKey;
 }
 
-function notifyContentScript(type: string, config: Settings): void {
+export function notifyContentScript(type: string, config: Settings): void {
   if (bridgeChannel === null || bridgeNonce === null) return;
   try {
     window.dispatchEvent(
@@ -82,10 +90,11 @@ function notifyContentScript(type: string, config: Settings): void {
   } catch (_e) {}
 }
 
-function handlePageScriptMessage(
+export function handlePageScriptMessage(
   payload: unknown,
   expectedNonce: string,
-  onUpdate: (config: Settings) => void,
+  onUpdate?: (config: Settings) => void,
+  onUnlock?: () => void,
 ): boolean {
   if (!payload || typeof payload !== 'object') return false;
   const data = payload as {
@@ -103,13 +112,18 @@ function handlePageScriptMessage(
     return false;
   }
 
+  if (data.type === 'UNLOCK') {
+    onUnlock?.();
+    return true;
+  }
+
   if (data.type !== 'UPDATE') return false;
   if (!data.config || typeof data.config !== 'object') return false;
 
   try {
     const validated = validateSettings(data.config as Partial<Settings>);
     activeConfig = validated;
-    onUpdate(validated);
+    onUpdate?.(validated);
     return true;
   } catch (_e) {
     return false;
@@ -118,8 +132,9 @@ function handlePageScriptMessage(
 
 if (typeof window !== 'undefined') {
   const originalPreventDefault = Event.prototype.preventDefault;
-  const originalStopPropagation = Event.prototype.stopPropagation;
-  const originalStopImmediatePropagation = Event.prototype.stopImmediatePropagation;
+  const _originalStopPropagation = Event.prototype.stopPropagation;
+  const _originalStopImmediatePropagation =
+    Event.prototype.stopImmediatePropagation;
 
   function shouldBlockEvent(event: Event): boolean {
     if (!event || !isShieldActive()) {
@@ -143,7 +158,7 @@ if (typeof window !== 'undefined') {
     }
 
     if (isModifierBypassActive() && isModifierPressed(event)) {
-      return true;
+      return false;
     }
     return true;
   }
@@ -155,5 +170,34 @@ if (typeof window !== 'undefined') {
     } catch (_e) {}
   };
 
-  // ...rest of file unchanged...
+  // Handshake initialization with content script
+  const channel = `__rcr_bridge_${getSecureRandomString()}`;
+  const nonce = getSecureRandomString();
+
+  bridgeChannel = channel;
+  bridgeNonce = nonce;
+
+  const handleMessage = (e: Event) => {
+    try {
+      const detail = (e as CustomEvent)?.detail;
+      handlePageScriptMessage(detail, nonce, (config) => {
+        activeConfig = config;
+      });
+    } catch (_err) {}
+  };
+
+  window.addEventListener(channel, handleMessage);
+
+  const performHandshake = () => {
+    try {
+      window.dispatchEvent(
+        new CustomEvent('__rcr_handshake__', {
+          detail: { channel, nonce },
+        }),
+      );
+    } catch (_e) {}
+  };
+
+  window.addEventListener('__rcr_handshake_req__', performHandshake);
+  performHandshake();
 }

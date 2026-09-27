@@ -269,7 +269,7 @@ async function forceUnlockPage() {
       <!-- Domain Labels Stack -->
       <div class="min-w-0 flex flex-col justify-center">
         <span class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
-          {!settings.enabled ? 'Extension Paused' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
+          {!settings.enabled ? 'Extension Paused' : isSiteDisabled ? 'Disabled on Domain' : isToggleableDomain ? 'Active on Domain' : 'Active Page'}
         </span>
         <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-1" title={currentHostname}>
           {currentHostname || 'Loading…'}
@@ -469,7 +469,15 @@ async function forceUnlockPage() {
   <!-- Footnote Tip with High-Contrast Keycap -->
   <footer class="pt-0.5 text-center select-none">
     <p class="text-[10px] text-[var(--text-tertiary)] leading-tight m-0 inline">
-      Tip: Hold <kbd>⇧ Shift</kbd> to summon native menu anywhere
+      {#if !settings.enabled}
+        Tip: Turn on protection above to restore right-click
+      {:else if isSiteDisabled}
+        Tip: Protection is paused for this domain
+      {:else if !settings.bypassModifierKey}
+        Tip: Enable Modifier Key Bypass to allow <kbd>⇧ Shift</kbd> override
+      {:else}
+        Tip: Hold <kbd>⇧ Shift</kbd> or <kbd>⌥ Option</kbd> to summon native menu
+      {/if}
     </p>
   </footer>
 </main>

@@ -194,10 +194,19 @@ body {
   width: 17px;
 }
 
-/* Accessible Focus States */
+/* Accessible Focus States & Disabled Affordance */
 .apple-switch input:focus-visible + .apple-slider {
   outline: 2px solid var(--accent-blue);
   outline-offset: 2px;
+}
+
+.apple-switch input:disabled + .apple-slider {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.apple-switch:has(input:disabled) {
+  cursor: not-allowed;
 }
 
 button:focus:not(:focus-visible) {

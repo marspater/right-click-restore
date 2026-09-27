@@ -44,26 +44,23 @@ export const SCRUB_SELECTOR = [
  * and 18-selector evaluations on clean DOM nodes during MutationObserver processing.
  */
 function hasScrubbableState(node: Element, settings: Settings): boolean {
-  if (node.hasAttributes()) {
-    if (settings.restoreRightClick && safeHasAttribute(node, 'oncontextmenu')) {
-      return true;
-    }
-    if (settings.restoreSelection) {
-      for (let i = 1; i < SCRUB_ATTRS.length; i++) {
-        if (safeHasAttribute(node, SCRUB_ATTRS[i])) return true;
-      }
-      try {
-        const style = safeGetStyle(node as HTMLElement);
-        if (
-          style &&
-          (style.userSelect === 'none' || style.webkitUserSelect === 'none')
-        ) {
-          return true;
-        }
-      } catch (_e) {}
-    }
+  if (safeGetShadowRoot(node)) return true;
+  if (!node.hasAttributes()) return false;
+
+  if (settings.restoreRightClick && safeHasAttribute(node, 'oncontextmenu')) {
+    return true;
   }
-  return Boolean(safeGetShadowRoot(node));
+
+  if (!settings.restoreSelection) return false;
+
+  for (let i = 1; i < SCRUB_ATTRS.length; i++) {
+    if (safeHasAttribute(node, SCRUB_ATTRS[i])) return true;
+  }
+
+  const style = safeGetStyle(node as HTMLElement);
+  return Boolean(
+    style && (style.userSelect === 'none' || style.webkitUserSelect === 'none'),
+  );
 }
 
 export function cleanNode(

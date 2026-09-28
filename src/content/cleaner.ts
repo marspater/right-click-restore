@@ -21,6 +21,14 @@ export {
   safeRemoveAttribute,
 } from '../shared/dom';
 
+const FAST_INTERACTIVE_TAGS = new Set([
+  'INPUT',
+  'TEXTAREA',
+  'SELECT',
+  'BUTTON',
+  'CANVAS',
+]);
+
 export const SCRUB_ATTRS = [
   'oncontextmenu',
   'onselectstart',
@@ -44,6 +52,11 @@ export function cleanNode(
 
   // Early return if both restoration settings are disabled to avoid unnecessary DOM traversals & selector checks
   if (!settings.restoreRightClick && !settings.restoreSelection) {
+    return;
+  }
+
+  // Fast-path: O(1) tag lookup to bypass safeClosest & selector evaluation for native form controls
+  if (FAST_INTERACTIVE_TAGS.has(node.tagName)) {
     return;
   }
 

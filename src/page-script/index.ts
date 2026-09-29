@@ -146,59 +146,43 @@ if (typeof window !== 'undefined') {
   } catch (_e) {}
 
   function shouldBlockEvent(event: Event): boolean {
-    if (!event || !activeConfig.enabled) {
-      return false;
-    }
+    if (!event || !activeConfig.enabled) return false;
 
-    const isContextMenu = event.type === 'contextmenu';
-    const isSelection = SELECTION_EVENTS.has(event.type);
-    if (!isContextMenu && !isSelection) {
-      return false;
-    }
+    const isContextMenu =
+      event.type === 'contextmenu' && activeConfig.restoreRightClick;
+    const isSelection =
+      SELECTION_EVENTS.has(event.type) && activeConfig.restoreSelection;
+    if (!isContextMenu && !isSelection) return false;
 
-    const isRightClick = isContextMenu && activeConfig.restoreRightClick;
-    const isSelect = isSelection && activeConfig.restoreSelection;
-    if (!isRightClick && !isSelect) {
-      return false;
-    }
+    if (isInteractiveEvent(event)) return false;
 
-    if (isInteractiveEvent(event)) {
-      return false;
-    }
-
-    if (activeConfig.bypassModifierKey && isModifierPressed(event)) {
-      return false;
-    }
-    return true;
+    return !(activeConfig.bypassModifierKey && isModifierPressed(event));
   }
 
   function shouldBypassPropagation(event: Event): boolean {
-    return (
-      Boolean(event) &&
-      event instanceof Event &&
-      activeConfig.absoluteForce &&
-      shouldBlockEvent(event)
-    );
+    return activeConfig.absoluteForce && shouldBlockEvent(event);
   }
 
-  Event.prototype.preventDefault = function (this: Event): void {
-    if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
-    try {
-      originalPreventDefault.apply(this);
-    } catch (_e) {}
-  };
+  const overrides: Array<
+    [keyof Event, (this: Event) => void, (e: Event) => boolean]
+  > = [
+    ['preventDefault', originalPreventDefault, shouldBlockEvent],
+    ['stopPropagation', originalStopPropagation, shouldBypassPropagation],
+    [
+      'stopImmediatePropagation',
+      originalStopImmediatePropagation,
+      shouldBypassPropagation,
+    ],
+  ];
 
-  Event.prototype.stopPropagation = function (this: Event): void {
-    if (shouldBypassPropagation(this)) return;
-    try {
-      originalStopPropagation.apply(this);
-    } catch (_e) {}
-  };
-
-  Event.prototype.stopImmediatePropagation = function (this: Event): void {
-    if (shouldBypassPropagation(this)) return;
-    try {
-      originalStopImmediatePropagation.apply(this);
-    } catch (_e) {}
-  };
+  for (const [methodName, originalFn, shouldBypass] of overrides) {
+    (Event.prototype as Record<string, unknown>)[methodName] = function (
+      this: Event,
+    ): void {
+      if (!this || !(this instanceof Event) || shouldBypass(this)) return;
+      try {
+        originalFn.apply(this);
+      } catch (_e) {}
+    };
+  }
 }

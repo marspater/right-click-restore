@@ -1,16 +1,47 @@
 # RightClickRestore for Safari 🛡️
 
-A native Safari Web Extension for macOS and iOS that restores context menus, text selection, copy, and drag behavior on pages that deliberately disable them.
+[![CI](https://github.com/marspater/right-click-restore/actions/workflows/ci.yml/badge.svg)](https://github.com/marspater/right-click-restore/actions/workflows/ci.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=marspater_right-click-restore&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=marspater_right-click-restore)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Platform: macOS & iOS](https://img.shields.io/badge/Platform-macOS%2012%2B%20%7C%20macOS%2027%20%7C%20iOS%2015%2B-purple.svg)](README.md#compatibility--system-requirements)
+[![Safari: MV3](https://img.shields.io/badge/Safari-MV3-blue.svg)](README.md)
+
+A high-performance Safari Web Extension and native companion application for macOS and iOS that restores context menus, text selection, copy, cut, and drag operations on websites that deliberately disable them.
+
+---
+
+## Compatibility & System Requirements
+
+| Platform | Minimum Version | Tested & Verified | Design & HIG Target |
+| :--- | :--- | :--- | :--- |
+| **macOS** | macOS 12.0 (Monterey) | macOS 14 (Sonoma), macOS 15 (Sequoia) | **macOS 27 Liquid Glass HIG** (Continuous Sheen & Vibrancy) |
+| **Architecture** | Universal | Apple Silicon (`arm64`), Intel (`x86_64`) | Optimized for Apple M-series chips |
+| **iOS / iPadOS** | iOS 15.0+ | iOS 17, iOS 18 | Apple Touch & Share Sheet |
+| **Safari** | Safari 15.0+ | Safari 17, Safari 18, Technology Preview | Manifest V3 (Main World & Isolated World) |
+
+---
+
+## macOS 27 & Apple HIG Design System
+
+RightClickRestore adopts the forward-looking **macOS 27** Apple Human Interface Guidelines:
+- **Liquid Glass UI**: Ultra-refined backdrop blur, specular top glass highlight, and ambient fluid mesh gradient lighting.
+- **Continuous Curvature Squircles**: Icons and panels rendered with mathematical squircles and transparent corners.
+- **Native System Vibrancy**: Adapts seamlessly to macOS Light and Dark appearance with automatic contrast balancing.
+- **Zero Idle Overhead**: Pure event-driven DOM unmasking with no continuous polling or CPU spikes.
+
+---
 
 ## What it does
 
-- Restores right-click/context menus blocked by inline handlers and JavaScript event cancellation.
-- Restores text selection, copy, cut, and drag operations where safe.
-- Handles transparent media overlays without continuously rewriting the DOM.
-- Keeps rich editors and controls such as inputs, buttons, ProseMirror, Monaco, and video players usable.
-- Provides global and per-domain controls.
-- Includes a manual **Force Unlock** action for pages that need an extra kick.
-- Uses a bounded DOM observer to avoid unbounded mutation queues and long-lived timer buildup.
+- **Restores Right-Click**: Eliminates `oncontextmenu="return false;"` and JavaScript `preventDefault()` / `stopPropagation()` cancellations in both capture and bubble phases.
+- **Restores Selection & Copy**: Unblocks `user-select: none`, `onselectstart`, `oncopy`, `oncut`, and `onbeforecopy`.
+- **Anti-Shield Protection**: Dynamically disables invisible transparent overlays swallowing mouse clicks above images and videos without breaking web layouts.
+- **Editor & Video Protection**: Intelligently safeguards interactive elements (`input`, `textarea`, `button`, Monaco Editor, ProseMirror, and HTML5 / YouTube video players).
+- **Global & Per-Domain Controls**: Disable restoration per site or toggle features individually via the Svelte 5 popup.
+- **Force Unlock**: One-click nuclear unlock button for extreme obfuscation cases.
+- **Bounded DOM Observer**: Batched mutation processing prevents memory leaks on high-churn single-page applications.
+
+---
 
 ## macOS installation
 

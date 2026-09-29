@@ -1,5 +1,27 @@
 {
   "name": "right-click-restore",
+  "version": "1.0.1",
+  "description": "Safari Web Extension & macOS App to restore right-click, selection, and copy operations with Apple HIG liquid glass UI.",
+  "author": "Mars Pater",
+  "license": "MIT",
+  "homepage": "https://github.com/marspater/right-click-restore#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marspater/right-click-restore.git"
+  },
+  "bugs": {
+    "url": "https://github.com/marspater/right-click-restore/issues"
+  },
+  "keywords": [
+    "safari",
+    "safari-extension",
+    "webextension",
+    "macos",
+    "macos-27",
+    "right-click",
+    "context-menu",
+    "svelte5"
+  ],
   "private": true,
   "type": "module",
   "scripts": {

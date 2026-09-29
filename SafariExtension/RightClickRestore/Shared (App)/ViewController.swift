@@ -206,10 +206,9 @@ struct ContentView: View {
     private func openSafariPreferences() {
         #if os(macOS)
         SFSafariApplication.showPreferencesForExtension(withIdentifier: extensionBundleIdentifier) { error in
-            if error != nil {
-                if let url = URL(string: "x-apple.systempreferences:com.apple.Safari-Settings.extension.pref") ?? URL(string: "x-apple.systempreferences:com.apple.Safari.Extensions") {
-                    NSWorkspace.shared.open(url)
-                }
+            if error != nil,
+               let url = URL(string: "x-apple.systempreferences:com.apple.Safari-Settings.extension.pref") ?? URL(string: "x-apple.systempreferences:com.apple.Safari.Extensions") {
+                NSWorkspace.shared.open(url)
             }
         }
         #elseif os(iOS)

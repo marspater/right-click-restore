@@ -115,9 +115,8 @@ export function validateSettings(raw: unknown): Settings {
   const sanitizeDomains = (val: unknown): string[] => {
     if (!Array.isArray(val)) return [];
     const validDomains = new Set<string>();
-    for (let i = 0; i < val.length; i++) {
+    for (const item of val) {
       if (validDomains.size >= MAX_DOMAINS_COUNT) break;
-      const item = val[i];
       if (
         typeof item === 'string' &&
         item.length > 0 &&
@@ -164,8 +163,7 @@ export function isDomainDisabled(
   const host = normalizeHostname(hostname);
   if (!host) return false;
 
-  for (let i = 0; i < disabledDomains.length; i++) {
-    const disabled = disabledDomains[i];
+  for (const disabled of disabledDomains) {
     if (disabled && (disabled === host || host.endsWith(`.${disabled}`))) {
       return true;
     }

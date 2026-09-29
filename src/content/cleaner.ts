@@ -102,40 +102,22 @@ function hasScrubbableTarget(node: Element, settings: Settings): boolean {
   return false;
 }
 
-export function cleanNode(
-  node: unknown,
-  settings: Settings = DEFAULT_SETTINGS,
-) {
-  if (typeof Element === 'undefined' || !(node instanceof Element)) return;
-
-  // Early return if both restoration settings are disabled to avoid unnecessary DOM traversals & selector checks
-  if (!settings.restoreRightClick && !settings.restoreSelection) {
-    return;
-  }
-
-  // Fast-path: Skip expensive ancestor tree traversal (safeClosest) if the element has no scrubbable attributes,
-  // inline user-select: none styles, or shadow root to clean.
-  if (!hasScrubbableTarget(node, settings)) {
-    return;
-  }
-
-  // Fast-path: O(1) tag lookup to bypass safeClosest & selector evaluation for native form controls
+function isInteractiveOrDescendant(node: Element): boolean {
   if (
     typeof node.tagName === 'string' &&
     FAST_INTERACTIVE_TAGS.has(node.tagName)
   ) {
-    return;
+    return true;
   }
-
   try {
-    if (safeClosest(node, ALL_INTERACTIVE_SELECTORS)) {
-      return;
-    }
+    return Boolean(safeClosest(node, ALL_INTERACTIVE_SELECTORS));
   } catch {
-    // Return early if ancestor matching throws on detached node
-    return;
+    // Return true on error to avoid modifying detached or protected elements
+    return true;
   }
+}
 
+function stripScrubbableAttributes(node: Element, settings: Settings): void {
   if (settings.restoreRightClick) {
     safeRemoveAttribute(node, 'oncontextmenu');
   }
@@ -148,6 +130,29 @@ export function cleanNode(
     }
     restoreUserSelect(node);
   }
+}
+
+export function cleanNode(
+  node: unknown,
+  settings: Settings = DEFAULT_SETTINGS,
+) {
+  if (typeof Element === 'undefined' || !(node instanceof Element)) return;
+
+  // Early return if both restoration settings are disabled
+  if (!settings.restoreRightClick && !settings.restoreSelection) {
+    return;
+  }
+
+  // Fast-path: Skip expensive tree traversal if element has no scrubbable attributes/styles
+  if (!hasScrubbableTarget(node, settings)) {
+    return;
+  }
+
+  if (isInteractiveOrDescendant(node)) {
+    return;
+  }
+
+  stripScrubbableAttributes(node, settings);
 
   // Traverse open shadow root if accessible
   try {

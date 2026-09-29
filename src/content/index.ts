@@ -54,6 +54,31 @@ function isAuthorizedSender(
   return true;
 }
 
+function executeForceUnlock(handlers: ContentMessageHandlers) {
+  try {
+    handlers.onUnlockTriggered?.();
+  } catch {
+    // Suppress unlock callback errors
+  }
+  try {
+    handlers.onCleanDOMTree?.();
+  } catch {
+    // Suppress DOM cleaning errors
+  }
+  if (handlers.unlockEventName && handlers.onDispatchEvent) {
+    try {
+      handlers.onDispatchEvent(handlers.unlockEventName);
+    } catch {
+      // Suppress custom event dispatch errors
+    }
+  }
+  try {
+    handlers.onShowUnlockToast?.();
+  } catch {
+    // Suppress toast notification errors
+  }
+}
+
 export function handleContentMessage(
   message: { type?: string; config?: Settings },
   sender: chrome.runtime.MessageSender | undefined,
@@ -73,28 +98,7 @@ export function handleContentMessage(
   }
 
   if (message.type === 'RCR_FORCE_UNLOCK') {
-    try {
-      handlers.onUnlockTriggered?.();
-    } catch {
-      // Suppress unlock callback errors
-    }
-    try {
-      handlers.onCleanDOMTree?.();
-    } catch {
-      // Suppress DOM cleaning errors
-    }
-    if (handlers.unlockEventName && handlers.onDispatchEvent) {
-      try {
-        handlers.onDispatchEvent(handlers.unlockEventName);
-      } catch {
-        // Suppress custom event dispatch errors
-      }
-    }
-    try {
-      handlers.onShowUnlockToast?.();
-    } catch {
-      // Suppress toast notification errors
-    }
+    executeForceUnlock(handlers);
     sendResponse({ status: 'unlocked' });
     return;
   }
@@ -268,7 +272,9 @@ export function handleContentMessage(
       } else {
         styleEl?.remove();
       }
-    } catch (_e) {}
+    } catch {
+      // Suppress errors injecting selection styles
+    }
   }
 
   function applySettings(settings: Settings) {
@@ -292,7 +298,9 @@ export function handleContentMessage(
           new CustomEvent(updateEventName, { detail: currentSettings }),
         );
       }
-    } catch (_e) {}
+    } catch {
+      // Suppress errors applying settings
+    }
   }
 
   function loadSettings() {
@@ -314,7 +322,7 @@ export function handleContentMessage(
               | undefined;
             const settings: Settings = validateSettings({
               ...DEFAULT_SETTINGS,
-              ...(stored ?? {}),
+              ...stored,
             });
             if (typeof result?.shieldEnabled === 'boolean') {
               settings.enabled = result.shieldEnabled;
@@ -326,7 +334,7 @@ export function handleContentMessage(
         configRequestInFlight = false;
         applySettings(DEFAULT_SETTINGS);
       }
-    } catch (_error) {
+    } catch {
       configRequestInFlight = false;
       applySettings(DEFAULT_SETTINGS);
     }

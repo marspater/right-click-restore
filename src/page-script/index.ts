@@ -33,7 +33,9 @@ export function isInteractiveNode(node: Node | null): boolean {
       }
       if (safeClosest(curr, ALL_INTERACTIVE_SELECTORS)) return true;
     }
-  } catch (_e) {}
+  } catch {
+    // Suppress errors inspecting interactive node
+  }
   return false;
 }
 
@@ -57,7 +59,9 @@ export function isInteractiveEvent(event: Event): boolean {
         );
       }
     }
-  } catch (_e) {}
+  } catch {
+    // Suppress errors checking composedPath
+  }
   return isInteractiveNode(event.target instanceof Node ? event.target : null);
 }
 
@@ -74,7 +78,9 @@ export function isModifierPressed(event: Event): boolean {
       const e = event as MouseEvent;
       return Boolean(e.shiftKey || e.altKey);
     }
-  } catch (_e) {}
+  } catch {
+    // Suppress errors checking modifier keys
+  }
   return false;
 }
 
@@ -123,6 +129,170 @@ export function handlePageScriptMessage(
   }
 
   return false;
+}
+
+function setupLegacyScriptFallback(
+  onUpdate: (config: Settings) => void,
+  onUnlock: () => void,
+) {
+  try {
+    const scriptEl = document.currentScript;
+    if (
+      scriptEl instanceof HTMLScriptElement &&
+      scriptEl.dataset.initialConfig
+    ) {
+      onUpdate(validateSettings(JSON.parse(scriptEl.dataset.initialConfig)));
+      const legacyUpdate = scriptEl.dataset.updateEvent;
+      const legacyUnlock = scriptEl.dataset.unlockEvent;
+
+      delete scriptEl.dataset.initialConfig;
+      delete scriptEl.dataset.updateEvent;
+      delete scriptEl.dataset.unlockEvent;
+      scriptEl.remove();
+
+      if (legacyUpdate) {
+        window.addEventListener(legacyUpdate, (e: Event) => {
+          try {
+            const customEvent = e as CustomEvent<Settings>;
+            if (customEvent.detail && typeof customEvent.detail === 'object') {
+              onUpdate(validateSettings(customEvent.detail));
+            }
+          } catch {
+            // Suppress errors applying legacy config update
+          }
+        });
+      }
+      if (legacyUnlock) {
+        window.addEventListener(legacyUnlock, onUnlock);
+      }
+    }
+  } catch {
+    // Suppress errors reading legacy script element
+  }
+}
+
+function setupEventInterception(shouldBlockEvent: (event: Event) => boolean) {
+  const origPD = Event.prototype.preventDefault;
+  const origSP = Event.prototype.stopPropagation;
+  const origSIP = Event.prototype.stopImmediatePropagation;
+
+  Event.prototype.preventDefault = function (this: Event): void {
+    if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
+    try {
+      origPD.apply(this);
+    } catch {
+      // Suppress errors calling original preventDefault
+    }
+  };
+
+  try {
+    const origDescriptor = Object.getOwnPropertyDescriptor(
+      Event.prototype,
+      'returnValue',
+    );
+    if (origDescriptor?.configurable !== false) {
+      Object.defineProperty(Event.prototype, 'returnValue', {
+        get() {
+          if (this && this instanceof Event && shouldBlockEvent(this))
+            return true;
+          try {
+            if (origDescriptor?.get) return origDescriptor.get.call(this);
+          } catch {
+            // Suppress errors calling original returnValue getter
+          }
+          return true;
+        },
+        set(val) {
+          if (this && this instanceof Event && shouldBlockEvent(this)) return;
+          try {
+            if (origDescriptor?.set) origDescriptor.set.call(this, val);
+          } catch {
+            // Suppress errors calling original returnValue setter
+          }
+        },
+        configurable: true,
+        enumerable: true,
+      });
+    }
+  } catch {
+    // Suppress errors intercepting returnValue property
+  }
+
+  Event.prototype.stopPropagation = function (this: Event): void {
+    if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
+    try {
+      origSP.apply(this);
+    } catch {
+      // Suppress errors calling original stopPropagation
+    }
+  };
+
+  Event.prototype.stopImmediatePropagation = function (this: Event): void {
+    if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
+    try {
+      origSIP.apply(this);
+    } catch {
+      // Suppress errors calling original stopImmediatePropagation
+    }
+  };
+}
+
+function setupPropertyTraps(isForceModeActive: () => boolean) {
+  const targets = [
+    typeof Window !== 'undefined' ? Window.prototype : null,
+    typeof Document !== 'undefined' ? Document.prototype : null,
+    typeof HTMLElement !== 'undefined' ? HTMLElement.prototype : null,
+    typeof HTMLBodyElement !== 'undefined' ? HTMLBodyElement.prototype : null,
+  ].filter(Boolean) as object[];
+
+  for (const prop of [
+    'oncontextmenu',
+    'onselectstart',
+    'ondragstart',
+    'oncopy',
+    'oncut',
+    'onbeforecopy',
+  ]) {
+    for (const proto of targets) {
+      try {
+        const origDescriptor = Object.getOwnPropertyDescriptor(proto, prop);
+        if (origDescriptor?.configurable === false) {
+          continue;
+        }
+        Object.defineProperty(proto, prop, {
+          get() {
+            if (isForceModeActive() && !isInteractiveNode(this as Node)) {
+              return null;
+            }
+            try {
+              if (origDescriptor?.get) {
+                return origDescriptor.get.call(this);
+              }
+            } catch {
+              // Suppress errors calling original event getter
+            }
+            return undefined;
+          },
+          set(val) {
+            if (isForceModeActive() && !isInteractiveNode(this as Node)) {
+              return;
+            }
+            try {
+              if (origDescriptor?.set) {
+                origDescriptor.set.call(this, val);
+              }
+            } catch {
+              // Suppress errors calling original event setter
+            }
+          },
+          configurable: true,
+          enumerable: true,
+        });
+      } catch {
+        // Suppress errors defining event handler properties
+      }
+    }
+  }
 }
 
 if (typeof window !== 'undefined') {
@@ -212,49 +382,9 @@ if (typeof window !== 'undefined') {
     sendHandshake();
 
     // Fallback support for legacy injected script element
-    try {
-      const scriptEl = document.currentScript;
-      if (
-        scriptEl instanceof HTMLScriptElement &&
-        scriptEl.dataset.initialConfig
-      ) {
-        activeConfig = validateSettings(
-          JSON.parse(scriptEl.dataset.initialConfig),
-        );
-        const legacyUpdate = scriptEl.dataset.updateEvent;
-        const legacyUnlock = scriptEl.dataset.unlockEvent;
-
-        delete scriptEl.dataset.initialConfig;
-        delete scriptEl.dataset.updateEvent;
-        delete scriptEl.dataset.unlockEvent;
-        scriptEl.remove();
-
-        if (legacyUpdate) {
-          window.addEventListener(legacyUpdate, (e: Event) => {
-            try {
-              const customEvent = e as CustomEvent<Settings>;
-              if (
-                customEvent.detail &&
-                typeof customEvent.detail === 'object'
-              ) {
-                activeConfig = validateSettings(customEvent.detail);
-              }
-            } catch {
-              // Suppress errors applying legacy config update
-            }
-          });
-        }
-        if (legacyUnlock) {
-          window.addEventListener(legacyUnlock, unlockPage);
-        }
-      }
-    } catch {
-      // Suppress errors reading legacy script element
-    }
-
-    const origPD = Event.prototype.preventDefault;
-    const origSP = Event.prototype.stopPropagation;
-    const origSIP = Event.prototype.stopImmediatePropagation;
+    setupLegacyScriptFallback((newConfig) => {
+      activeConfig = newConfig;
+    }, unlockPage);
 
     function isShieldActive(): boolean {
       return activeConfig.enabled !== false;
@@ -312,121 +442,8 @@ if (typeof window !== 'undefined') {
       return false;
     }
 
-    Event.prototype.preventDefault = function (this: Event): void {
-      if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
-      try {
-        origPD.apply(this);
-      } catch {
-        // Suppress errors calling original preventDefault
-      }
-    };
-
-    try {
-      const origDescriptor = Object.getOwnPropertyDescriptor(
-        Event.prototype,
-        'returnValue',
-      );
-      if (origDescriptor?.configurable !== false) {
-        Object.defineProperty(Event.prototype, 'returnValue', {
-          get() {
-            if (this && this instanceof Event && shouldBlockEvent(this))
-              return true;
-            try {
-              if (origDescriptor?.get) return origDescriptor.get.call(this);
-            } catch {
-              // Suppress errors calling original returnValue getter
-            }
-            return true;
-          },
-          set(val) {
-            if (this && this instanceof Event && shouldBlockEvent(this)) return;
-            try {
-              if (origDescriptor?.set) origDescriptor.set.call(this, val);
-            } catch {
-              // Suppress errors calling original returnValue setter
-            }
-          },
-          configurable: true,
-          enumerable: true,
-        });
-      }
-    } catch {
-      // Suppress errors intercepting returnValue property
-    }
-
-    Event.prototype.stopPropagation = function (this: Event): void {
-      if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
-      try {
-        origSP.apply(this);
-      } catch {
-        // Suppress errors calling original stopPropagation
-      }
-    };
-
-    Event.prototype.stopImmediatePropagation = function (this: Event): void {
-      if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
-      try {
-        origSIP.apply(this);
-      } catch {
-        // Suppress errors calling original stopImmediatePropagation
-      }
-    };
-
-    const targets = [
-      typeof Window !== 'undefined' ? Window.prototype : null,
-      typeof Document !== 'undefined' ? Document.prototype : null,
-      typeof HTMLElement !== 'undefined' ? HTMLElement.prototype : null,
-      typeof HTMLBodyElement !== 'undefined' ? HTMLBodyElement.prototype : null,
-    ].filter(Boolean) as object[];
-
-    for (const prop of [
-      'oncontextmenu',
-      'onselectstart',
-      'ondragstart',
-      'oncopy',
-      'oncut',
-      'onbeforecopy',
-    ]) {
-      for (const proto of targets) {
-        try {
-          const origDescriptor = Object.getOwnPropertyDescriptor(proto, prop);
-          if (origDescriptor?.configurable === false) {
-            continue;
-          }
-          Object.defineProperty(proto, prop, {
-            get() {
-              if (isForceModeActive() && !isInteractiveNode(this as Node)) {
-                return null;
-              }
-              try {
-                if (origDescriptor?.get) {
-                  return origDescriptor.get.call(this);
-                }
-              } catch {
-                // Suppress errors calling original event getter
-              }
-              return undefined;
-            },
-            set(val) {
-              if (isForceModeActive() && !isInteractiveNode(this as Node)) {
-                return;
-              }
-              try {
-                if (origDescriptor?.set) {
-                  origDescriptor.set.call(this, val);
-                }
-              } catch {
-                // Suppress errors calling original event setter
-              }
-            },
-            configurable: true,
-            enumerable: true,
-          });
-        } catch {
-          // Suppress errors defining event handler properties
-        }
-      }
-    }
+    setupEventInterception(shouldBlockEvent);
+    setupPropertyTraps(isForceModeActive);
 
     function isMediaOrTextElement(el: Element): boolean {
       return (

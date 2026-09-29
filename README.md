@@ -3,10 +3,10 @@
 [![CI](https://github.com/marspater/right-click-restore/actions/workflows/ci.yml/badge.svg)](https://github.com/marspater/right-click-restore/actions/workflows/ci.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=marspater_right-click-restore&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=marspater_right-click-restore)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Platform: macOS & iOS](https://img.shields.io/badge/Platform-macOS%2012%2B%20%7C%20macOS%2027%20%7C%20iOS%2015%2B-purple.svg)](README.md#compatibility--system-requirements)
+[![Platform: macOS](https://img.shields.io/badge/Platform-macOS%2012%2B%20%7C%20macOS%2027-purple.svg)](README.md#compatibility--system-requirements)
 [![Safari: MV3](https://img.shields.io/badge/Safari-MV3-blue.svg)](README.md)
 
-A high-performance Safari Web Extension and native companion application for macOS and iOS that restores context menus, text selection, copy, cut, and drag operations on websites that deliberately disable them.
+A high-performance Safari Web Extension and native companion application for macOS that restores context menus, text selection, copy, cut, and drag operations on websites that deliberately disable them.
 
 ---
 
@@ -16,7 +16,6 @@ A high-performance Safari Web Extension and native companion application for mac
 | :--- | :--- | :--- | :--- |
 | **macOS** | macOS 12.0 (Monterey) | macOS 14 (Sonoma), macOS 15 (Sequoia) | **macOS 27 Liquid Glass HIG** (Continuous Sheen & Vibrancy) |
 | **Architecture** | Universal | Apple Silicon (`arm64`), Intel (`x86_64`) | Optimized for Apple M-series chips |
-| **iOS / iPadOS** | iOS 15.0+ | iOS 17, iOS 18 | Apple Touch & Share Sheet |
 | **Safari** | Safari 15.0+ | Safari 17, Safari 18, Technology Preview | Manifest V3 (Main World & Isolated World) |
 
 ---
@@ -128,7 +127,7 @@ src/
 └── manifest.json     Safari Web Extension manifest
 
 SafariExtension/
-└── RightClickRestore/  Native macOS/iOS wrapper and extension targets
+└── RightClickRestore/  Native macOS companion app and extension target
 ```
 
 The build pipeline compiles the web extension into the Safari extension's `Resources` directory before Xcode embeds it. This prevents the common failure mode where Xcode packages stale JavaScript from a previous build.

@@ -10,3 +10,7 @@
 
 3. **Visual Polish for Keycap Badges (`src/popup/popup.css`)**:
    - Enhanced `<kbd>` keycap styling with `font-weight: 600`, elevated contrast using `var(--text-primary)`, and subtle drop-shadow `0 1px 1.5px rgba(0, 0, 0, 0.08)` to present keycaps clearly across both light and dark themes.
+
+4. **Dynamic Footnote Tip & High-Contrast Action Feedback (`src/popup/App.svelte`)**:
+   - Updated footer tip to dynamically adapt based on `settings.bypassModifierKey` status—showing keyboard shortcuts (`⇧ Shift` / `⌥ Option`) when active, and setup guidance when disabled.
+   - Enhanced "Force Unlock Page" feedback states (`unlockStatus === 'success'` or `'error'`) with `disabled:opacity-100` so vibrant status colors maintain high contrast across popover displays.

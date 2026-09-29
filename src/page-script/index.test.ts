@@ -184,6 +184,23 @@ describe('page-script helpers', () => {
     });
   });
 
+  describe('isModifierPressed', () => {
+    test('returns true when shiftKey or altKey is pressed', () => {
+      const shiftEvent = { shiftKey: true, altKey: false } as MouseEvent;
+      const altEvent = { shiftKey: false, altKey: true } as MouseEvent;
+      const plainEvent = { shiftKey: false, altKey: false } as MouseEvent;
+
+      expect(isModifierPressed(shiftEvent)).toBe(true);
+      expect(isModifierPressed(altEvent)).toBe(true);
+      expect(isModifierPressed(plainEvent)).toBe(false);
+    });
+
+    test('handles null or invalid event objects safely', () => {
+      expect(isModifierPressed(null as unknown as Event)).toBe(false);
+      expect(isModifierPressed(undefined as unknown as Event)).toBe(false);
+    });
+  });
+
   describe('isInteractiveNode DOM clobbering resistance', () => {
     test('resists DOM clobbering when child inputs shadow matches or closest', () => {
       const form = document.createElement('form');

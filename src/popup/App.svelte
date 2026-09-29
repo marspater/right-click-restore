@@ -431,9 +431,9 @@ async function forceUnlockPage() {
         isSiteActive && unlockStatus === 'idle' ? 'active:scale-[0.985]' : ''
       } ${
         unlockStatus === 'success'
-          ? 'bg-[var(--accent-green)] text-white shadow-sm border border-transparent'
+          ? 'bg-[var(--accent-green)] text-white shadow-sm border border-transparent disabled:opacity-100'
           : unlockStatus === 'error'
-            ? 'bg-[var(--accent-red)] text-white shadow-sm border border-transparent'
+            ? 'bg-[var(--accent-red)] text-white shadow-sm border border-transparent disabled:opacity-100'
             : isSiteActive
               ? 'bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] text-[var(--text-primary)] border border-[var(--border-subtle)] shadow-[var(--shadow-btn)]'
               : 'bg-[var(--bg-card)] text-[var(--text-tertiary)] border border-[var(--border-subtle)] opacity-50'
@@ -466,10 +466,14 @@ async function forceUnlockPage() {
     </button>
   </div>
 
-  <!-- Footnote Tip with High-Contrast Keycap -->
+  <!-- Footnote Tip with Dynamic Context Awareness -->
   <footer class="pt-0.5 text-center select-none">
     <p class="text-[10px] text-[var(--text-tertiary)] leading-tight m-0 inline">
-      Tip: Hold <kbd>⇧ Shift</kbd> to summon native menu anywhere
+      {#if settings.bypassModifierKey}
+        Tip: Hold <kbd>⇧ Shift</kbd> or <kbd>⌥ Option</kbd> for native menu
+      {:else}
+        Tip: Enable Modifier Key Bypass to hold <kbd>⇧ Shift</kbd>
+      {/if}
     </p>
   </footer>
 </main>

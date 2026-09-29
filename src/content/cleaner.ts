@@ -45,35 +45,60 @@ export const SCRUB_SELECTOR = [
   '[style*="UserSelect"]',
 ].join(',');
 
+function hasUserSelectNone(node: Element): boolean {
+  if (typeof HTMLElement === 'undefined' || !(node instanceof HTMLElement)) {
+    return false;
+  }
+  const style = safeGetStyle(node);
+  if (!style) return false;
+  return (
+    style.userSelect === 'none' ||
+    style.getPropertyValue('-webkit-user-select') === 'none'
+  );
+}
+
+function restoreUserSelect(node: Element): void {
+  if (typeof HTMLElement === 'undefined' || !(node instanceof HTMLElement)) {
+    return;
+  }
+  try {
+    const style = safeGetStyle(node);
+    if (style) {
+      if (style.userSelect === 'none') {
+        style.userSelect = 'auto';
+      }
+      if (style.getPropertyValue('-webkit-user-select') === 'none') {
+        style.setProperty('-webkit-user-select', 'auto');
+      }
+    }
+  } catch {
+    // Suppress style modification errors on restricted or read-only elements
+  }
+}
+
+function hasScrubbableSelection(node: Element): boolean {
+  for (const attr of SCRUB_ATTRS) {
+    if (attr !== 'oncontextmenu' && safeHasAttribute(node, attr)) {
+      return true;
+    }
+  }
+  return hasUserSelectNone(node);
+}
+
 function hasScrubbableTarget(node: Element, settings: Settings): boolean {
   try {
     if (settings.restoreRightClick && safeHasAttribute(node, 'oncontextmenu')) {
       return true;
     }
-    if (settings.restoreSelection) {
-      for (let i = 0; i < SCRUB_ATTRS.length; i++) {
-        const attr = SCRUB_ATTRS[i];
-        if (attr !== 'oncontextmenu' && safeHasAttribute(node, attr)) {
-          return true;
-        }
-      }
-      if (typeof HTMLElement !== 'undefined' && node instanceof HTMLElement) {
-        const style = safeGetStyle(node);
-        if (style) {
-          if (style.userSelect === 'none') return true;
-          if (
-            'webkitUserSelect' in style &&
-            style.webkitUserSelect === 'none'
-          ) {
-            return true;
-          }
-        }
-      }
+    if (settings.restoreSelection && hasScrubbableSelection(node)) {
+      return true;
     }
     if (safeGetShadowRoot(node)) {
       return true;
     }
-  } catch (_e) {}
+  } catch {
+    // Suppress errors inspecting attributes or shadow roots on detached elements
+  }
   return false;
 }
 
@@ -106,7 +131,8 @@ export function cleanNode(
     if (safeClosest(node, ALL_INTERACTIVE_SELECTORS)) {
       return;
     }
-  } catch (_e) {
+  } catch {
+    // Return early if ancestor matching throws on detached node
     return;
   }
 
@@ -115,26 +141,12 @@ export function cleanNode(
   }
 
   if (settings.restoreSelection) {
-    for (let i = 0; i < SCRUB_ATTRS.length; i++) {
-      const attr = SCRUB_ATTRS[i];
+    for (const attr of SCRUB_ATTRS) {
       if (attr !== 'oncontextmenu') {
         safeRemoveAttribute(node, attr);
       }
     }
-    if (typeof HTMLElement !== 'undefined' && node instanceof HTMLElement) {
-      try {
-        const style = safeGetStyle(node);
-        if (style) {
-          if (style.userSelect === 'none') style.userSelect = 'auto';
-          if (
-            'webkitUserSelect' in style &&
-            style.webkitUserSelect === 'none'
-          ) {
-            style.webkitUserSelect = 'auto';
-          }
-        }
-      } catch (_e) {}
-    }
+    restoreUserSelect(node);
   }
 
   // Traverse open shadow root if accessible
@@ -143,7 +155,9 @@ export function cleanNode(
     if (shadow) {
       cleanDOMTree(shadow, settings);
     }
-  } catch (_e) {}
+  } catch {
+    // Suppress errors traversing shadow roots on restricted elements
+  }
 }
 
 export function cleanAddedNode(
@@ -156,7 +170,9 @@ export function cleanAddedNode(
     for (const child of safeQuerySelectorAll(node, SCRUB_SELECTOR)) {
       cleanNode(child, settings);
     }
-  } catch (_e) {}
+  } catch {
+    // Suppress querySelectorAll errors on detached elements
+  }
 }
 
 export function cleanDOMTree(
@@ -175,5 +191,7 @@ export function cleanDOMTree(
     for (const node of safeQuerySelectorAll(root, SCRUB_SELECTOR)) {
       cleanNode(node, settings);
     }
-  } catch (_e) {}
+  } catch {
+    // Suppress querySelectorAll errors during DOM tree traversal
+  }
 }

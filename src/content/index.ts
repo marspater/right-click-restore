@@ -13,45 +13,57 @@ import {
   safeGetElementById,
 } from './cleaner';
 
+export interface ContentMessageHandlers {
+  onUnlockTriggered?: () => void;
+  onCleanDOMTree?: () => void;
+  onDispatchEvent?: (name: string) => void;
+  unlockEventName?: string;
+  onShowUnlockToast?: () => void;
+  onApplySettings?: (config: Settings) => void;
+}
+
+function isAuthorizedSender(
+  sender: chrome.runtime.MessageSender | undefined,
+): boolean {
+  if (typeof chrome === 'undefined' || !chrome.runtime?.id) {
+    return true;
+  }
+  if (!sender?.id || sender.id !== chrome.runtime.id) {
+    return false;
+  }
+
+  const extPrefix =
+    typeof chrome.runtime.getURL === 'function'
+      ? chrome.runtime.getURL('')
+      : '';
+  const isExtensionUri = (uri?: string) =>
+    Boolean(
+      uri &&
+        (uri.startsWith('chrome-extension://') ||
+          uri.startsWith('safari-web-extension://') ||
+          uri.startsWith('moz-extension://') ||
+          (extPrefix && uri.startsWith(extPrefix))),
+    );
+
+  if (sender.origin && !isExtensionUri(sender.origin)) {
+    return false;
+  }
+  if (sender.url && !isExtensionUri(sender.url)) {
+    return false;
+  }
+  return true;
+}
+
 export function handleContentMessage(
   message: { type?: string; config?: Settings },
   sender: chrome.runtime.MessageSender | undefined,
   sendResponse: (response?: unknown) => void,
-  onUnlockTriggered?: () => void,
-  onCleanDOMTree?: () => void,
-  onDispatchEvent?: (name: string) => void,
-  unlockEventName?: string,
-  onShowUnlockToast?: () => void,
-  onApplySettings?: (config: Settings) => void,
+  handlers: ContentMessageHandlers = {},
 ) {
   // Validate sender origin to prevent message spoofing from untrusted extension contexts or web scripts
-  if (typeof chrome !== 'undefined' && chrome.runtime?.id) {
-    if (!sender || sender.id !== chrome.runtime.id) {
-      sendResponse({ status: 'unauthorized' });
-      return;
-    }
-
-    const extPrefix =
-      typeof chrome.runtime.getURL === 'function'
-        ? chrome.runtime.getURL('')
-        : '';
-    const isExtensionUri = (uri?: string) =>
-      Boolean(
-        uri &&
-          (uri.startsWith('chrome-extension://') ||
-            uri.startsWith('safari-web-extension://') ||
-            uri.startsWith('moz-extension://') ||
-            (extPrefix && uri.startsWith(extPrefix))),
-      );
-
-    if (sender.origin && !isExtensionUri(sender.origin)) {
-      sendResponse({ status: 'unauthorized' });
-      return;
-    }
-    if (sender.url && !isExtensionUri(sender.url)) {
-      sendResponse({ status: 'unauthorized' });
-      return;
-    }
+  if (!isAuthorizedSender(sender)) {
+    sendResponse({ status: 'unauthorized' });
+    return;
   }
 
   // Security Hardening: Validate message payload to prevent unhandled TypeErrors on null/non-object messages
@@ -62,28 +74,37 @@ export function handleContentMessage(
 
   if (message.type === 'RCR_FORCE_UNLOCK') {
     try {
-      onUnlockTriggered?.();
-    } catch (_e) {}
-    try {
-      onCleanDOMTree?.();
-    } catch (_e) {}
-    if (unlockEventName && onDispatchEvent) {
-      try {
-        onDispatchEvent(unlockEventName);
-      } catch (_e) {}
+      handlers.onUnlockTriggered?.();
+    } catch {
+      // Suppress unlock callback errors
     }
     try {
-      onShowUnlockToast?.();
-    } catch (_e) {}
+      handlers.onCleanDOMTree?.();
+    } catch {
+      // Suppress DOM cleaning errors
+    }
+    if (handlers.unlockEventName && handlers.onDispatchEvent) {
+      try {
+        handlers.onDispatchEvent(handlers.unlockEventName);
+      } catch {
+        // Suppress custom event dispatch errors
+      }
+    }
+    try {
+      handlers.onShowUnlockToast?.();
+    } catch {
+      // Suppress toast notification errors
+    }
     sendResponse({ status: 'unlocked' });
     return;
   }
 
   if (message.type === 'RCR_CONFIG_CHANGED' && message.config) {
     try {
-      onApplySettings?.(message.config);
+      handlers.onApplySettings?.(message.config);
       sendResponse({ status: 'ok' });
-    } catch (_err) {
+    } catch {
+      // Send error response if applying settings fails
       sendResponse({ status: 'error' });
     }
     return;
@@ -202,7 +223,9 @@ export function handleContentMessage(
             bridgeNonce = detail.nonce;
             notifyPageScript('UPDATE', currentSettings);
           }
-        } catch (_err) {}
+        } catch {
+          // Suppress errors handling handshake event
+        }
       });
 
       // Request handshake from page-script if it already ran at document_start
@@ -375,12 +398,32 @@ export function handleContentMessage(
         unlockToastRemoveTimer = setTimeout(() => {
           try {
             host.remove();
-          } catch (_e) {}
+          } catch {
+            // Suppress errors removing toast host
+          }
           unlockToastRemoveTimer = null;
         }, 300);
         unlockToastTimer = null;
       }, 1600);
-    } catch (_e) {}
+    } catch {
+      // Suppress errors during toast creation
+    }
+  }
+
+  function handleMutation(mutation: MutationRecord) {
+    if (mutation.type === 'childList') {
+      for (const node of mutation.addedNodes) {
+        // Only queue Element nodes; ignore Text, Comment, etc.
+        if (node?.nodeType === 1) {
+          pendingNodes.add(node);
+        }
+      }
+    } else if (
+      mutation.type === 'attributes' &&
+      mutation.target instanceof Element
+    ) {
+      cleanNode(mutation.target);
+    }
   }
 
   function startObserver() {
@@ -398,20 +441,10 @@ export function handleContentMessage(
 
         for (const mutation of mutations) {
           try {
-            if (mutation.type === 'childList') {
-              for (const node of mutation.addedNodes) {
-                // Only queue Element nodes; ignore Text, Comment, etc.
-                if (node && node.nodeType === 1) {
-                  pendingNodes.add(node);
-                }
-              }
-            } else if (
-              mutation.type === 'attributes' &&
-              mutation.target instanceof Element
-            ) {
-              cleanNode(mutation.target);
-            }
-          } catch (_e) {}
+            handleMutation(mutation);
+          } catch {
+            // Suppress errors processing single mutation
+          }
         }
 
         // Bounded queue protection: prevent memory bloat on heavy churn
@@ -429,7 +462,9 @@ export function handleContentMessage(
         attributes: true,
         attributeFilter: SCRUB_ATTRS,
       });
-    } catch (_e) {}
+    } catch {
+      // Suppress errors initializing MutationObserver
+    }
   }
 
   // SPA Navigation hooks
@@ -440,7 +475,9 @@ export function handleContentMessage(
       if (currentSettings.enabled) {
         cleanDOMTree();
       }
-    } catch (_e) {}
+    } catch {
+      // Suppress errors reapplying settings during SPA route transition
+    }
   }
 
   try {
@@ -448,27 +485,26 @@ export function handleContentMessage(
     window.addEventListener('hashchange', handleSpaNavigation, {
       passive: true,
     });
-  } catch (_e) {}
+  } catch {
+    // Suppress errors adding SPA navigation event listeners
+  }
 
   function handleMessage(
     message: { type?: string; config?: Settings },
     sender: chrome.runtime.MessageSender | undefined,
     sendResponse: (response?: unknown) => void,
   ) {
-    return handleContentMessage(
-      message,
-      sender,
-      sendResponse,
-      () => {
+    return handleContentMessage(message, sender, sendResponse, {
+      onUnlockTriggered: () => {
         diagnostics.unlockTriggered++;
         notifyPageScript('UNLOCK');
       },
-      cleanDOMTree,
-      (name) => window.dispatchEvent(new CustomEvent(name)),
+      onCleanDOMTree,
+      onDispatchEvent: (name) => window.dispatchEvent(new CustomEvent(name)),
       unlockEventName,
-      showUnlockToast,
-      applySettings,
-    );
+      onShowUnlockToast: showUnlockToast,
+      onApplySettings: applySettings,
+    });
   }
 
   try {

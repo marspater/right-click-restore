@@ -25,6 +25,19 @@ const MAX_HOSTNAME_LENGTH = 253;
 
 const HOSTNAME_VALID_CHARS = /^[a-z0-9.-]+$/;
 
+function stripProtocolAndPath(str: string): string {
+  if (str.includes('://') || str.startsWith('//')) {
+    try {
+      const url = new URL(str.startsWith('//') ? `http:${str}` : str);
+      return url.hostname;
+    } catch {
+      // Fallback to manual prefix and path stripping if URL constructor fails
+      return str.replace(/^[a-z]+:\/\//, '').split('/')[0];
+    }
+  }
+  return str.split('/')[0].split('?')[0].split('#')[0];
+}
+
 export function normalizeHostname(hostname: string): string {
   if (typeof hostname !== 'string') return '';
   const cached = hostnameCache.get(hostname);
@@ -38,7 +51,7 @@ export function normalizeHostname(hostname: string): string {
   // 1. Strip control characters and null bytes without regex control chars
   let clean = '';
   for (let i = 0; i < input.length; i++) {
-    const code = input.charCodeAt(i);
+    const code = input.codePointAt(i) ?? 0;
     if (code > 31 && code !== 127) {
       clean += input[i];
     }
@@ -46,16 +59,7 @@ export function normalizeHostname(hostname: string): string {
   clean = clean.trim().toLowerCase();
 
   // 2. If a full URL or protocol-relative string is passed, extract hostname
-  if (clean.includes('://') || clean.startsWith('//')) {
-    try {
-      const url = new URL(clean.startsWith('//') ? `http:${clean}` : clean);
-      clean = url.hostname;
-    } catch (_e) {
-      clean = clean.replace(/^[a-z]+:\/\//, '').split('/')[0];
-    }
-  } else {
-    clean = clean.split('/')[0].split('?')[0].split('#')[0];
-  }
+  clean = stripProtocolAndPath(clean);
 
   // 3. Strip user credentials (userInfo) if present (e.g. user:pass@host)
   if (clean.includes('@')) {
@@ -65,11 +69,11 @@ export function normalizeHostname(hostname: string): string {
   // 4. Strip port if present (e.g. host:8080)
   clean = clean.replace(/:\d+$/, '');
 
-  // 5. Strip www. prefix and trailing dots
-  clean = clean
-    .slice(0, MAX_HOSTNAME_LENGTH)
-    .replace(/^www\./, '')
-    .replace(/\.+$/, '');
+  // 5. Strip www. prefix and trailing dots without backtracking
+  clean = clean.slice(0, MAX_HOSTNAME_LENGTH).replace(/^www\./, '');
+  while (clean.endsWith('.')) {
+    clean = clean.slice(0, -1);
+  }
 
   // 6. Validate DNS characters (RFC 1123 compliant: a-z, 0-9, hyphens, dots)
   if (
@@ -100,9 +104,7 @@ export function validateSettings(raw: unknown): Settings {
     if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
       return undefined;
     }
-    return Object.prototype.hasOwnProperty.call(obj, key)
-      ? obj[key]
-      : undefined;
+    return Object.hasOwn(obj, key) ? obj[key] : undefined;
   };
 
   const sanitizeBool = (key: string, fallback: boolean): boolean => {

@@ -22,7 +22,7 @@ describe('getSecureRandomString', () => {
     try {
       const token = getSecureRandomString();
       expect(typeof token).toBe('string');
-      expect(token.length).toBe(32); // 16 bytes = 32 hex chars
+      expect(token).toHaveLength(32); // 16 bytes = 32 hex chars
       expect(/^[0-9a-f]{32}$/.test(token)).toBe(true);
     } finally {
       Object.defineProperty(crypto, 'randomUUID', {

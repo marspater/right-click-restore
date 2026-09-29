@@ -29,13 +29,10 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
                 rawMessage = userInfo["message"]
             }
 
-            if let dict = rawMessage as? [String: Any] {
-                // Ensure request action is recognized or safe
-                if let action = dict["action"] as? String {
-                    if action.count > 64 {
-                        status = "invalid_action"
-                    }
-                }
+            if let dict = rawMessage as? [String: Any],
+               let action = dict["action"] as? String,
+               action.count > 64 {
+                status = "invalid_action"
             }
         }
 

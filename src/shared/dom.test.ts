@@ -214,7 +214,7 @@ describe('shared DOM utilities', () => {
       container.appendChild(item2);
 
       const items = safeQuerySelectorAll(container, '.item');
-      expect(items.length).toBe(2);
+      expect(items).toHaveLength(2);
       expect(items[0]).toBe(item1);
       expect(items[1]).toBe(item2);
     });
@@ -236,7 +236,7 @@ describe('shared DOM utilities', () => {
       });
 
       const results = safeQuerySelectorAll(container, '.target');
-      expect(results.length).toBe(1);
+      expect(results).toHaveLength(1);
       expect(results[0]).toBe(target);
     });
   });

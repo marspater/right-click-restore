@@ -120,16 +120,16 @@ describe('content script message handler', () => {
       { type: 'RCR_FORCE_UNLOCK' },
       authorizedSender,
       sendResponse,
-      () => {
-        unlockTriggered = true;
-      },
-      () => {
-        domCleaned = true;
-      },
-      undefined,
-      undefined,
-      () => {
-        toastShown = true;
+      {
+        onUnlockTriggered: () => {
+          unlockTriggered = true;
+        },
+        onCleanDOMTree: () => {
+          domCleaned = true;
+        },
+        onShowUnlockToast: () => {
+          toastShown = true;
+        },
       },
     );
 
@@ -200,13 +200,10 @@ describe('content script message handler', () => {
       },
       authorizedSender,
       sendResponse,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      () => {
-        throw new Error('Callback failed');
+      {
+        onApplySettings: () => {
+          throw new Error('Callback failed');
+        },
       },
     );
 

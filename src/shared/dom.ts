@@ -11,7 +11,7 @@ export function getUnshadowedMethod(
     // and DOM methods (matches, closest, etc.) are not on Object.prototype.
     if (
       !OBJECT_PROTO_METHODS.has(methodName) &&
-      !Object.prototype.hasOwnProperty.call(obj, methodName)
+      !Object.hasOwn(obj, methodName)
     ) {
       const fn = (obj as Record<string, unknown>)[methodName];
       if (typeof fn === 'function') {
@@ -68,7 +68,8 @@ export function safeMatches(element: Element, selector: string): boolean {
       return Boolean(fn.call(element, selector));
     }
     return element.matches(selector);
-  } catch (_e) {
+  } catch {
+    // Return false if selector matching throws on restricted or detached nodes
     return false;
   }
 }
@@ -83,7 +84,8 @@ export function safeClosest(
       return fn.call(element, selector) as Element | null;
     }
     return element.closest(selector);
-  } catch (_e) {
+  } catch {
+    // Return null if closest traversal throws on restricted or detached nodes
     return null;
   }
 }
@@ -98,7 +100,8 @@ export function safeGetElementById(
       return fn.call(doc, id) as HTMLElement | null;
     }
     return doc.getElementById(id);
-  } catch (_e) {
+  } catch {
+    // Return null if getElementById throws on restricted document contexts
     return null;
   }
 }
@@ -113,7 +116,8 @@ export function safeQuerySelectorAll(
       return Array.from(fn.call(root, selector) as NodeListOf<Element>);
     }
     return Array.from(root.querySelectorAll(selector));
-  } catch (_e) {
+  } catch {
+    // Return empty array if querySelectorAll throws on invalid selectors or detached nodes
     return [];
   }
 }
@@ -125,7 +129,8 @@ export function safeHasAttribute(element: Element, attr: string): boolean {
       return Boolean(fn.call(element, attr));
     }
     return element.hasAttribute(attr);
-  } catch (_e) {
+  } catch {
+    // Return false if attribute check throws on restricted elements
     return false;
   }
 }
@@ -139,14 +144,14 @@ export function safeRemoveAttribute(element: Element, attr: string): void {
     } else {
       element.removeAttribute(attr);
     }
-  } catch (_e) {
-    // Fallback if attribute removal throws
+  } catch {
+    // Suppress attribute removal errors on cross-origin or read-only elements
   }
 }
 
 export function safeGetShadowRoot(element: Element): ShadowRoot | null {
   try {
-    if (!Object.prototype.hasOwnProperty.call(element, 'shadowRoot')) {
+    if (!Object.hasOwn(element, 'shadowRoot')) {
       return element.shadowRoot;
     }
     const getter = getUnshadowedGetter(element, 'shadowRoot');
@@ -154,14 +159,15 @@ export function safeGetShadowRoot(element: Element): ShadowRoot | null {
       return getter.call(element) as ShadowRoot | null;
     }
     return element.shadowRoot;
-  } catch (_e) {
+  } catch {
+    // Return null if accessing shadowRoot throws on restricted elements
     return null;
   }
 }
 
 export function safeGetStyle(element: HTMLElement): CSSStyleDeclaration | null {
   try {
-    if (!Object.prototype.hasOwnProperty.call(element, 'style')) {
+    if (!Object.hasOwn(element, 'style')) {
       return element.style;
     }
     const getter = getUnshadowedGetter(element, 'style');
@@ -169,7 +175,8 @@ export function safeGetStyle(element: HTMLElement): CSSStyleDeclaration | null {
       return getter.call(element) as CSSStyleDeclaration | null;
     }
     return element.style;
-  } catch (_e) {
+  } catch {
+    // Return null if accessing style throws on restricted elements
     return null;
   }
 }

@@ -78,5 +78,7 @@ if (typeof chrome !== 'undefined') {
     chrome.runtime?.onInstalled?.addListener(handleInstalled);
     chrome.runtime?.onStartup?.addListener(handleStartup);
     chrome.storage?.onChanged?.addListener(handleStorageChange);
-  } catch (_err) {}
+  } catch {
+    // Suppress errors registering extension event listeners in unsupported contexts
+  }
 }

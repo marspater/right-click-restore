@@ -161,7 +161,9 @@ if (typeof window !== 'undefined') {
         document.oncopy = null;
         if (document.documentElement) document.documentElement.oncopy = null;
         if (document.body) document.body.oncopy = null;
-      } catch (_e) {}
+      } catch {
+        // Suppress errors clearing inline event handlers
+      }
     };
 
     // Listen on the unguessable private session channel
@@ -177,9 +179,13 @@ if (typeof window !== 'undefined') {
             },
             unlockPage,
           );
-        } catch (_err) {}
+        } catch {
+          // Suppress errors processing session message
+        }
       });
-    } catch (_e) {}
+    } catch {
+      // Suppress errors listening on session channel
+    }
 
     const sendHandshake = () => {
       try {
@@ -188,7 +194,9 @@ if (typeof window !== 'undefined') {
             detail: { channel: channelName, nonce: sessionNonce },
           }),
         );
-      } catch (_e) {}
+      } catch {
+        // Suppress errors dispatching handshake event
+      }
     };
 
     // Bidirectional handshake: respond if content script requested handshake probe
@@ -196,7 +204,9 @@ if (typeof window !== 'undefined') {
       window.addEventListener('__rcr_handshake_req__', () => {
         sendHandshake();
       });
-    } catch (_e) {}
+    } catch {
+      // Suppress errors adding handshake request listener
+    }
 
     // Announce presence immediately in case content script is already listening
     sendHandshake();
@@ -214,9 +224,9 @@ if (typeof window !== 'undefined') {
         const legacyUpdate = scriptEl.dataset.updateEvent;
         const legacyUnlock = scriptEl.dataset.unlockEvent;
 
-        scriptEl.removeAttribute('data-initial-config');
-        scriptEl.removeAttribute('data-update-event');
-        scriptEl.removeAttribute('data-unlock-event');
+        delete scriptEl.dataset.initialConfig;
+        delete scriptEl.dataset.updateEvent;
+        delete scriptEl.dataset.unlockEvent;
         scriptEl.remove();
 
         if (legacyUpdate) {
@@ -229,14 +239,18 @@ if (typeof window !== 'undefined') {
               ) {
                 activeConfig = validateSettings(customEvent.detail);
               }
-            } catch (_err) {}
+            } catch {
+              // Suppress errors applying legacy config update
+            }
           });
         }
         if (legacyUnlock) {
           window.addEventListener(legacyUnlock, unlockPage);
         }
       }
-    } catch (_e) {}
+    } catch {
+      // Suppress errors reading legacy script element
+    }
 
     const origPD = Event.prototype.preventDefault;
     const origSP = Event.prototype.stopPropagation;
@@ -302,7 +316,9 @@ if (typeof window !== 'undefined') {
       if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
       try {
         origPD.apply(this);
-      } catch (_e) {}
+      } catch {
+        // Suppress errors calling original preventDefault
+      }
     };
 
     try {
@@ -310,40 +326,50 @@ if (typeof window !== 'undefined') {
         Event.prototype,
         'returnValue',
       );
-      if (!origDescriptor || origDescriptor.configurable !== false) {
+      if (origDescriptor?.configurable !== false) {
         Object.defineProperty(Event.prototype, 'returnValue', {
           get() {
             if (this && this instanceof Event && shouldBlockEvent(this))
               return true;
             try {
               if (origDescriptor?.get) return origDescriptor.get.call(this);
-            } catch (_e) {}
+            } catch {
+              // Suppress errors calling original returnValue getter
+            }
             return true;
           },
           set(val) {
             if (this && this instanceof Event && shouldBlockEvent(this)) return;
             try {
               if (origDescriptor?.set) origDescriptor.set.call(this, val);
-            } catch (_e) {}
+            } catch {
+              // Suppress errors calling original returnValue setter
+            }
           },
           configurable: true,
           enumerable: true,
         });
       }
-    } catch (_e) {}
+    } catch {
+      // Suppress errors intercepting returnValue property
+    }
 
     Event.prototype.stopPropagation = function (this: Event): void {
       if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
       try {
         origSP.apply(this);
-      } catch (_e) {}
+      } catch {
+        // Suppress errors calling original stopPropagation
+      }
     };
 
     Event.prototype.stopImmediatePropagation = function (this: Event): void {
       if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
       try {
         origSIP.apply(this);
-      } catch (_e) {}
+      } catch {
+        // Suppress errors calling original stopImmediatePropagation
+      }
     };
 
     const targets = [
@@ -364,7 +390,7 @@ if (typeof window !== 'undefined') {
       for (const proto of targets) {
         try {
           const origDescriptor = Object.getOwnPropertyDescriptor(proto, prop);
-          if (origDescriptor && origDescriptor.configurable === false) {
+          if (origDescriptor?.configurable === false) {
             continue;
           }
           Object.defineProperty(proto, prop, {
@@ -376,7 +402,9 @@ if (typeof window !== 'undefined') {
                 if (origDescriptor?.get) {
                   return origDescriptor.get.call(this);
                 }
-              } catch (_e) {}
+              } catch {
+                // Suppress errors calling original event getter
+              }
               return undefined;
             },
             set(val) {
@@ -387,13 +415,71 @@ if (typeof window !== 'undefined') {
                 if (origDescriptor?.set) {
                   origDescriptor.set.call(this, val);
                 }
-              } catch (_e) {}
+              } catch {
+                // Suppress errors calling original event setter
+              }
             },
             configurable: true,
             enumerable: true,
           });
-        } catch (_err) {}
+        } catch {
+          // Suppress errors defining event handler properties
+        }
       }
+    }
+
+    function isMediaOrTextElement(el: Element): boolean {
+      return (
+        el.tagName === 'IMG' ||
+        el.tagName === 'VIDEO' ||
+        el.tagName === 'CANVAS' ||
+        el.tagName === 'PICTURE' ||
+        el.tagName === 'SVG' ||
+        (el instanceof HTMLElement &&
+          (el.innerText || el.textContent || '').trim().length > 0)
+      );
+    }
+
+    function findUnderlyingTarget(elements: Element[]): Element | undefined {
+      return elements.find(
+        (el, idx) => idx > 0 && el && isMediaOrTextElement(el),
+      );
+    }
+
+    function applyUnmaskOverlay(
+      el: HTMLElement,
+      timers: Map<HTMLElement, number>,
+    ) {
+      const prevPointerEvents = el.style.pointerEvents;
+      const prevPriority = el.style.getPropertyPriority('pointer-events');
+
+      el.classList.add('rcr-unmasked-overlay');
+      el.style.setProperty('pointer-events', 'none', 'important');
+
+      const existingTimer = timers.get(el);
+      if (existingTimer) {
+        clearTimeout(existingTimer);
+      }
+
+      const timer = setTimeout(() => {
+        try {
+          el.classList.remove('rcr-unmasked-overlay');
+          if (prevPointerEvents) {
+            el.style.setProperty(
+              'pointer-events',
+              prevPointerEvents,
+              prevPriority,
+            );
+          } else {
+            el.style.removeProperty('pointer-events');
+          }
+          timers.delete(el);
+        } catch {
+          // Suppress errors restoring pointer-events
+        }
+      }, 1000) as unknown as number;
+
+      timers.set(el, timer);
     }
 
     function unmaskMedia(e: MouseEvent) {
@@ -416,60 +502,24 @@ if (typeof window !== 'undefined') {
         );
         if (isPlayerOrInteractive) return;
 
-        const target = elements.find(
-          (el, idx) =>
-            idx > 0 &&
-            el &&
-            (el.tagName === 'IMG' ||
-              el.tagName === 'VIDEO' ||
-              el.tagName === 'CANVAS' ||
-              el.tagName === 'PICTURE' ||
-              el.tagName === 'SVG' ||
-              (el instanceof HTMLElement &&
-                (el.innerText || el.textContent || '').trim().length > 0)),
-        );
+        const target = findUnderlyingTarget(elements);
         if (target && elements[0] !== target) {
           for (const el of elements) {
             if (el === target) break;
-            if (el && el instanceof HTMLElement) {
-              const prevPointerEvents = el.style.pointerEvents;
-              const prevPriority =
-                el.style.getPropertyPriority('pointer-events');
-
-              el.classList.add('rcr-unmasked-overlay');
-              el.style.setProperty('pointer-events', 'none', 'important');
-
-              // Centralized element timer management
-              const existingTimer = unmaskTimers.get(el);
-              if (existingTimer) {
-                clearTimeout(existingTimer);
-              }
-
-              const timer = setTimeout(() => {
-                try {
-                  el.classList.remove('rcr-unmasked-overlay');
-                  if (prevPointerEvents) {
-                    el.style.setProperty(
-                      'pointer-events',
-                      prevPointerEvents,
-                      prevPriority,
-                    );
-                  } else {
-                    el.style.removeProperty('pointer-events');
-                  }
-                  unmaskTimers.delete(el);
-                } catch (_err) {}
-              }, 1000) as unknown as number;
-
-              unmaskTimers.set(el, timer);
+            if (el instanceof HTMLElement) {
+              applyUnmaskOverlay(el, unmaskTimers);
             }
           }
         }
-      } catch (_err) {}
+      } catch {
+        // Suppress errors during media unmasking
+      }
     }
 
     try {
       document.addEventListener('contextmenu', (e) => unmaskMedia(e), false);
-    } catch (_e) {}
+    } catch {
+      // Suppress errors attaching contextmenu listener
+    }
   }
 }

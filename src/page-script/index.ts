@@ -62,22 +62,6 @@ export function isModifierPressed(event: Event): boolean {
 
 let activeConfig: Settings = { ...DEFAULT_SETTINGS };
 
-function isShieldActive(): boolean {
-  return activeConfig.enabled;
-}
-
-function isRightClickActive(): boolean {
-  return activeConfig.restoreRightClick;
-}
-
-function isSelectionActive(): boolean {
-  return activeConfig.restoreSelection;
-}
-
-function isModifierBypassActive(): boolean {
-  return activeConfig.bypassModifierKey;
-}
-
 export function handlePageScriptMessage(
   payload: unknown,
   expectedNonce: string,
@@ -162,7 +146,7 @@ if (typeof window !== 'undefined') {
   } catch (_e) {}
 
   function shouldBlockEvent(event: Event): boolean {
-    if (!event || !isShieldActive()) {
+    if (!event || !activeConfig.enabled) {
       return false;
     }
 
@@ -172,8 +156,8 @@ if (typeof window !== 'undefined') {
       return false;
     }
 
-    const isRightClick = isContextMenu && isRightClickActive();
-    const isSelect = isSelection && isSelectionActive();
+    const isRightClick = isContextMenu && activeConfig.restoreRightClick;
+    const isSelect = isSelection && activeConfig.restoreSelection;
     if (!isRightClick && !isSelect) {
       return false;
     }
@@ -182,10 +166,19 @@ if (typeof window !== 'undefined') {
       return false;
     }
 
-    if (isModifierBypassActive() && isModifierPressed(event)) {
+    if (activeConfig.bypassModifierKey && isModifierPressed(event)) {
       return false;
     }
     return true;
+  }
+
+  function shouldBypassPropagation(event: Event): boolean {
+    return (
+      Boolean(event) &&
+      event instanceof Event &&
+      activeConfig.absoluteForce &&
+      shouldBlockEvent(event)
+    );
   }
 
   Event.prototype.preventDefault = function (this: Event): void {
@@ -196,28 +189,14 @@ if (typeof window !== 'undefined') {
   };
 
   Event.prototype.stopPropagation = function (this: Event): void {
-    if (
-      this &&
-      this instanceof Event &&
-      activeConfig.absoluteForce &&
-      shouldBlockEvent(this)
-    ) {
-      return;
-    }
+    if (shouldBypassPropagation(this)) return;
     try {
       originalStopPropagation.apply(this);
     } catch (_e) {}
   };
 
   Event.prototype.stopImmediatePropagation = function (this: Event): void {
-    if (
-      this &&
-      this instanceof Event &&
-      activeConfig.absoluteForce &&
-      shouldBlockEvent(this)
-    ) {
-      return;
-    }
+    if (shouldBypassPropagation(this)) return;
     try {
       originalStopImmediatePropagation.apply(this);
     } catch (_e) {}

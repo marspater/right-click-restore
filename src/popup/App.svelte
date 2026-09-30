@@ -241,8 +241,8 @@ async function forceUnlockPage() {
     </div>
 
     <!-- Master Apple Switch -->
-    <label class="apple-switch" title="Toggle protection globally">
-      <input type="checkbox" role="switch" checked={settings.enabled} aria-checked={settings.enabled} onchange={toggleGlobal} aria-label="Toggle protection globally" />
+    <label class="apple-switch" title={settings.enabled ? 'Disable protection globally' : 'Enable protection globally'}>
+      <input type="checkbox" role="switch" checked={settings.enabled} aria-checked={settings.enabled} onchange={toggleGlobal} aria-label={settings.enabled ? 'Disable protection globally' : 'Enable protection globally'} />
       <span class="apple-slider"></span>
     </label>
   </header>
@@ -258,9 +258,9 @@ async function forceUnlockPage() {
           {/if}
           <span class={`relative inline-flex rounded-full h-2 w-2 transition-all duration-200 ${
             isSiteActive
-              ? 'bg-[var(--accent-green)] shadow-[0_0_6px_rgba(52,199,89,0.5)]'
+              ? 'bg-[var(--accent-green)] shadow-[0_0_6px_var(--beacon-green-glow)]'
               : settings.enabled && isSiteDisabled
-                ? 'bg-[var(--accent-orange)] shadow-[0_0_6px_rgba(255,149,0,0.4)]'
+                ? 'bg-[var(--accent-orange)] shadow-[0_0_6px_var(--beacon-orange-glow)]'
                 : 'bg-[var(--text-tertiary)]'
           }`}></span>
         </span>
@@ -271,15 +271,15 @@ async function forceUnlockPage() {
         <span class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
           {!settings.enabled ? 'Extension Paused' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
         </span>
-        <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-1" title={currentHostname}>
+        <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-0.5" title={currentHostname}>
           {currentHostname || 'Loading…'}
         </span>
       </div>
     </div>
 
     {#if isToggleableDomain}
-      <label class="apple-switch apple-switch-sm" title={`Toggle protection on ${currentHostname}`}>
-        <input type="checkbox" role="switch" checked={!isSiteDisabled} aria-checked={!isSiteDisabled} disabled={!settings.enabled} onchange={toggleCurrentSite} aria-label={`Toggle protection on ${currentHostname}`} />
+      <label class="apple-switch apple-switch-sm" title={isSiteDisabled ? `Enable protection on ${currentHostname}` : `Disable protection on ${currentHostname}`}>
+        <input type="checkbox" role="switch" checked={!isSiteDisabled} aria-checked={!isSiteDisabled} disabled={!settings.enabled} onchange={toggleCurrentSite} aria-label={isSiteDisabled ? `Enable protection on ${currentHostname}` : `Disable protection on ${currentHostname}`} />
         <span class="apple-slider"></span>
       </label>
     {/if}
@@ -426,7 +426,17 @@ async function forceUnlockPage() {
       onclick={forceUnlockPage}
       disabled={unlockStatus !== 'idle' || !isSiteActive}
       title={isSiteActive ? 'Force unlock context menu and selection on active page' : 'Protection is inactive on this page'}
-      aria-label="Force unlock context menu and selection on active page"
+      aria-label={
+        !isSiteActive
+          ? 'Force unlock is unavailable while protection is inactive'
+          : unlockStatus === 'unlocking'
+            ? 'Unlocking current page'
+            : unlockStatus === 'success'
+              ? 'Page unlocked successfully'
+              : unlockStatus === 'error'
+                ? 'Unable to unlock current page'
+                : 'Force unlock context menu and selection on active page'
+      }
       class={`w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none disabled:cursor-not-allowed ${
         isSiteActive && unlockStatus === 'idle' ? 'active:scale-[0.985]' : ''
       } ${
@@ -469,7 +479,11 @@ async function forceUnlockPage() {
   <!-- Footnote Tip with Dynamic Context Awareness -->
   <footer class="pt-0.5 text-center select-none">
     <p class="text-[10px] text-[var(--text-tertiary)] leading-tight m-0 inline">
-      {#if settings.bypassModifierKey}
+      {#if !settings.enabled}
+        Extension is paused globally
+      {:else if isSiteDisabled}
+        Protection is disabled on this domain
+      {:else if settings.bypassModifierKey}
         Tip: Hold <kbd>⇧ Shift</kbd> or <kbd>⌥ Option</kbd> for native menu
       {:else}
         Tip: Enable Modifier Key Bypass to hold <kbd>⇧ Shift</kbd>

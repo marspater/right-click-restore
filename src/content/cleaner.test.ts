@@ -1,7 +1,15 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { Window } from 'happy-dom';
 import { DEFAULT_SETTINGS } from '../shared/settings';
-import { cleanAddedNode, cleanDOMTree, cleanNode } from './cleaner';
+import {
+  RIGHT_CLICK_SELECTOR,
+  SCRUB_SELECTOR,
+  SELECTION_SELECTOR,
+  cleanAddedNode,
+  cleanDOMTree,
+  cleanNode,
+  getScrubSelector,
+} from './cleaner';
 
 describe('cleaner module', () => {
   let window: Window;
@@ -251,6 +259,44 @@ describe('cleaner module', () => {
 
       expect(paragraph.style.userSelect).toBe('auto');
       container.remove();
+    });
+  });
+
+  describe('getScrubSelector', () => {
+    test('returns full SCRUB_SELECTOR when both settings are enabled', () => {
+      const settings = {
+        ...DEFAULT_SETTINGS,
+        restoreRightClick: true,
+        restoreSelection: true,
+      };
+      expect(getScrubSelector(settings)).toBe(SCRUB_SELECTOR);
+    });
+
+    test('returns RIGHT_CLICK_SELECTOR when only restoreRightClick is enabled', () => {
+      const settings = {
+        ...DEFAULT_SETTINGS,
+        restoreRightClick: true,
+        restoreSelection: false,
+      };
+      expect(getScrubSelector(settings)).toBe(RIGHT_CLICK_SELECTOR);
+    });
+
+    test('returns SELECTION_SELECTOR when only restoreSelection is enabled', () => {
+      const settings = {
+        ...DEFAULT_SETTINGS,
+        restoreRightClick: false,
+        restoreSelection: true,
+      };
+      expect(getScrubSelector(settings)).toBe(SELECTION_SELECTOR);
+    });
+
+    test('returns empty string when both restoration settings are disabled', () => {
+      const settings = {
+        ...DEFAULT_SETTINGS,
+        restoreRightClick: false,
+        restoreSelection: false,
+      };
+      expect(getScrubSelector(settings)).toBe('');
     });
   });
 });

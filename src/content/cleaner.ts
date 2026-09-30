@@ -45,6 +45,34 @@ export const SCRUB_SELECTOR = [
   '[style*="UserSelect"]',
 ].join(',');
 
+export const RIGHT_CLICK_SELECTOR = '[oncontextmenu]';
+
+export const SELECTION_SELECTOR = [
+  ...SCRUB_ATTRS.filter((attr) => attr !== 'oncontextmenu').map(
+    (attr) => `[${attr}]`,
+  ),
+  '[style*="user-select"]',
+  '[style*="UserSelect"]',
+].join(',');
+
+// Performance optimization: Construct minimal targeted CSS selectors based on active restoration settings.
+// Scanning for disabled features (e.g. searching for user-select styles when restoreSelection is false)
+// causes unnecessary querySelectorAll work across large DOM trees.
+export function getScrubSelector(
+  settings: Settings = DEFAULT_SETTINGS,
+): string {
+  if (settings.restoreRightClick && settings.restoreSelection) {
+    return SCRUB_SELECTOR;
+  }
+  if (settings.restoreRightClick) {
+    return RIGHT_CLICK_SELECTOR;
+  }
+  if (settings.restoreSelection) {
+    return SELECTION_SELECTOR;
+  }
+  return '';
+}
+
 function hasUserSelectNone(node: Element): boolean {
   if (typeof HTMLElement === 'undefined' || !(node instanceof HTMLElement)) {
     return false;
@@ -171,8 +199,10 @@ export function cleanAddedNode(
 ) {
   if (typeof Element === 'undefined' || !(node instanceof Element)) return;
   cleanNode(node, settings);
+  const selector = getScrubSelector(settings);
+  if (!selector) return;
   try {
-    for (const child of safeQuerySelectorAll(node, SCRUB_SELECTOR)) {
+    for (const child of safeQuerySelectorAll(node, selector)) {
       cleanNode(child, settings);
     }
   } catch {
@@ -184,16 +214,13 @@ export function cleanDOMTree(
   root: ParentNode = document,
   settings: Settings = DEFAULT_SETTINGS,
 ) {
-  // Early return if both restoration features are turned off to avoid scanning the entire DOM tree with querySelectorAll
-  if (!settings.restoreRightClick && !settings.restoreSelection) {
-    return;
-  }
-
   if (typeof Element !== 'undefined' && root instanceof Element) {
     cleanNode(root, settings);
   }
+  const selector = getScrubSelector(settings);
+  if (!selector) return;
   try {
-    for (const node of safeQuerySelectorAll(root, SCRUB_SELECTOR)) {
+    for (const node of safeQuerySelectorAll(root, selector)) {
       cleanNode(node, settings);
     }
   } catch {

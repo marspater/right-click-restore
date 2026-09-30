@@ -29,6 +29,9 @@
   --accent-red: #ff3b30;
   --accent-red-hover: #e03228;
 
+  --beacon-green-glow: rgba(52, 199, 89, 0.5);
+  --beacon-orange-glow: rgba(255, 149, 0, 0.4);
+
   --switch-track-off: rgba(120, 120, 128, 0.22);
   --switch-knob-shadow: 0 1px 3px rgba(0, 0, 0, 0.18), 0 0.5px 1px
     rgba(0, 0, 0, 0.1);
@@ -67,6 +70,9 @@
     --accent-orange: #ff9f0a;
     --accent-red: #ff453a;
     --accent-red-hover: #ff5c52;
+
+    --beacon-green-glow: rgba(48, 209, 88, 0.6);
+    --beacon-orange-glow: rgba(255, 159, 10, 0.5);
 
     --switch-track-off: rgba(120, 120, 128, 0.32);
     --switch-knob-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
@@ -304,4 +310,16 @@ kbd {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }

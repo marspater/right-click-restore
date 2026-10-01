@@ -8,6 +8,7 @@ import {
   safeGetShadowRoot,
   safeGetStyle,
   safeHasAttribute,
+  safeHasAttributes,
   safeMatches,
   safeQuerySelectorAll,
   safeRemoveAttribute,
@@ -148,7 +149,7 @@ describe('shared DOM utilities', () => {
     });
   });
 
-  describe('safeHasAttribute and safeRemoveAttribute', () => {
+  describe('safeHasAttribute, safeHasAttributes, and safeRemoveAttribute', () => {
     test('safely checks and removes attributes', () => {
       const el = document.createElement('div');
       el.setAttribute('oncontextmenu', 'return false');
@@ -156,6 +157,36 @@ describe('shared DOM utilities', () => {
       expect(safeHasAttribute(el, 'oncontextmenu')).toBe(true);
       safeRemoveAttribute(el, 'oncontextmenu');
       expect(safeHasAttribute(el, 'oncontextmenu')).toBe(false);
+    });
+
+    test('safeHasAttributes checks attribute presence accurately and resists DOM clobbering', () => {
+      const plain = document.createElement('div');
+      expect(safeHasAttributes(plain)).toBe(false);
+
+      plain.setAttribute('data-test', 'true');
+      expect(safeHasAttributes(plain)).toBe(true);
+
+      const form = document.createElement('form');
+      form.setAttribute('id', 'clobbered-form');
+      const input = document.createElement('input');
+      input.setAttribute('name', 'hasAttributes');
+      form.appendChild(input);
+
+      Object.defineProperty(form, 'hasAttributes', {
+        value: input,
+        configurable: true,
+      });
+
+      expect(safeHasAttributes(form)).toBe(true);
+    });
+
+    test('safeHasAttributes returns true (fails safe) when hasAttributes throws', () => {
+      const faulty = {
+        hasAttributes: () => {
+          throw new Error('fail');
+        },
+      } as unknown as Element;
+      expect(safeHasAttributes(faulty)).toBe(true);
     });
   });
 

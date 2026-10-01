@@ -74,6 +74,19 @@ export function safeMatches(element: Element, selector: string): boolean {
   }
 }
 
+export function safeHasAttributes(element: Element): boolean {
+  try {
+    const fn = getUnshadowedMethod(element, 'hasAttributes');
+    if (fn) {
+      return Boolean(fn.call(element));
+    }
+    return element.hasAttributes();
+  } catch {
+    // Fail safe on restricted or detached nodes: assume attributes exist
+    return true;
+  }
+}
+
 export function safeClosest(
   element: Element,
   selector: string,

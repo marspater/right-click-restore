@@ -74,6 +74,19 @@ export function safeMatches(element: Element, selector: string): boolean {
   }
 }
 
+export function safeHasAttributes(element: Element): boolean {
+  try {
+    const fn = getUnshadowedMethod(element, 'hasAttributes');
+    if (fn) {
+      return Boolean(fn.call(element));
+    }
+    return element.hasAttributes();
+  } catch {
+    // Fail safe on restricted or detached nodes: assume attributes exist
+    return true;
+  }
+}
+
 export function safeClosest(
   element: Element,
   selector: string,
@@ -151,32 +164,35 @@ export function safeRemoveAttribute(element: Element, attr: string): void {
 
 export function safeGetShadowRoot(element: Element): ShadowRoot | null {
   try {
-    if (!Object.hasOwn(element, 'shadowRoot')) {
-      return element.shadowRoot;
-    }
     const getter = getUnshadowedGetter(element, 'shadowRoot');
-    if (getter) {
-      return getter.call(element) as ShadowRoot | null;
+    const shadow = getter ? getter.call(element) : element.shadowRoot;
+    if (
+      shadow &&
+      typeof shadow === 'object' &&
+      'nodeType' in shadow &&
+      (shadow as Node).nodeType === 11
+    ) {
+      return shadow as ShadowRoot;
     }
-    return element.shadowRoot;
   } catch {
     // Return null if accessing shadowRoot throws on restricted elements
-    return null;
   }
+  return null;
 }
 
 export function safeGetStyle(element: HTMLElement): CSSStyleDeclaration | null {
   try {
-    if (!Object.hasOwn(element, 'style')) {
-      return element.style;
-    }
     const getter = getUnshadowedGetter(element, 'style');
-    if (getter) {
-      return getter.call(element) as CSSStyleDeclaration | null;
+    const style = getter ? getter.call(element) : element.style;
+    if (
+      style &&
+      typeof style === 'object' &&
+      typeof (style as Record<string, unknown>).getPropertyValue === 'function'
+    ) {
+      return style as CSSStyleDeclaration;
     }
-    return element.style;
   } catch {
     // Return null if accessing style throws on restricted elements
-    return null;
   }
+  return null;
 }

@@ -414,11 +414,6 @@ async function forceUnlockPage() {
     </label>
   </section>
 
-  <!-- Live Region Status Announcement for Screen Readers -->
-  <div class="sr-only" role="status" aria-live="polite">
-    {statusAnnouncement}
-  </div>
-
   <!-- Force Unlock Action Button -->
   <div class="mb-2">
     <button
@@ -429,13 +424,15 @@ async function forceUnlockPage() {
       class={`w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none disabled:cursor-not-allowed ${
         isSiteActive && unlockStatus === 'idle' ? 'active:scale-[0.985]' : ''
       } ${
-        unlockStatus === 'success'
-          ? 'bg-[var(--accent-green)] text-white shadow-sm border border-transparent disabled:opacity-100'
-          : unlockStatus === 'error'
-            ? 'bg-[var(--accent-red)] text-white shadow-sm border border-transparent disabled:opacity-100'
-            : isSiteActive
-              ? 'bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] text-[var(--text-primary)] border border-[var(--border-subtle)] shadow-[var(--shadow-btn)]'
-              : 'bg-[var(--bg-card)] text-[var(--text-tertiary)] border border-[var(--border-subtle)] opacity-50'
+        unlockStatus === 'unlocking'
+          ? 'bg-[var(--bg-badge-active)] text-[var(--accent-blue)] border border-[var(--accent-blue)]/30 shadow-sm disabled:opacity-100'
+          : unlockStatus === 'success'
+            ? 'bg-[var(--accent-green)] text-white shadow-sm border border-transparent disabled:opacity-100'
+            : unlockStatus === 'error'
+              ? 'bg-[var(--accent-red)] text-white shadow-sm border border-transparent disabled:opacity-100'
+              : isSiteActive
+                ? 'bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] hover:border-[var(--border-subtle)] text-[var(--text-primary)] border border-[var(--border-subtle)] shadow-[var(--shadow-btn)]'
+                : 'bg-[var(--bg-card)] text-[var(--text-tertiary)] border border-[var(--border-subtle)] opacity-50'
       }`}
     >
       {#if unlockStatus === 'unlocking'}
@@ -463,15 +460,11 @@ async function forceUnlockPage() {
         <span>Force Unlock Page</span>
       {/if}
     </button>
-    <span class="sr-only" role="status" aria-live="polite">
-      {unlockStatus === 'unlocking'
-        ? 'Unlocking current page'
-        : unlockStatus === 'success'
-          ? 'Page unlocked successfully'
-          : unlockStatus === 'error'
-            ? 'Unable to unlock current page'
-            : ''}
-    </span>
+
+    <!-- Live Region Status Announcement for Screen Readers -->
+    <div class="sr-only" role="status" aria-live="polite">
+      {statusAnnouncement}
+    </div>
   </div>
 
   <!-- Footnote Tip with Dynamic Context Awareness -->

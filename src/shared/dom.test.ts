@@ -168,9 +168,42 @@ describe('shared DOM utilities', () => {
       expect(style?.userSelect).toBe('none');
     });
 
+    test('resists DOM clobbering on style property', () => {
+      const form = document.createElement('form') as HTMLElement;
+      const input = document.createElement('input');
+      input.setAttribute('name', 'style');
+      form.appendChild(input);
+
+      Object.defineProperty(form, 'style', {
+        value: input,
+        configurable: true,
+      });
+
+      const style = safeGetStyle(form);
+      expect(
+        style === null || typeof style?.getPropertyValue === 'function',
+      ).toBe(true);
+      expect(style).not.toBe(input as unknown as CSSStyleDeclaration);
+    });
+
     test('retrieves shadowRoot safely', () => {
       const el = document.createElement('div');
       expect(safeGetShadowRoot(el)).toBeNull();
+    });
+
+    test('resists DOM clobbering on shadowRoot property', () => {
+      const form = document.createElement('form');
+      const input = document.createElement('input');
+      input.setAttribute('name', 'shadowRoot');
+      form.appendChild(input);
+
+      Object.defineProperty(form, 'shadowRoot', {
+        value: input,
+        configurable: true,
+      });
+
+      const shadow = safeGetShadowRoot(form);
+      expect(shadow).toBeNull();
     });
   });
 

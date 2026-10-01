@@ -4,6 +4,7 @@ import {
   safeGetShadowRoot,
   safeGetStyle,
   safeHasAttribute,
+  safeHasAttributes,
   safeQuerySelectorAll,
   safeRemoveAttribute,
 } from '../shared/dom';
@@ -17,6 +18,7 @@ export {
   safeGetShadowRoot,
   safeGetStyle,
   safeHasAttribute,
+  safeHasAttributes,
   safeMatches,
   safeQuerySelectorAll,
   safeRemoveAttribute,
@@ -39,6 +41,10 @@ export const SCRUB_ATTRS = [
   'onbeforecopy',
 ];
 
+export const SELECTION_ATTRS = SCRUB_ATTRS.filter(
+  (attr) => attr !== 'oncontextmenu',
+);
+
 export const SCRUB_SELECTOR = [
   ...SCRUB_ATTRS.map((attr) => `[${attr}]`),
   '[style*="user-select"]',
@@ -48,9 +54,7 @@ export const SCRUB_SELECTOR = [
 export const RIGHT_CLICK_SELECTOR = '[oncontextmenu]';
 
 export const SELECTION_SELECTOR = [
-  ...SCRUB_ATTRS.filter((attr) => attr !== 'oncontextmenu').map(
-    (attr) => `[${attr}]`,
-  ),
+  ...SELECTION_ATTRS.map((attr) => `[${attr}]`),
   '[style*="user-select"]',
   '[style*="UserSelect"]',
 ].join(',');
@@ -77,6 +81,9 @@ function hasUserSelectNone(node: Element): boolean {
   if (typeof HTMLElement === 'undefined' || !(node instanceof HTMLElement)) {
     return false;
   }
+  if (!safeHasAttribute(node, 'style')) {
+    return false;
+  }
   const style = safeGetStyle(node);
   if (!style) return false;
   return (
@@ -87,6 +94,9 @@ function hasUserSelectNone(node: Element): boolean {
 
 function restoreUserSelect(node: Element): void {
   if (typeof HTMLElement === 'undefined' || !(node instanceof HTMLElement)) {
+    return;
+  }
+  if (!safeHasAttribute(node, 'style')) {
     return;
   }
   try {
@@ -105,8 +115,8 @@ function restoreUserSelect(node: Element): void {
 }
 
 function hasScrubbableSelection(node: Element): boolean {
-  for (const attr of SCRUB_ATTRS) {
-    if (attr !== 'oncontextmenu' && safeHasAttribute(node, attr)) {
+  for (const attr of SELECTION_ATTRS) {
+    if (safeHasAttribute(node, attr)) {
       return true;
     }
   }
@@ -115,6 +125,10 @@ function hasScrubbableSelection(node: Element): boolean {
 
 function hasScrubbableTarget(node: Element, settings: Settings): boolean {
   try {
+    // Fast-path: Elements without attributes cannot have event handler attributes or inline style attributes
+    if (!safeHasAttributes(node)) {
+      return Boolean(safeGetShadowRoot(node));
+    }
     if (settings.restoreRightClick && safeHasAttribute(node, 'oncontextmenu')) {
       return true;
     }
@@ -151,10 +165,8 @@ function stripScrubbableAttributes(node: Element, settings: Settings): void {
   }
 
   if (settings.restoreSelection) {
-    for (const attr of SCRUB_ATTRS) {
-      if (attr !== 'oncontextmenu') {
-        safeRemoveAttribute(node, attr);
-      }
+    for (const attr of SELECTION_ATTRS) {
+      safeRemoveAttribute(node, attr);
     }
     restoreUserSelect(node);
   }

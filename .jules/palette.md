@@ -17,3 +17,7 @@
    - Introduced an `aria-live="polite"` status region for Force Unlock dynamic announcements without mutating labels on disabled buttons.
    - Introduced theme-aware `--beacon-green-glow` and `--beacon-orange-glow` variables for status dot shadows in light/dark modes and tightened typography spacing in the domain stack (`mt-0.5`).
 
+5. **Force Unlock State Feedback & Setting Row Micro-Interactions (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+   - Refined the Force Unlock button with a dedicated active unlocking state (`bg-[var(--bg-badge-active)] text-[var(--accent-blue)] disabled:opacity-100`) that prevents spinner/text dimming while page unlocking is in progress.
+   - Added smooth scale micro-interaction transitions (`transform: scale(1.05)`) on setting row icon badges upon hover/focus for refined affordance and tactile feel.
+   - Maintained an `aria-live="polite"` screen reader region for status announcements.

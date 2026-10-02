@@ -113,6 +113,35 @@ body {
     cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
 }
 
+/* Domain Inset Card Interaction & Focus */
+.domain-card {
+  transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.2s
+    ease;
+}
+
+.domain-card .relative > .rounded-full {
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), background-color
+    0.2s ease, box-shadow 0.2s ease;
+}
+
+.domain-card:hover:not(.dimmed) .relative > .rounded-full {
+  transform: scale(1.2);
+}
+
+.domain-card:focus-within:not(.dimmed),
+.domain-card:has(input:focus-visible):not(.dimmed) {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: -1px;
+}
+
+/* Prevent duplicate outline on domain switch slider inside focused domain card */
+.domain-card:has(input:focus-visible)
+  .apple-switch
+  input:focus-visible
+  + .apple-slider {
+  outline: none;
+}
+
 /* Master Apple Toggle Switch */
 .apple-switch {
   position: relative;

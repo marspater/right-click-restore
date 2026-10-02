@@ -10,3 +10,6 @@
 **Learning:** Checking `safeHasAttributes(node)` at the top of `hasScrubbableTarget` bypasses multiple `safeHasAttribute` calls and `safeGetStyle` checks for the ~40-60% of DOM nodes that have zero attributes, significantly accelerating DOM mutation processing and tree cleaning sweeps. Also, checking `safeHasAttribute(node, 'style')` before calling `safeGetStyle(node)` avoids unnecessary `CSSStyleDeclaration` property accesses.
 **Action:** Always verify if an element has attributes via `safeHasAttributes` before checking specific attribute names or inline style properties.
 
+## 2025-05-21 - Attribute fast-pathing for event path selector matching
+**Learning:** Checking `safeHasAttributes(item)` during `composedPath` element traversals in `isInteractiveElement` bypasses expensive multi-selector CSS evaluations (`safeMatches`) for attribute-less DOM nodes, eliminating selector checks for ~40-60% of path elements without risking false negatives on attributed interactive elements.
+**Action:** Check `safeHasAttributes(item)` and fast tag sets before invoking heavy CSS selector matching routines on DOM event paths.

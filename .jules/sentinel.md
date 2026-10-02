@@ -13,3 +13,7 @@
 **Learning:** Named element getters on HTML collections and form elements do not create own properties on instance objects, causing `Object.hasOwn` checks to evaluate to `false` and fall back to clobbered instance properties.
 **Prevention:** Always retrieve unshadowed prototype getter descriptors directly using `getUnshadowedGetter` without checking `Object.hasOwn`, and validate that returned objects match expected interface specifications (`getPropertyValue` for CSS styles, `nodeType === 11` for shadow roots).
 
+## 2025-05-21 - DOM Clobbering Protection for `document.elementsFromPoint` in Anti-Shield Overlay
+**Vulnerability:** Untrusted host page scripts could shadow `document.elementsFromPoint` (e.g. via `<form id="elementsFromPoint">` or `<input name="elementsFromPoint">`), causing direct calls or `typeof` checks on `document.elementsFromPoint` to fail or throw TypeErrors, disabling Anti-Shield overlay unmasking.
+**Learning:** Document-level spatial queries executed by main-world page scripts are subject to DOM clobbering when accessed via instance properties on `document`.
+**Prevention:** Use `safeElementsFromPoint` (built on `getUnshadowedMethod`) to unshadow `Document.prototype.elementsFromPoint` when executing spatial element inspection.

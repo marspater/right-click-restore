@@ -22,4 +22,7 @@
    - Added smooth scale micro-interaction transitions (`transform: scale(1.05)`) on setting row icon badges upon hover/focus for refined affordance and tactile feel.
    - Maintained an `aria-live="polite"` screen reader region for status announcements.
 
+6. **Domain Inset Card Interactive Target & Container Focus (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+   - Converted Active Domain Inset Card into an interactive `<label>` row when `isToggleableDomain` is active, expanding the tap target from the small switch to the full card (Fitts's Law) and matching setting row interaction patterns.
+   - Added subtle status beacon scale transitions (`transform: scale(1.2)`) on hover and unified container focus rings via `.domain-card:has(input:focus-visible)` while suppressing duplicate inner switch focus outlines.
 

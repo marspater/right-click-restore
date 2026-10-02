@@ -1,13 +1,23 @@
 import { ALL_INTERACTIVE_SELECTORS } from '../shared/constants';
 import { getSecureRandomString } from '../shared/crypto';
-import { getUnshadowedMethod, safeClosest, safeMatches } from '../shared/dom';
+import {
+  getUnshadowedMethod,
+  safeClosest,
+  safeElementsFromPoint,
+  safeMatches,
+} from '../shared/dom';
 import {
   DEFAULT_SETTINGS,
   type Settings,
   validateSettings,
 } from '../shared/settings';
 
-export { getUnshadowedMethod, safeClosest, safeMatches } from '../shared/dom';
+export {
+  getUnshadowedMethod,
+  safeClosest,
+  safeElementsFromPoint,
+  safeMatches,
+} from '../shared/dom';
 
 const FAST_INTERACTIVE_TAGS = new Set([
   'INPUT',
@@ -505,13 +515,9 @@ if (typeof window !== 'undefined') {
         return;
       try {
         if (isInteractiveEvent(e)) return;
-        if (
-          typeof document === 'undefined' ||
-          typeof document.elementsFromPoint !== 'function'
-        )
-          return;
+        if (typeof document === 'undefined') return;
 
-        const elements = document.elementsFromPoint(e.clientX, e.clientY);
+        const elements = safeElementsFromPoint(document, e.clientX, e.clientY);
         if (!elements || elements.length <= 1) return;
 
         const isPlayerOrInteractive = elements.some((el) =>

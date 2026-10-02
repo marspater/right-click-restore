@@ -4,6 +4,7 @@ import {
   getUnshadowedGetter,
   getUnshadowedMethod,
   safeClosest,
+  safeElementsFromPoint,
   safeGetElementById,
   safeGetShadowRoot,
   safeGetStyle,
@@ -302,6 +303,46 @@ describe('shared DOM utilities', () => {
       const results = safeQuerySelectorAll(container, '.target');
       expect(results).toHaveLength(1);
       expect(results[0]).toBe(target);
+    });
+  });
+
+  describe('safeElementsFromPoint', () => {
+    test('retrieves elements from point and resists DOM clobbering', () => {
+      const target = document.createElement('div');
+      document.body.appendChild(target);
+
+      const docProto = Object.getPrototypeOf(document);
+      if (docProto && typeof docProto.elementsFromPoint !== 'function') {
+        docProto.elementsFromPoint = (_x: number, _y: number) =>
+          [target] as unknown as NodeListOf<Element>;
+      }
+
+      const elements = safeElementsFromPoint(document, 10, 10);
+      expect(Array.isArray(elements)).toBe(true);
+
+      const form = document.createElement('form');
+      form.id = 'elementsFromPoint';
+      document.body.appendChild(form);
+
+      // Clobber elementsFromPoint property on document instance
+      Object.defineProperty(document, 'elementsFromPoint', {
+        value: form,
+        configurable: true,
+      });
+
+      const safeResults = safeElementsFromPoint(document, 10, 10);
+      expect(Array.isArray(safeResults)).toBe(true);
+      expect(safeResults).toContain(target);
+    });
+
+    test('returns empty array when elementsFromPoint throws an error', () => {
+      const faultyDoc = {
+        elementsFromPoint: () => {
+          throw new Error('fail');
+        },
+      } as unknown as Document;
+
+      expect(safeElementsFromPoint(faultyDoc, 0, 0)).toEqual([]);
     });
   });
 });

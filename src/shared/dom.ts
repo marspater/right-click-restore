@@ -135,6 +135,23 @@ export function safeQuerySelectorAll(
   }
 }
 
+export function safeElementsFromPoint(
+  doc: Document,
+  x: number,
+  y: number,
+): Element[] {
+  try {
+    const fn = getUnshadowedMethod(doc, 'elementsFromPoint');
+    if (fn) {
+      return Array.from(fn.call(doc, x, y) as Element[]);
+    }
+    return Array.from(doc.elementsFromPoint(x, y));
+  } catch {
+    // Return empty array if elementsFromPoint throws or is unavailable on restricted documents
+    return [];
+  }
+}
+
 export function safeHasAttribute(element: Element, attr: string): boolean {
   try {
     const fn = getUnshadowedMethod(element, 'hasAttribute');

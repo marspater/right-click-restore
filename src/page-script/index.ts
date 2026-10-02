@@ -1,6 +1,12 @@
 import { ALL_INTERACTIVE_SELECTORS } from '../shared/constants';
 import { getSecureRandomString } from '../shared/crypto';
-import { getUnshadowedMethod, safeClosest, safeMatches } from '../shared/dom';
+import {
+  getUnshadowedMethod,
+  safeClosest,
+  safeHasAttribute,
+  safeHasAttributes,
+  safeMatches,
+} from '../shared/dom';
 import {
   DEFAULT_SETTINGS,
   type Settings,
@@ -15,7 +21,26 @@ const FAST_INTERACTIVE_TAGS = new Set([
   'SELECT',
   'BUTTON',
   'CANVAS',
+  'YTD-APP',
 ]);
+
+// Performance optimization: Fast-path interactive element check during event composed path traversals.
+// Bypasses expensive safeMatches CSS selector evaluation when an element has no attributes,
+// avoiding selector matching on attribute-less DOM nodes while guaranteeing exact selector accuracy.
+export function isInteractiveElement(item: Element): boolean {
+  try {
+    const tag = typeof item.tagName === 'string' ? item.tagName : '';
+    if (FAST_INTERACTIVE_TAGS.has(tag)) {
+      return true;
+    }
+    if (!safeHasAttributes(item)) {
+      return false;
+    }
+    return safeMatches(item, ALL_INTERACTIVE_SELECTORS);
+  } catch {
+    return safeMatches(item, ALL_INTERACTIVE_SELECTORS);
+  }
+}
 
 export function isInteractiveNode(node: Node | null): boolean {
   if (!node) return false;
@@ -25,10 +50,7 @@ export function isInteractiveNode(node: Node | null): boolean {
       curr = curr.parentElement;
     }
     if (curr instanceof Element) {
-      if (
-        typeof curr.tagName === 'string' &&
-        FAST_INTERACTIVE_TAGS.has(curr.tagName)
-      ) {
+      if (isInteractiveElement(curr)) {
         return true;
       }
       if (safeClosest(curr, ALL_INTERACTIVE_SELECTORS)) return true;
@@ -40,7 +62,7 @@ export function isInteractiveNode(node: Node | null): boolean {
 }
 
 // Fast-path interactive event check. When composedPath is available and non-empty,
-// iterating over path elements already inspects target and all parent ancestors.
+// iterating over path elements inspects target and all parent ancestors using isInteractiveElement.
 // Returning false directly avoids a redundant call to isInteractiveNode() which
 // re-traverses the DOM tree using closest().
 export function isInteractiveEvent(event: Event): boolean {
@@ -51,11 +73,7 @@ export function isInteractiveEvent(event: Event): boolean {
       const path = composedPathFn.call(event) as unknown[];
       if (Array.isArray(path) && path.length > 0) {
         return path.some(
-          (item) =>
-            item instanceof Element &&
-            ((typeof item.tagName === 'string' &&
-              FAST_INTERACTIVE_TAGS.has(item.tagName)) ||
-              safeMatches(item, ALL_INTERACTIVE_SELECTORS)),
+          (item) => item instanceof Element && isInteractiveElement(item),
         );
       }
     }

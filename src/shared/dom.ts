@@ -47,10 +47,7 @@ export function getUnshadowedGetter(
     // and standard DOM getter properties ('shadowRoot', 'style') are not defined on Object.prototype.
     // If the object does not own the property directly and it's not on Object.prototype,
     // we can retrieve the getter descriptor directly from its prototype chain without checking own property.
-    if (
-      !OBJECT_PROTO_METHODS.has(propName) &&
-      !Object.hasOwn(obj, propName)
-    ) {
+    if (!OBJECT_PROTO_METHODS.has(propName) && !Object.hasOwn(obj, propName)) {
       let proto = Object.getPrototypeOf(obj);
       while (proto && proto !== Object.prototype) {
         const desc = Object.getOwnPropertyDescriptor(proto, propName);

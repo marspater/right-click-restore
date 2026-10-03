@@ -22,4 +22,7 @@
    - Added smooth scale micro-interaction transitions (`transform: scale(1.05)`) on setting row icon badges upon hover/focus for refined affordance and tactile feel.
    - Maintained an `aria-live="polite"` screen reader region for status announcements.
 
+6. **Focus Ring Contour Alignment & Button Micro-Interaction Polish (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+   - Upgraded keyboard focus state definitions across `.apple-switch`, `button`, and `.settings-row` from blocky rectangular CSS `outline` to rounded `box-shadow` rings (`0 0 0 2px var(--bg-popover), 0 0 0 4px var(--accent-blue)`), preserving exact border-radius contours for capsule switches, action buttons, and inset settings cards.
+   - Added a subtle scale micro-interaction (`group-hover:scale-110`) on the Force Unlock lightning icon for responsive tactile feedback on hover, mirroring setting row badge behaviors.
 

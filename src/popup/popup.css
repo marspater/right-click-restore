@@ -202,8 +202,8 @@ body {
 
 /* Accessible Focus States */
 .apple-switch input:focus-visible + .apple-slider {
-  outline: 2px solid var(--accent-blue);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: 0 0 0 2px var(--bg-popover), 0 0 0 4px var(--accent-blue);
 }
 
 button:focus:not(:focus-visible) {
@@ -211,8 +211,8 @@ button:focus:not(:focus-visible) {
 }
 
 button:focus-visible {
-  outline: 2px solid var(--accent-blue);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: 0 0 0 2px var(--bg-popover), 0 0 0 4px var(--accent-blue);
 }
 
 /* Inset Settings Row */
@@ -252,8 +252,8 @@ button:focus-visible {
 .settings-row:focus-within:not(.is-disabled),
 .settings-row:has(input:focus-visible):not(.is-disabled) {
   background-color: var(--bg-row-hover);
-  outline: 2px solid var(--accent-blue);
-  outline-offset: -1px;
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-blue);
 }
 
 /* Prevent duplicate outline on switch slider inside focused settings row */
@@ -262,6 +262,7 @@ button:focus-visible {
   input:focus-visible
   + .apple-slider {
   outline: none;
+  box-shadow: none;
 }
 
 /* Screen Reader Only Utility */

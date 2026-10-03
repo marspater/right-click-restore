@@ -214,14 +214,15 @@ export function handleContentMessage(
       window.addEventListener('__rcr_handshake__', (e: Event) => {
         try {
           const detail = (e as CustomEvent)?.detail;
-          // Security hardening: Lock channel & nonce once established to prevent hijacking from untrusted page scripts
+          // Security hardening: Lock channel & nonce once established to prevent hijacking from untrusted page scripts.
+          // Validate that nonce is a non-empty string and channel strictly matches `__rcr_bridge_${nonce}`.
           if (
             bridgeChannel === null &&
             detail &&
-            typeof detail.channel === 'string' &&
-            detail.channel.length > 0 &&
             typeof detail.nonce === 'string' &&
-            detail.nonce.length > 0
+            detail.nonce.length >= 8 &&
+            typeof detail.channel === 'string' &&
+            detail.channel === `__rcr_bridge_${detail.nonce}`
           ) {
             bridgeChannel = detail.channel;
             bridgeNonce = detail.nonce;

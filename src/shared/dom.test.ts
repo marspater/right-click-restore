@@ -199,6 +199,11 @@ describe('shared DOM utilities', () => {
       expect(style?.userSelect).toBe('none');
     });
 
+    test('handles non-HTMLElement or SVGElement safely without throwing', () => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      expect(() => safeGetStyle(svg as unknown as HTMLElement)).not.toThrow();
+    });
+
     test('resists DOM clobbering on style property', () => {
       const form = document.createElement('form') as HTMLElement;
       const input = document.createElement('input');

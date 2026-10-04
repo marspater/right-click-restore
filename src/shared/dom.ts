@@ -162,10 +162,48 @@ export function safeRemoveAttribute(element: Element, attr: string): void {
   }
 }
 
+let nativeShadowRootGetter: ((this: unknown) => unknown) | null | undefined;
+function getNativeShadowRootGetter() {
+  if (nativeShadowRootGetter === undefined) {
+    try {
+      nativeShadowRootGetter =
+        typeof Element !== 'undefined'
+          ? (Object.getOwnPropertyDescriptor(Element.prototype, 'shadowRoot')
+              ?.get ?? null)
+          : null;
+    } catch {
+      nativeShadowRootGetter = null;
+    }
+  }
+  return nativeShadowRootGetter;
+}
+
+let nativeStyleGetter: ((this: unknown) => unknown) | null | undefined;
+function getNativeStyleGetter() {
+  if (nativeStyleGetter === undefined) {
+    try {
+      nativeStyleGetter =
+        typeof HTMLElement !== 'undefined'
+          ? (Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'style')
+              ?.get ?? null)
+          : null;
+    } catch {
+      nativeStyleGetter = null;
+    }
+  }
+  return nativeStyleGetter;
+}
+
 export function safeGetShadowRoot(element: Element): ShadowRoot | null {
   try {
-    const getter = getUnshadowedGetter(element, 'shadowRoot');
-    const shadow = getter ? getter.call(element) : element.shadowRoot;
+    // Fast-path: Directly invoke the native Element.prototype.shadowRoot getter function.
+    // This avoids traversing prototype chains and allocating descriptor objects on every access,
+    // while remaining immune to DOM clobbering and prototype monkey-patching.
+    const nativeGetter = getNativeShadowRootGetter();
+    const shadow = nativeGetter
+      ? nativeGetter.call(element)
+      : (getUnshadowedGetter(element, 'shadowRoot')?.call(element) ??
+        element.shadowRoot);
     if (
       shadow &&
       typeof shadow === 'object' &&
@@ -182,6 +220,24 @@ export function safeGetShadowRoot(element: Element): ShadowRoot | null {
 
 export function safeGetStyle(element: HTMLElement): CSSStyleDeclaration | null {
   try {
+    // Fast-path: Directly invoke the native HTMLElement.prototype.style getter function on HTMLElement instances.
+    // This avoids traversing prototype chains and allocating descriptor objects on every access,
+    // while remaining immune to DOM clobbering and prototype monkey-patching.
+    const nativeGetter = getNativeStyleGetter();
+    if (
+      nativeGetter &&
+      typeof HTMLElement !== 'undefined' &&
+      element instanceof HTMLElement
+    ) {
+      const style = nativeGetter.call(element) as CSSStyleDeclaration;
+      if (
+        style &&
+        typeof style === 'object' &&
+        typeof style.getPropertyValue === 'function'
+      ) {
+        return style;
+      }
+    }
     const getter = getUnshadowedGetter(element, 'style');
     const style = getter ? getter.call(element) : element.style;
     if (

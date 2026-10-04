@@ -22,4 +22,9 @@
    - Added smooth scale micro-interaction transitions (`transform: scale(1.05)`) on setting row icon badges upon hover/focus for refined affordance and tactile feel.
    - Maintained an `aria-live="polite"` screen reader region for status announcements.
 
+6. **Rounded Focus Rings, Disabled Switch Affordance, & System Page Indicator (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+   - Replaced square CSS `outline` on rounded components (`.apple-switch`, `button:focus-visible`, and `.settings-row`) with smooth capsule/rounded `box-shadow` focus rings matching Apple macOS HIG patterns.
+   - Added explicit disabled rules for `.apple-switch` (`cursor: not-allowed` and reduced opacity on `input:disabled`), eliminating misleading `pointer` cursors on non-interactive switches.
+   - Added a subtle "System Page" badge on the active domain card when viewing internal or non-toggleable browser pages (`!isToggleableDomain`), balancing the card visually and clarifying non-toggleable context.
+   - Added group scale micro-interactions (`group-hover:scale-110 group-focus-visible:scale-110`) on the Force Unlock button icon for responsive tactile feedback.
 

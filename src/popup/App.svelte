@@ -282,6 +282,10 @@ async function forceUnlockPage() {
         <input type="checkbox" role="switch" checked={!isSiteDisabled} aria-checked={!isSiteDisabled} disabled={!settings.enabled} onchange={toggleCurrentSite} aria-label={`Protection on ${currentHostname}`} />
         <span class="apple-slider"></span>
       </label>
+    {:else}
+      <span class="text-[10px] font-medium text-[var(--text-tertiary)] bg-[var(--bg-badge)] px-2 py-0.5 rounded-full select-none" title="Domain protection rules are not applicable on non-web or internal pages">
+        System Page
+      </span>
     {/if}
   </section>
 
@@ -421,7 +425,7 @@ async function forceUnlockPage() {
       onclick={forceUnlockPage}
       disabled={unlockStatus !== 'idle' || !isSiteActive}
       title={isSiteActive ? 'Force unlock context menu and selection on active page' : 'Protection is inactive on this page'}
-      class={`w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none disabled:cursor-not-allowed ${
+      class={`group w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none disabled:cursor-not-allowed ${
         isSiteActive && unlockStatus === 'idle' ? 'active:scale-[0.985]' : ''
       } ${
         unlockStatus === 'unlocking'
@@ -442,19 +446,19 @@ async function forceUnlockPage() {
         </svg>
         <span>Unlocking Current Page…</span>
       {:else if unlockStatus === 'success'}
-        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <svg class="w-3.5 h-3.5 transition-transform scale-105" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <polyline points="20 6 9 17 4 12" />
         </svg>
         <span>Page Unlocked</span>
       {:else if unlockStatus === 'error'}
-        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <svg class="w-3.5 h-3.5 transition-transform scale-105" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="12" cy="12" r="10" />
           <line x1="12" y1="8" x2="12" y2="12" />
           <line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
         <span>Unable to Unlock Page</span>
       {:else}
-        <svg class="w-3.5 h-3.5 text-[var(--accent-blue)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <svg class="w-3.5 h-3.5 text-[var(--accent-blue)] transition-transform duration-150 group-hover:scale-110 group-focus-visible:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
         </svg>
         <span>Force Unlock Page</span>

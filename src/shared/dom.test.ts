@@ -236,6 +236,22 @@ describe('shared DOM utilities', () => {
       const shadow = safeGetShadowRoot(form);
       expect(shadow).toBeNull();
     });
+
+    test('rejects plain object interface spoofing for shadowRoot and style', () => {
+      const mockElement = {
+        shadowRoot: {
+          nodeType: 11,
+          querySelectorAll: () => [],
+        },
+        style: {
+          getPropertyValue: () => 'none',
+          userSelect: 'none',
+        },
+      } as unknown as HTMLElement;
+
+      expect(safeGetShadowRoot(mockElement)).toBeNull();
+      expect(safeGetStyle(mockElement)).toBeNull();
+    });
   });
 
   describe('safeGetElementById', () => {

@@ -166,13 +166,16 @@ export function safeGetShadowRoot(element: Element): ShadowRoot | null {
   try {
     const getter = getUnshadowedGetter(element, 'shadowRoot');
     const shadow = getter ? getter.call(element) : element.shadowRoot;
-    if (
-      shadow &&
-      typeof shadow === 'object' &&
-      'nodeType' in shadow &&
-      (shadow as Node).nodeType === 11
-    ) {
-      return shadow as ShadowRoot;
+    if (shadow && typeof shadow === 'object') {
+      const proto = Object.getPrototypeOf(shadow);
+      if (
+        proto !== null &&
+        proto !== Object.prototype &&
+        'nodeType' in shadow &&
+        (shadow as Node).nodeType === 11
+      ) {
+        return shadow as ShadowRoot;
+      }
     }
   } catch {
     // Return null if accessing shadowRoot throws on restricted elements
@@ -184,12 +187,16 @@ export function safeGetStyle(element: HTMLElement): CSSStyleDeclaration | null {
   try {
     const getter = getUnshadowedGetter(element, 'style');
     const style = getter ? getter.call(element) : element.style;
-    if (
-      style &&
-      typeof style === 'object' &&
-      typeof (style as Record<string, unknown>).getPropertyValue === 'function'
-    ) {
-      return style as CSSStyleDeclaration;
+    if (style && typeof style === 'object') {
+      const proto = Object.getPrototypeOf(style);
+      if (
+        proto !== null &&
+        proto !== Object.prototype &&
+        typeof (style as Record<string, unknown>).getPropertyValue ===
+          'function'
+      ) {
+        return style as CSSStyleDeclaration;
+      }
     }
   } catch {
     // Return null if accessing style throws on restricted elements

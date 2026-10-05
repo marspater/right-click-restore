@@ -13,3 +13,7 @@
 **Learning:** Named element getters on HTML collections and form elements do not create own properties on instance objects, causing `Object.hasOwn` checks to evaluate to `false` and fall back to clobbered instance properties.
 **Prevention:** Always retrieve unshadowed prototype getter descriptors directly using `getUnshadowedGetter` without checking `Object.hasOwn`, and validate that returned objects match expected interface specifications (`getPropertyValue` for CSS styles, `nodeType === 11` for shadow roots).
 
+## 2025-05-21 - Function Prototype Method Shadowing Resistance via Module Evaluation Snapshotting
+**Vulnerability:** Invoking unshadowed DOM methods or intercepted event functions using `fn.call(thisArg)` or `fn.apply(thisArg)` relied on `Function.prototype.call` and `Function.prototype.apply`. Untrusted host web pages executing in the MAIN world context could override `Function.prototype.call` or `Function.prototype.apply` with throwing or hijacked functions, causing extension event interception and DOM cleaning to fail.
+**Learning:** In MAIN world scripts, calling methods on function instances via `.call()` or `.apply()` accesses prototype getters that may be shadowed by host page scripts at runtime.
+**Prevention:** Snapshot `Reflect.apply` or `Function.prototype.apply` at module evaluation time in a `safeApply` helper, ensuring function invocation remains secure regardless of host page prototype tampering.

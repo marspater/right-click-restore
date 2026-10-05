@@ -1,6 +1,11 @@
 import { ALL_INTERACTIVE_SELECTORS } from '../shared/constants';
 import { getSecureRandomString } from '../shared/crypto';
-import { getUnshadowedMethod, safeClosest, safeMatches } from '../shared/dom';
+import {
+  getUnshadowedMethod,
+  safeApply,
+  safeClosest,
+  safeMatches,
+} from '../shared/dom';
 import {
   DEFAULT_SETTINGS,
   type Settings,
@@ -48,7 +53,7 @@ export function isInteractiveEvent(event: Event): boolean {
   try {
     const composedPathFn = getUnshadowedMethod(event, 'composedPath');
     if (composedPathFn) {
-      const path = composedPathFn.call(event) as unknown[];
+      const path = safeApply(composedPathFn, event, []) as unknown[];
       if (Array.isArray(path) && path.length > 0) {
         return path.some(
           (item) =>
@@ -176,10 +181,13 @@ function setupEventInterception(shouldBlockEvent: (event: Event) => boolean) {
   const origSP = Event.prototype.stopPropagation;
   const origSIP = Event.prototype.stopImmediatePropagation;
 
-  Event.prototype.preventDefault = function (this: Event): void {
+  Event.prototype.preventDefault = function (
+    this: Event,
+    ...args: unknown[]
+  ): void {
     if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
     try {
-      origPD.apply(this);
+      safeApply(origPD, this, args);
     } catch {
       // Suppress errors calling original preventDefault
     }
@@ -196,7 +204,8 @@ function setupEventInterception(shouldBlockEvent: (event: Event) => boolean) {
           if (this && this instanceof Event && shouldBlockEvent(this))
             return true;
           try {
-            if (origDescriptor?.get) return origDescriptor.get.call(this);
+            if (origDescriptor?.get)
+              return safeApply(origDescriptor.get, this, []);
           } catch {
             // Suppress errors calling original returnValue getter
           }
@@ -205,7 +214,7 @@ function setupEventInterception(shouldBlockEvent: (event: Event) => boolean) {
         set(val) {
           if (this && this instanceof Event && shouldBlockEvent(this)) return;
           try {
-            if (origDescriptor?.set) origDescriptor.set.call(this, val);
+            if (origDescriptor?.set) safeApply(origDescriptor.set, this, [val]);
           } catch {
             // Suppress errors calling original returnValue setter
           }
@@ -218,19 +227,25 @@ function setupEventInterception(shouldBlockEvent: (event: Event) => boolean) {
     // Suppress errors intercepting returnValue property
   }
 
-  Event.prototype.stopPropagation = function (this: Event): void {
+  Event.prototype.stopPropagation = function (
+    this: Event,
+    ...args: unknown[]
+  ): void {
     if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
     try {
-      origSP.apply(this);
+      safeApply(origSP, this, args);
     } catch {
       // Suppress errors calling original stopPropagation
     }
   };
 
-  Event.prototype.stopImmediatePropagation = function (this: Event): void {
+  Event.prototype.stopImmediatePropagation = function (
+    this: Event,
+    ...args: unknown[]
+  ): void {
     if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
     try {
-      origSIP.apply(this);
+      safeApply(origSIP, this, args);
     } catch {
       // Suppress errors calling original stopImmediatePropagation
     }
@@ -266,7 +281,7 @@ function setupPropertyTraps(isForceModeActive: () => boolean) {
             }
             try {
               if (origDescriptor?.get) {
-                return origDescriptor.get.call(this);
+                return safeApply(origDescriptor.get, this, []);
               }
             } catch {
               // Suppress errors calling original event getter
@@ -279,7 +294,7 @@ function setupPropertyTraps(isForceModeActive: () => boolean) {
             }
             try {
               if (origDescriptor?.set) {
-                origDescriptor.set.call(this, val);
+                safeApply(origDescriptor.set, this, [val]);
               }
             } catch {
               // Suppress errors calling original event setter

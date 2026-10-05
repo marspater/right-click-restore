@@ -163,6 +163,33 @@ describe('page-script helpers', () => {
     });
   });
 
+  describe('Function prototype method shadowing resistance', () => {
+    test('isInteractiveEvent resists host page shadowing Function.prototype.apply/call', () => {
+      const origApply = Function.prototype.apply;
+      const origCall = Function.prototype.call;
+
+      try {
+        Function.prototype.apply = () => {
+          throw new Error('Host script hijacked apply');
+        };
+        Function.prototype.call = () => {
+          throw new Error('Host script hijacked call');
+        };
+
+        const input = document.createElement('input');
+        const event = {
+          composedPath: () => [input],
+          target: null,
+        } as unknown as Event;
+
+        expect(isInteractiveEvent(event)).toBe(true);
+      } finally {
+        Function.prototype.apply = origApply;
+        Function.prototype.call = origCall;
+      }
+    });
+  });
+
   describe('isInteractiveEvent', () => {
     test('returns true when composedPath includes interactive element', () => {
       const input = document.createElement('input');

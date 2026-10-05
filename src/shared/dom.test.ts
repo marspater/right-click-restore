@@ -267,6 +267,40 @@ describe('shared DOM utilities', () => {
     });
   });
 
+  describe('Function prototype shadowing resistance', () => {
+    test('safeMatches, safeClosest, and DOM utilities operate even if Function.prototype.apply and call are shadowed', () => {
+      const origApply = Function.prototype.apply;
+      const origCall = Function.prototype.call;
+
+      try {
+        // Shadow apply and call on Function.prototype with malicious/failing implementations
+        Function.prototype.apply = () => {
+          throw new Error('Host page hijacked Function.prototype.apply');
+        };
+        Function.prototype.call = () => {
+          throw new Error('Host page hijacked Function.prototype.call');
+        };
+
+        const div = document.createElement('div');
+        div.className = 'test-class';
+        expect(safeMatches(div, '.test-class')).toBe(true);
+
+        const parent = document.createElement('div');
+        parent.className = 'parent';
+        parent.appendChild(div);
+        expect(safeClosest(div, '.parent')).toBe(parent);
+
+        div.setAttribute('oncontextmenu', 'return false');
+        expect(safeHasAttribute(div, 'oncontextmenu')).toBe(true);
+        safeRemoveAttribute(div, 'oncontextmenu');
+        expect(safeHasAttribute(div, 'oncontextmenu')).toBe(false);
+      } finally {
+        Function.prototype.apply = origApply;
+        Function.prototype.call = origCall;
+      }
+    });
+  });
+
   describe('safeQuerySelectorAll', () => {
     test('returns array of matching elements', () => {
       const container = document.createElement('div');

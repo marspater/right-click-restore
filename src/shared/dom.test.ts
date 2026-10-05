@@ -3,6 +3,7 @@ import { Window } from 'happy-dom';
 import {
   getUnshadowedGetter,
   getUnshadowedMethod,
+  safeApply,
   safeClosest,
   safeGetElementById,
   safeGetShadowRoot,
@@ -217,6 +218,27 @@ describe('shared DOM utilities', () => {
       expect(style).not.toBe(input as unknown as CSSStyleDeclaration);
     });
 
+    test('handles non-HTMLElement or SVGElement safely without throwing', () => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      expect(() => safeGetStyle(svg as unknown as HTMLElement)).not.toThrow();
+    });
+
+    test('rejects plain object interface spoofing for shadowRoot and style', () => {
+      const mockElement = {
+        shadowRoot: {
+          nodeType: 11,
+          querySelectorAll: () => [],
+        },
+        style: {
+          getPropertyValue: () => 'none',
+          userSelect: 'none',
+        },
+      } as unknown as HTMLElement;
+
+      expect(safeGetShadowRoot(mockElement)).toBeNull();
+      expect(safeGetStyle(mockElement)).toBeNull();
+    });
+
     test('retrieves shadowRoot safely', () => {
       const el = document.createElement('div');
       expect(safeGetShadowRoot(el)).toBeNull();
@@ -235,6 +257,48 @@ describe('shared DOM utilities', () => {
 
       const shadow = safeGetShadowRoot(form);
       expect(shadow).toBeNull();
+    });
+  });
+
+  describe('Function prototype shadowing resistance', () => {
+    test('safeMatches, safeClosest, and DOM utilities operate even if Function.prototype.apply and call are shadowed', () => {
+      const origApply = Function.prototype.apply;
+      const origCall = Function.prototype.call;
+
+      try {
+        // Shadow apply and call on Function.prototype with malicious/failing implementations
+        Function.prototype.apply = () => {
+          throw new Error('Host page hijacked Function.prototype.apply');
+        };
+        Function.prototype.call = () => {
+          throw new Error('Host page hijacked Function.prototype.call');
+        };
+
+        const div = document.createElement('div');
+        div.className = 'test-class';
+        expect(safeMatches(div, '.test-class')).toBe(true);
+
+        const parent = document.createElement('div');
+        parent.className = 'parent';
+        parent.appendChild(div);
+        expect(safeClosest(div, '.parent')).toBe(parent);
+
+        div.setAttribute('oncontextmenu', 'return false');
+        expect(safeHasAttribute(div, 'oncontextmenu')).toBe(true);
+        safeRemoveAttribute(div, 'oncontextmenu');
+        expect(safeHasAttribute(div, 'oncontextmenu')).toBe(false);
+      } finally {
+        Function.prototype.apply = origApply;
+        Function.prototype.call = origCall;
+      }
+    });
+
+    test('safeApply executes native functions accurately', () => {
+      const add = function (this: { offset: number }, a: number, b: number) {
+        return this.offset + a + b;
+      };
+      const context = { offset: 10 };
+      expect(safeApply(add, context, [5, 3])).toBe(18);
     });
   });
 

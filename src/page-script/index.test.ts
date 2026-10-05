@@ -3,6 +3,7 @@ import { Window } from 'happy-dom';
 import type { Settings } from '../shared/settings';
 import {
   handlePageScriptMessage,
+  isInteractiveElement,
   isInteractiveEvent,
   isInteractiveNode,
   isModifierPressed,
@@ -41,6 +42,22 @@ describe('page-script helpers', () => {
       expect(isInteractiveNode(span)).toBe(false);
       expect(isInteractiveNode(p)).toBe(false);
       expect(isInteractiveNode(section)).toBe(false);
+    });
+
+    test('isInteractiveElement fast-paths element attribute checks', () => {
+      const plainDiv = document.createElement('div');
+      expect(isInteractiveElement(plainDiv)).toBe(false);
+
+      const ytdApp = document.createElement('ytd-app');
+      expect(isInteractiveElement(ytdApp)).toBe(true);
+
+      const roleBtn = document.createElement('div');
+      roleBtn.setAttribute('role', 'button');
+      expect(isInteractiveElement(roleBtn)).toBe(true);
+
+      const proseMirror = document.createElement('div');
+      proseMirror.className = 'ProseMirror';
+      expect(isInteractiveElement(proseMirror)).toBe(true);
     });
 
     test('returns true for interactive HTML form & canvas elements', () => {
@@ -172,6 +189,18 @@ describe('page-script helpers', () => {
       } as unknown as Event;
 
       expect(isInteractiveEvent(event)).toBe(true);
+    });
+
+    test('fast-paths non-interactive elements in composedPath without error', () => {
+      const divNoAttrs = document.createElement('div');
+      const spanNoAttrs = document.createElement('span');
+
+      const event = {
+        composedPath: () => [spanNoAttrs, divNoAttrs],
+        target: spanNoAttrs,
+      } as unknown as Event;
+
+      expect(isInteractiveEvent(event)).toBe(false);
     });
 
     test('returns true when event target is interactive', () => {

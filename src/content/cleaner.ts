@@ -30,6 +30,7 @@ const FAST_INTERACTIVE_TAGS = new Set([
   'SELECT',
   'BUTTON',
   'CANVAS',
+  'YTD-APP',
 ]);
 
 export const SCRUB_ATTRS = [

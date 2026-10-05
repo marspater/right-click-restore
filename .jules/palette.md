@@ -22,4 +22,15 @@
    - Added smooth scale micro-interaction transitions (`transform: scale(1.05)`) on setting row icon badges upon hover/focus for refined affordance and tactile feel.
    - Maintained an `aria-live="polite"` screen reader region for status announcements.
 
+6. **Domain Inset Card Tap Target Expansion & Container Focus (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+   - Converted Active Domain Inset Card into an interactive `<label>` row when `isToggleableDomain` is active, expanding the tap target from the small switch to the full card (Fitts's Law) and matching setting row interaction patterns.
+   - Added subtle status beacon scale transitions (`transform: scale(1.2)`) on hover and unified container focus rings via `.domain-card:has(input:focus-visible)` while suppressing duplicate inner switch focus outlines.
+
+7. **Apple Switch Affordances & Icon Entrance Micro-Animations (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+   - Added explicit disabled cursor (`cursor: not-allowed`) and dimmed track opacity (`0.45`) for `.apple-switch` controls when disabled, preventing confusing pointer cursors on inactive controls.
+   - Added tactile active press response (`transform: scale(0.92)`) for setting row icon badges to complement the scale-up on hover/focus.
+   - Introduced a springy pop-in entrance micro-animation (`@keyframes popIn`) for the Force Unlock status icons upon success or error, offering responsive visual feedback.
+   - Added subtle theme-aware hover brightness adjustments on active Apple switch tracks for polished tactile depth.
+
+
 

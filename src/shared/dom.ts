@@ -2,6 +2,25 @@ const OBJECT_PROTO_METHODS = new Set(
   Object.getOwnPropertyNames(Object.prototype),
 );
 
+const nativeReflectApply =
+  typeof Reflect !== 'undefined' && typeof Reflect.apply === 'function'
+    ? Reflect.apply
+    : null;
+const nativeFuncApplyCall = Function.prototype.call.bind(
+  Function.prototype.apply,
+);
+
+export function safeApply<T, A extends unknown[], R>(
+  fn: (this: T, ...args: A) => R,
+  thisArg: T,
+  args: A | IArguments = [] as unknown as A,
+): R {
+  if (nativeReflectApply) {
+    return nativeReflectApply(fn, thisArg, args as ArrayLike<unknown>) as R;
+  }
+  return nativeFuncApplyCall(fn, thisArg, args as ArrayLike<unknown>) as R;
+}
+
 export function getUnshadowedMethod(
   obj: object,
   methodName: string,
@@ -65,7 +84,7 @@ export function safeMatches(element: Element, selector: string): boolean {
   try {
     const fn = getUnshadowedMethod(element, 'matches');
     if (fn) {
-      return Boolean(fn.call(element, selector));
+      return Boolean(safeApply(fn, element, [selector]));
     }
     return element.matches(selector);
   } catch {
@@ -78,7 +97,7 @@ export function safeHasAttributes(element: Element): boolean {
   try {
     const fn = getUnshadowedMethod(element, 'hasAttributes');
     if (fn) {
-      return Boolean(fn.call(element));
+      return Boolean(safeApply(fn, element, []));
     }
     return element.hasAttributes();
   } catch {
@@ -94,7 +113,7 @@ export function safeClosest(
   try {
     const fn = getUnshadowedMethod(element, 'closest');
     if (fn) {
-      return fn.call(element, selector) as Element | null;
+      return safeApply(fn, element, [selector]) as Element | null;
     }
     return element.closest(selector);
   } catch {
@@ -110,7 +129,7 @@ export function safeGetElementById(
   try {
     const fn = getUnshadowedMethod(doc, 'getElementById');
     if (fn) {
-      return fn.call(doc, id) as HTMLElement | null;
+      return safeApply(fn, doc, [id]) as HTMLElement | null;
     }
     return doc.getElementById(id);
   } catch {
@@ -126,7 +145,7 @@ export function safeQuerySelectorAll(
   try {
     const fn = getUnshadowedMethod(root, 'querySelectorAll');
     if (fn) {
-      return Array.from(fn.call(root, selector) as NodeListOf<Element>);
+      return Array.from(safeApply(fn, root, [selector]) as NodeListOf<Element>);
     }
     return Array.from(root.querySelectorAll(selector));
   } catch {
@@ -139,7 +158,7 @@ export function safeHasAttribute(element: Element, attr: string): boolean {
   try {
     const fn = getUnshadowedMethod(element, 'hasAttribute');
     if (fn) {
-      return Boolean(fn.call(element, attr));
+      return Boolean(safeApply(fn, element, [attr]));
     }
     return element.hasAttribute(attr);
   } catch {
@@ -153,7 +172,7 @@ export function safeRemoveAttribute(element: Element, attr: string): void {
     if (!safeHasAttribute(element, attr)) return;
     const fn = getUnshadowedMethod(element, 'removeAttribute');
     if (fn) {
-      fn.call(element, attr);
+      safeApply(fn, element, [attr]);
     } else {
       element.removeAttribute(attr);
     }
@@ -162,17 +181,57 @@ export function safeRemoveAttribute(element: Element, attr: string): void {
   }
 }
 
+let nativeShadowRootGetter: ((this: unknown) => unknown) | null | undefined;
+function getNativeShadowRootGetter(): ((this: unknown) => unknown) | null {
+  if (nativeShadowRootGetter === undefined) {
+    try {
+      nativeShadowRootGetter =
+        typeof Element !== 'undefined'
+          ? (Object.getOwnPropertyDescriptor(Element.prototype, 'shadowRoot')
+              ?.get ?? null)
+          : null;
+    } catch {
+      nativeShadowRootGetter = null;
+    }
+  }
+  return nativeShadowRootGetter;
+}
+
+let nativeStyleGetter: ((this: unknown) => unknown) | null | undefined;
+function getNativeStyleGetter(): ((this: unknown) => unknown) | null {
+  if (nativeStyleGetter === undefined) {
+    try {
+      nativeStyleGetter =
+        typeof HTMLElement !== 'undefined'
+          ? (Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'style')
+              ?.get ?? null)
+          : null;
+    } catch {
+      nativeStyleGetter = null;
+    }
+  }
+  return nativeStyleGetter;
+}
+
 export function safeGetShadowRoot(element: Element): ShadowRoot | null {
   try {
-    const getter = getUnshadowedGetter(element, 'shadowRoot');
-    const shadow = getter ? getter.call(element) : element.shadowRoot;
-    if (
-      shadow &&
-      typeof shadow === 'object' &&
-      'nodeType' in shadow &&
-      (shadow as Node).nodeType === 11
-    ) {
-      return shadow as ShadowRoot;
+    const nativeGetter = getNativeShadowRootGetter();
+    const shadow = nativeGetter
+      ? safeApply(nativeGetter, element, [])
+      : (() => {
+          const getter = getUnshadowedGetter(element, 'shadowRoot');
+          return getter ? safeApply(getter, element, []) : element.shadowRoot;
+        })();
+    if (shadow && typeof shadow === 'object') {
+      const proto = Object.getPrototypeOf(shadow);
+      if (
+        proto !== null &&
+        proto !== Object.prototype &&
+        'nodeType' in shadow &&
+        (shadow as Node).nodeType === 11
+      ) {
+        return shadow as ShadowRoot;
+      }
     }
   } catch {
     // Return null if accessing shadowRoot throws on restricted elements
@@ -182,14 +241,28 @@ export function safeGetShadowRoot(element: Element): ShadowRoot | null {
 
 export function safeGetStyle(element: HTMLElement): CSSStyleDeclaration | null {
   try {
-    const getter = getUnshadowedGetter(element, 'style');
-    const style = getter ? getter.call(element) : element.style;
+    let style: unknown = null;
+    const nativeGetter = getNativeStyleGetter();
     if (
-      style &&
-      typeof style === 'object' &&
-      typeof (style as Record<string, unknown>).getPropertyValue === 'function'
+      nativeGetter &&
+      typeof HTMLElement !== 'undefined' &&
+      element instanceof HTMLElement
     ) {
-      return style as CSSStyleDeclaration;
+      style = safeApply(nativeGetter, element, []);
+    } else {
+      const getter = getUnshadowedGetter(element, 'style');
+      style = getter ? safeApply(getter, element, []) : element.style;
+    }
+    if (style && typeof style === 'object') {
+      const proto = Object.getPrototypeOf(style);
+      if (
+        proto !== null &&
+        proto !== Object.prototype &&
+        typeof (style as Record<string, unknown>).getPropertyValue ===
+          'function'
+      ) {
+        return style as CSSStyleDeclaration;
+      }
     }
   } catch {
     // Return null if accessing style throws on restricted elements

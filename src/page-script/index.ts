@@ -1,13 +1,24 @@
 import { ALL_INTERACTIVE_SELECTORS } from '../shared/constants';
 import { getSecureRandomString } from '../shared/crypto';
-import { getUnshadowedMethod, safeClosest, safeMatches } from '../shared/dom';
+import {
+  getUnshadowedMethod,
+  safeApply,
+  safeClosest,
+  safeHasAttributes,
+  safeMatches,
+} from '../shared/dom';
 import {
   DEFAULT_SETTINGS,
   type Settings,
   validateSettings,
 } from '../shared/settings';
 
-export { getUnshadowedMethod, safeClosest, safeMatches } from '../shared/dom';
+export {
+  getUnshadowedMethod,
+  safeApply,
+  safeClosest,
+  safeMatches,
+} from '../shared/dom';
 
 const FAST_INTERACTIVE_TAGS = new Set([
   'INPUT',
@@ -15,7 +26,26 @@ const FAST_INTERACTIVE_TAGS = new Set([
   'SELECT',
   'BUTTON',
   'CANVAS',
+  'YTD-APP',
 ]);
+
+// Performance optimization: Fast-path interactive element check during event composed path traversals.
+// Bypasses expensive safeMatches CSS selector evaluation when an element has no attributes,
+// avoiding selector matching on attribute-less DOM nodes while guaranteeing exact selector accuracy.
+export function isInteractiveElement(item: Element): boolean {
+  try {
+    const tag = typeof item.tagName === 'string' ? item.tagName : '';
+    if (FAST_INTERACTIVE_TAGS.has(tag)) {
+      return true;
+    }
+    if (!safeHasAttributes(item)) {
+      return false;
+    }
+    return safeMatches(item, ALL_INTERACTIVE_SELECTORS);
+  } catch {
+    return safeMatches(item, ALL_INTERACTIVE_SELECTORS);
+  }
+}
 
 export function isInteractiveNode(node: Node | null): boolean {
   if (!node) return false;
@@ -25,10 +55,7 @@ export function isInteractiveNode(node: Node | null): boolean {
       curr = curr.parentElement;
     }
     if (curr instanceof Element) {
-      if (
-        typeof curr.tagName === 'string' &&
-        FAST_INTERACTIVE_TAGS.has(curr.tagName)
-      ) {
+      if (isInteractiveElement(curr)) {
         return true;
       }
       if (safeClosest(curr, ALL_INTERACTIVE_SELECTORS)) return true;
@@ -48,14 +75,10 @@ export function isInteractiveEvent(event: Event): boolean {
   try {
     const composedPathFn = getUnshadowedMethod(event, 'composedPath');
     if (composedPathFn) {
-      const path = composedPathFn.call(event) as unknown[];
+      const path = safeApply(composedPathFn, event, []) as unknown[];
       if (Array.isArray(path) && path.length > 0) {
         return path.some(
-          (item) =>
-            item instanceof Element &&
-            ((typeof item.tagName === 'string' &&
-              FAST_INTERACTIVE_TAGS.has(item.tagName)) ||
-              safeMatches(item, ALL_INTERACTIVE_SELECTORS)),
+          (item) => item instanceof Element && isInteractiveElement(item),
         );
       }
     }
@@ -176,10 +199,13 @@ function setupEventInterception(shouldBlockEvent: (event: Event) => boolean) {
   const origSP = Event.prototype.stopPropagation;
   const origSIP = Event.prototype.stopImmediatePropagation;
 
-  Event.prototype.preventDefault = function (this: Event): void {
+  Event.prototype.preventDefault = function (
+    this: Event,
+    ...args: unknown[]
+  ): void {
     if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
     try {
-      origPD.apply(this);
+      safeApply(origPD, this, args);
     } catch {
       // Suppress errors calling original preventDefault
     }
@@ -196,7 +222,8 @@ function setupEventInterception(shouldBlockEvent: (event: Event) => boolean) {
           if (this && this instanceof Event && shouldBlockEvent(this))
             return true;
           try {
-            if (origDescriptor?.get) return origDescriptor.get.call(this);
+            if (origDescriptor?.get)
+              return safeApply(origDescriptor.get, this, []);
           } catch {
             // Suppress errors calling original returnValue getter
           }
@@ -205,7 +232,7 @@ function setupEventInterception(shouldBlockEvent: (event: Event) => boolean) {
         set(val) {
           if (this && this instanceof Event && shouldBlockEvent(this)) return;
           try {
-            if (origDescriptor?.set) origDescriptor.set.call(this, val);
+            if (origDescriptor?.set) safeApply(origDescriptor.set, this, [val]);
           } catch {
             // Suppress errors calling original returnValue setter
           }
@@ -218,19 +245,25 @@ function setupEventInterception(shouldBlockEvent: (event: Event) => boolean) {
     // Suppress errors intercepting returnValue property
   }
 
-  Event.prototype.stopPropagation = function (this: Event): void {
+  Event.prototype.stopPropagation = function (
+    this: Event,
+    ...args: unknown[]
+  ): void {
     if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
     try {
-      origSP.apply(this);
+      safeApply(origSP, this, args);
     } catch {
       // Suppress errors calling original stopPropagation
     }
   };
 
-  Event.prototype.stopImmediatePropagation = function (this: Event): void {
+  Event.prototype.stopImmediatePropagation = function (
+    this: Event,
+    ...args: unknown[]
+  ): void {
     if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
     try {
-      origSIP.apply(this);
+      safeApply(origSIP, this, args);
     } catch {
       // Suppress errors calling original stopImmediatePropagation
     }
@@ -266,7 +299,7 @@ function setupPropertyTraps(isForceModeActive: () => boolean) {
             }
             try {
               if (origDescriptor?.get) {
-                return origDescriptor.get.call(this);
+                return safeApply(origDescriptor.get, this, []);
               }
             } catch {
               // Suppress errors calling original event getter
@@ -279,7 +312,7 @@ function setupPropertyTraps(isForceModeActive: () => boolean) {
             }
             try {
               if (origDescriptor?.set) {
-                origDescriptor.set.call(this, val);
+                safeApply(origDescriptor.set, this, [val]);
               }
             } catch {
               // Suppress errors calling original event setter

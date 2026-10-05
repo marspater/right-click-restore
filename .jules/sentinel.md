@@ -13,3 +13,19 @@
 **Learning:** Named element getters on HTML collections and form elements do not create own properties on instance objects, causing `Object.hasOwn` checks to evaluate to `false` and fall back to clobbered instance properties.
 **Prevention:** Always retrieve unshadowed prototype getter descriptors directly using `getUnshadowedGetter` without checking `Object.hasOwn`, and validate that returned objects match expected interface specifications (`getPropertyValue` for CSS styles, `nodeType === 11` for shadow roots).
 
+## 2025-05-21 - Bridge Channel Nonce Validation & Handshake Tampering Resistance
+**Vulnerability:** Untrusted page scripts could trigger fake `__rcr_handshake__` events with standard DOM event names (e.g. `click`) or arbitrary channel strings, potentially confusing communication channels or hijacking message relays.
+**Learning:** Handshake payloads must be strictly validated before channel registration. Nonce strings must satisfy minimum length constraints, and channel names must adhere strictly to the internal naming convention (`__rcr_bridge_${nonce}`).
+**Prevention:** Verify `typeof detail.nonce === 'string' && detail.nonce.length >= 8 && detail.channel === '__rcr_bridge_' + detail.nonce` and permanently lock channel state upon initial establishment.
+
+## 2025-05-21 - Interface Prototype Verification & Duck-Typing Bypass Resistance
+**Vulnerability:** Relying solely on structural duck-typing (`'nodeType' in shadow && shadow.nodeType === 11` or `typeof style.getPropertyValue === 'function'`) allowed host page scripts to spoof `shadowRoot` or `style` with plain JS objects like `{ nodeType: 11 }` or `{ getPropertyValue: fn }`.
+**Learning:** Checking structural properties on objects returned by unshadowed getters is insufficient if plain JS objects (`{ ... }`) pass duck-typing checks. Plain objects inherit directly from `Object.prototype` or `null`.
+**Prevention:** Verify interface prototype inheritance (`Object.getPrototypeOf(obj) !== null && Object.getPrototypeOf(obj) !== Object.prototype`) ensuring objects are genuine DOM interface instances.
+
+## 2025-05-21 - Function Prototype Shadowing Resistance with safeApply
+**Vulnerability:** Malicious host scripts could monkey-patch or shadow `Function.prototype.apply` and `Function.prototype.call`, causing extension DOM helpers and event traps to fail or execute attacker-controlled logic.
+**Learning:** Calling `.call()` or `.apply()` directly relies on `Function.prototype` methods remaining unmodified in the current JS realm.
+**Prevention:** Implement `safeApply` using snapshotted native `Reflect.apply` (or fallback `Function.prototype.call.bind(Function.prototype.apply)`), ensuring untrusted host script modifications to `Function.prototype` cannot compromise DOM operations.
+
+

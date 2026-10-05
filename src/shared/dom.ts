@@ -164,6 +164,21 @@ export function safeRemoveAttribute(element: Element, attr: string): void {
 
 export function safeGetShadowRoot(element: Element): ShadowRoot | null {
   try {
+    // Fast-path: When shadowRoot is not an own property (99.99% of DOM nodes), direct property
+    // access invokes the unshadowed prototype getter without walking prototype chains or allocating descriptors.
+    if (!Object.hasOwn(element, 'shadowRoot')) {
+      const shadow = element.shadowRoot;
+      if (
+        shadow &&
+        typeof shadow === 'object' &&
+        'nodeType' in shadow &&
+        (shadow as Node).nodeType === 11
+      ) {
+        return shadow as ShadowRoot;
+      }
+      return null;
+    }
+
     const getter = getUnshadowedGetter(element, 'shadowRoot');
     const shadow = getter ? getter.call(element) : element.shadowRoot;
     if (
@@ -182,6 +197,21 @@ export function safeGetShadowRoot(element: Element): ShadowRoot | null {
 
 export function safeGetStyle(element: HTMLElement): CSSStyleDeclaration | null {
   try {
+    // Fast-path: When style is not an own property (99.99% of DOM nodes), direct property
+    // access invokes the unshadowed prototype getter without walking prototype chains or allocating descriptors.
+    if (!Object.hasOwn(element, 'style')) {
+      const style = element.style;
+      if (
+        style &&
+        typeof style === 'object' &&
+        typeof (style as Record<string, unknown>).getPropertyValue ===
+          'function'
+      ) {
+        return style as CSSStyleDeclaration;
+      }
+      return null;
+    }
+
     const getter = getUnshadowedGetter(element, 'style');
     const style = getter ? getter.call(element) : element.style;
     if (

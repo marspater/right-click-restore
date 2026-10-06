@@ -32,5 +32,9 @@
    - Introduced a springy pop-in entrance micro-animation (`@keyframes popIn`) for the Force Unlock status icons upon success or error, offering responsive visual feedback.
    - Added subtle theme-aware hover brightness adjustments on active Apple switch tracks for polished tactile depth.
 
+8. **Interactive Footnote Shortcut & Icon Micro-Interactions (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+   - Converted the "Tip: Enable Modifier Key Bypass..." text in the popup footer into an interactive quick-action button when `bypassModifierKey` is inactive and protection is active. Clicking directly toggles the setting on, reducing interaction friction.
+   - Added native `title` tooltips on disabled setting rows explaining why settings are inactive ("Extension is paused globally" or "Protection is disabled on this domain").
+   - Added smooth scale micro-interactions on the header shield badge (`group-hover:scale-105`) and Force Unlock button icon (`.force-unlock-btn:hover svg { transform: scale(1.12); }`) to provide cohesive tactile visual feedback.
 
 

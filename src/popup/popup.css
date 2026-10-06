@@ -264,6 +264,15 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
+/* Force Unlock Button Icon Micro-Interaction */
+.force-unlock-btn svg {
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.force-unlock-btn:hover:not(:disabled) svg {
+  transform: scale(1.12);
+}
+
 /* Inset Settings Row */
 .settings-row {
   display: flex;

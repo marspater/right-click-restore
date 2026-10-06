@@ -223,8 +223,8 @@ async function forceUnlockPage() {
 <main class="popover-root">
   <!-- Apple-Style Header -->
   <header class="flex items-center justify-between pb-3 select-none">
-    <div class="flex items-center gap-2.5">
-      <div class="w-7 h-7 rounded-[8px] bg-gradient-to-b from-[#007AFF] to-[#0062CC] flex items-center justify-center shadow-sm">
+    <div class="flex items-center gap-2.5 group cursor-default">
+      <div class="w-7 h-7 rounded-[8px] bg-gradient-to-b from-[#007AFF] to-[#0062CC] flex items-center justify-center shadow-sm transition-transform duration-200 group-hover:scale-105">
         <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           <polyline points="9 12 11 14 15 10" />
@@ -323,7 +323,11 @@ async function forceUnlockPage() {
   <!-- Settings List Group -->
   <section class={`glass-card p-1 mb-2 flex flex-col ${isSiteActive ? '' : 'dimmed'}`}>
     <!-- Feature 1: Restore Right Click -->
-    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive}>
+    <label
+      class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`}
+      aria-disabled={!isSiteActive}
+      title={!isSiteActive ? (!settings.enabled ? 'Extension is paused globally' : 'Protection is disabled on this domain') : undefined}
+    >
       <div class="flex items-center gap-2.5 min-w-0">
         <div class={`w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
           isSiteActive && settings.restoreRightClick
@@ -349,7 +353,11 @@ async function forceUnlockPage() {
     <div class="settings-divider" aria-hidden="true"></div>
 
     <!-- Feature 2: Allow Selection & Copy -->
-    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive}>
+    <label
+      class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`}
+      aria-disabled={!isSiteActive}
+      title={!isSiteActive ? (!settings.enabled ? 'Extension is paused globally' : 'Protection is disabled on this domain') : undefined}
+    >
       <div class="flex items-center gap-2.5 min-w-0">
         <div class={`w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
           isSiteActive && settings.restoreSelection
@@ -375,7 +383,11 @@ async function forceUnlockPage() {
     <div class="settings-divider" aria-hidden="true"></div>
 
     <!-- Feature 3: Anti-Shield Overlay -->
-    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive}>
+    <label
+      class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`}
+      aria-disabled={!isSiteActive}
+      title={!isSiteActive ? (!settings.enabled ? 'Extension is paused globally' : 'Protection is disabled on this domain') : undefined}
+    >
       <div class="flex items-center gap-2.5 min-w-0">
         <div class={`w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
           isSiteActive && settings.antiShield
@@ -400,7 +412,11 @@ async function forceUnlockPage() {
     <div class="settings-divider" aria-hidden="true"></div>
 
     <!-- Feature 4: Absolute Force Mode -->
-    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive}>
+    <label
+      class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`}
+      aria-disabled={!isSiteActive}
+      title={!isSiteActive ? (!settings.enabled ? 'Extension is paused globally' : 'Protection is disabled on this domain') : undefined}
+    >
       <div class="flex items-center gap-2.5 min-w-0">
         <div class={`w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
           isSiteActive && settings.absoluteForce
@@ -425,7 +441,11 @@ async function forceUnlockPage() {
     <div class="settings-divider" aria-hidden="true"></div>
 
     <!-- Feature 5: Modifier Key Bypass -->
-    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive}>
+    <label
+      class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`}
+      aria-disabled={!isSiteActive}
+      title={!isSiteActive ? (!settings.enabled ? 'Extension is paused globally' : 'Protection is disabled on this domain') : undefined}
+    >
       <div class="flex items-center gap-2.5 min-w-0">
         <div class={`w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
           isSiteActive && settings.bypassModifierKey
@@ -456,7 +476,7 @@ async function forceUnlockPage() {
       onclick={forceUnlockPage}
       disabled={unlockStatus !== 'idle' || !isSiteActive}
       title={isSiteActive ? 'Force unlock context menu and selection on active page' : 'Protection is inactive on this page'}
-      class={`w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none disabled:cursor-not-allowed ${
+      class={`force-unlock-btn w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none disabled:cursor-not-allowed ${
         isSiteActive && unlockStatus === 'idle' ? 'active:scale-[0.985]' : ''
       } ${
         unlockStatus === 'unlocking'
@@ -512,7 +532,12 @@ async function forceUnlockPage() {
       {:else if settings.bypassModifierKey}
         Tip: Hold <kbd>⇧ Shift</kbd> or <kbd>⌥ Option</kbd> for native menu
       {:else}
-        Tip: Enable Modifier Key Bypass to hold <kbd>⇧ Shift</kbd>
+        Tip: <button
+          type="button"
+          onclick={() => toggleFeature('bypassModifierKey')}
+          class="inline bg-transparent p-0 border-0 text-[var(--text-secondary)] hover:text-[var(--accent-blue)] underline underline-offset-2 cursor-pointer font-medium transition-colors focus-visible:outline-2 focus-visible:outline-[var(--accent-blue)] focus-visible:outline-offset-1 rounded-xs"
+          title="Click to enable Modifier Key Bypass setting"
+        >Enable Modifier Key Bypass</button> to hold <kbd>⇧ Shift</kbd>
       {/if}
     </p>
   </footer>

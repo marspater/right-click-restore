@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { Window } from 'happy-dom';
 import type { Settings } from '../shared/settings';
-import { handleContentMessage } from './index';
+import { cloneSettings, handleContentMessage } from './index';
 
 describe('content script message handler', () => {
   let windowInstance: InstanceType<typeof Window>;
@@ -299,5 +299,43 @@ describe('content script message handler', () => {
     expect(hijackReceived).toBe(false);
     expect(bridgeChannel).toBe('__rcr_bridge_validnonce123');
     expect(bridgeNonce).toBe('validnonce123');
+  });
+
+  test('clones settings object before dispatching CustomEvents to prevent state mutation by page scripts', () => {
+    const originalSettings: Settings = {
+      enabled: true,
+      restoreRightClick: true,
+      restoreSelection: true,
+      antiShield: true,
+      absoluteForce: true,
+      bypassModifierKey: false,
+      disabledDomains: ['example.com'],
+    };
+
+    let receivedConfig: Settings | undefined;
+
+    windowInstance.addEventListener('__rcr_bridge_testnonce123', (e: Event) => {
+      const customEvent = e as CustomEvent;
+      receivedConfig = customEvent.detail?.config;
+      if (receivedConfig && Array.isArray(receivedConfig.disabledDomains)) {
+        // Attempt host page mutation of received settings
+        receivedConfig.disabledDomains.push('malicious.com');
+        (receivedConfig as Record<string, unknown>).enabled = false;
+      }
+    });
+
+    windowInstance.dispatchEvent(
+      new CustomEvent('__rcr_bridge_testnonce123', {
+        detail: {
+          nonce: 'testnonce123',
+          type: 'UPDATE',
+          config: cloneSettings(originalSettings),
+        },
+      }),
+    );
+
+    expect(receivedConfig).toBeDefined();
+    expect(originalSettings.disabledDomains).toEqual(['example.com']);
+    expect(originalSettings.enabled).toBe(true);
   });
 });

@@ -5,6 +5,7 @@ import {
   getUnshadowedMethod,
   safeApply,
   safeClosest,
+  safeGetAttribute,
   safeGetElementById,
   safeGetShadowRoot,
   safeGetStyle,
@@ -150,14 +151,32 @@ describe('shared DOM utilities', () => {
     });
   });
 
-  describe('safeHasAttribute, safeHasAttributes, and safeRemoveAttribute', () => {
-    test('safely checks and removes attributes', () => {
+  describe('safeHasAttribute, safeGetAttribute, safeHasAttributes, and safeRemoveAttribute', () => {
+    test('safely checks, reads, and removes attributes', () => {
       const el = document.createElement('div');
       el.setAttribute('oncontextmenu', 'return false');
 
       expect(safeHasAttribute(el, 'oncontextmenu')).toBe(true);
+      expect(safeGetAttribute(el, 'oncontextmenu')).toBe('return false');
+      expect(safeGetAttribute(el, 'style')).toBeNull();
       safeRemoveAttribute(el, 'oncontextmenu');
       expect(safeHasAttribute(el, 'oncontextmenu')).toBe(false);
+      expect(safeGetAttribute(el, 'oncontextmenu')).toBeNull();
+    });
+
+    test('safeGetAttribute resists DOM clobbering', () => {
+      const form = document.createElement('form');
+      form.setAttribute('style', 'color: red;');
+      const input = document.createElement('input');
+      input.setAttribute('name', 'getAttribute');
+      form.appendChild(input);
+
+      Object.defineProperty(form, 'getAttribute', {
+        value: input,
+        configurable: true,
+      });
+
+      expect(safeGetAttribute(form, 'style')).toBe('color: red;');
     });
 
     test('safeHasAttributes checks attribute presence accurately and resists DOM clobbering', () => {

@@ -154,6 +154,22 @@ export function safeQuerySelectorAll(
   }
 }
 
+export function safeGetAttribute(
+  element: Element,
+  attr: string,
+): string | null {
+  try {
+    const fn = getUnshadowedMethod(element, 'getAttribute');
+    if (fn) {
+      return (safeApply(fn, element, [attr]) as string | null) ?? null;
+    }
+    return element.getAttribute(attr);
+  } catch {
+    // Return null if reading attribute throws on restricted elements
+    return null;
+  }
+}
+
 export function safeHasAttribute(element: Element, attr: string): boolean {
   try {
     const fn = getUnshadowedMethod(element, 'hasAttribute');

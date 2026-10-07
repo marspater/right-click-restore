@@ -32,5 +32,9 @@
    - Introduced a springy pop-in entrance micro-animation (`@keyframes popIn`) for the Force Unlock status icons upon success or error, offering responsive visual feedback.
    - Added subtle theme-aware hover brightness adjustments on active Apple switch tracks for polished tactile depth.
 
+8. **Card-Level Action Tooltips & Non-Toggleable Context Visual Symmetry (`src/popup/App.svelte`)**:
+   - Elevated action `title` tooltips (`!settings.enabled ? 'Extension is paused globally' : isSiteDisabled ? ...`) directly to the outer domain card container (`<label>`), ensuring hovering anywhere on the interactive domain row presents full action affordance hints.
+   - Updated non-toggleable domain contexts (`!isToggleableDomain`) to display `ACTIVE CONTEXT` instead of `ACTIVE ON DOMAIN` when shield is active, providing clearer context on internal pages.
+   - Introduced a subtle status badge pill ("Protected" / "Paused") on the right side of non-toggleable domain cards to restore visual balance and layout symmetry with the toggle switch rows below.
 
 

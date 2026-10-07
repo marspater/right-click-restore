@@ -254,6 +254,7 @@ async function forceUnlockPage() {
         settings.enabled ? 'cursor-pointer hover:bg-[var(--bg-card-hover)]' : 'dimmed cursor-not-allowed'
       }`}
       aria-disabled={!settings.enabled}
+      title={!settings.enabled ? 'Extension is paused globally' : isSiteDisabled ? `Enable protection on ${currentHostname}` : `Disable protection on ${currentHostname}`}
     >
       <div class="flex items-center gap-2.5 min-w-0 pr-2">
         <!-- Status Beacon -->
@@ -283,13 +284,16 @@ async function forceUnlockPage() {
         </div>
       </div>
 
-      <span class="apple-switch apple-switch-sm" title={isSiteDisabled ? `Enable protection on ${currentHostname}` : `Disable protection on ${currentHostname}`}>
+      <span class="apple-switch apple-switch-sm">
         <input type="checkbox" role="switch" checked={!isSiteDisabled} aria-checked={!isSiteDisabled} disabled={!settings.enabled} onchange={toggleCurrentSite} aria-label={`Protection on ${currentHostname}`} />
         <span class="apple-slider"></span>
       </span>
     </label>
   {:else}
-    <section class={`glass-card domain-card px-3 py-2.5 mb-2 flex items-center justify-between transition-all ${settings.enabled ? '' : 'dimmed'}`}>
+    <section
+      class={`glass-card domain-card px-3 py-2.5 mb-2 flex items-center justify-between transition-all ${settings.enabled ? '' : 'dimmed'}`}
+      title={!settings.enabled ? 'Extension is paused globally' : 'Protection is active on current page'}
+    >
       <div class="flex items-center gap-2.5 min-w-0 pr-2">
         <!-- Status Beacon -->
         <div class="flex items-center justify-center flex-shrink-0" aria-hidden="true">
@@ -310,13 +314,17 @@ async function forceUnlockPage() {
         <!-- Domain Labels Stack -->
         <div class="min-w-0 flex flex-col justify-center">
           <span class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
-            {!settings.enabled ? 'Extension Paused' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
+            {!settings.enabled ? 'Extension Paused' : 'Active Context'}
           </span>
           <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-0.5" title={currentHostname}>
             {currentHostname || 'Loading…'}
           </span>
         </div>
       </div>
+
+      <span class="text-[10px] font-medium text-[var(--text-secondary)] px-2 py-0.5 rounded-md bg-[var(--bg-badge)] border border-[var(--border-subtle)] select-none">
+        {settings.enabled ? 'Protected' : 'Paused'}
+      </span>
     </section>
   {/if}
 

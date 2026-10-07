@@ -5,6 +5,7 @@ import {
   getUnshadowedMethod,
   safeApply,
   safeClosest,
+  safeCreateElement,
   safeGetElementById,
   safeGetShadowRoot,
   safeGetStyle,
@@ -299,6 +300,30 @@ describe('shared DOM utilities', () => {
       };
       const context = { offset: 10 };
       expect(safeApply(add, context, [5, 3])).toBe(18);
+    });
+  });
+
+  describe('safeCreateElement', () => {
+    test('creates HTML element properly', () => {
+      const div = safeCreateElement(document, 'div');
+      expect(div).toBeInstanceOf(window.HTMLElement);
+      expect(div.tagName).toBe('DIV');
+    });
+
+    test('resists DOM clobbering when createElement is overridden by child element or form', () => {
+      const form = document.createElement('form');
+      form.id = 'createElement';
+      document.body.appendChild(form);
+
+      // Clobber createElement on document
+      Object.defineProperty(document, 'createElement', {
+        value: form,
+        configurable: true,
+      });
+
+      const span = safeCreateElement(document, 'span');
+      expect(span).toBeInstanceOf(window.HTMLElement);
+      expect(span.tagName).toBe('SPAN');
     });
   });
 

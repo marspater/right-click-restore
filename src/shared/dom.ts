@@ -122,6 +122,23 @@ export function safeClosest(
   }
 }
 
+export function safeCreateElement<K extends keyof HTMLElementTagNameMap>(
+  doc: Document,
+  tagName: K,
+): HTMLElementTagNameMap[K];
+export function safeCreateElement(doc: Document, tagName: string): HTMLElement;
+export function safeCreateElement(doc: Document, tagName: string): HTMLElement {
+  try {
+    const fn = getUnshadowedMethod(doc, 'createElement');
+    if (fn) {
+      return safeApply(fn, doc, [tagName]) as HTMLElement;
+    }
+    return doc.createElement(tagName);
+  } catch {
+    return doc.createElement(tagName);
+  }
+}
+
 export function safeGetElementById(
   doc: Document,
   id: string,

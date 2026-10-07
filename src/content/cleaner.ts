@@ -14,6 +14,7 @@ export {
   getUnshadowedGetter,
   getUnshadowedMethod,
   safeClosest,
+  safeCreateElement,
   safeGetElementById,
   safeGetShadowRoot,
   safeGetStyle,

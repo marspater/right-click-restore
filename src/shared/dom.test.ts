@@ -28,6 +28,8 @@ describe('shared DOM utilities', () => {
       Node: window.Node,
       Element: window.Element,
       HTMLElement: window.HTMLElement,
+      Document: window.Document,
+      DocumentFragment: window.DocumentFragment,
     });
   });
 
@@ -345,6 +347,25 @@ describe('shared DOM utilities', () => {
       expect(items).toHaveLength(2);
       expect(items[0]).toBe(item1);
       expect(items[1]).toBe(item2);
+    });
+
+    test('works correctly on Document and DocumentFragment nodes', () => {
+      const item = document.createElement('div');
+      item.className = 'doc-item';
+      document.body.appendChild(item);
+
+      const docResults = safeQuerySelectorAll(document, '.doc-item');
+      expect(docResults).toHaveLength(1);
+      expect(docResults[0]).toBe(item);
+
+      const fragment = document.createDocumentFragment();
+      const fragItem = document.createElement('span');
+      fragItem.className = 'frag-item';
+      fragment.appendChild(fragItem);
+
+      const fragResults = safeQuerySelectorAll(fragment, '.frag-item');
+      expect(fragResults).toHaveLength(1);
+      expect(fragResults[0]).toBe(fragItem);
     });
 
     test('resists DOM clobbering when querySelectorAll is overridden', () => {

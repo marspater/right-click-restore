@@ -1,6 +1,7 @@
 import { ALL_INTERACTIVE_SELECTORS } from '../shared/constants';
 import { getSecureRandomString } from '../shared/crypto';
 import {
+  getNativeComposedPathMethod,
   getUnshadowedMethod,
   safeApply,
   safeClosest,
@@ -73,13 +74,27 @@ export function isInteractiveNode(node: Node | null): boolean {
 export function isInteractiveEvent(event: Event): boolean {
   if (!event) return false;
   try {
-    const composedPathFn = getUnshadowedMethod(event, 'composedPath');
-    if (composedPathFn) {
-      const path = safeApply(composedPathFn, event, []) as unknown[];
+    const nativeComposedPath = getNativeComposedPathMethod();
+    if (
+      nativeComposedPath &&
+      typeof Event !== 'undefined' &&
+      event instanceof Event
+    ) {
+      const path = safeApply(nativeComposedPath, event, []) as unknown[];
       if (Array.isArray(path) && path.length > 0) {
         return path.some(
           (item) => item instanceof Element && isInteractiveElement(item),
         );
+      }
+    } else {
+      const composedPathFn = getUnshadowedMethod(event, 'composedPath');
+      if (composedPathFn) {
+        const path = safeApply(composedPathFn, event, []) as unknown[];
+        if (Array.isArray(path) && path.length > 0) {
+          return path.some(
+            (item) => item instanceof Element && isInteractiveElement(item),
+          );
+        }
       }
     }
   } catch {

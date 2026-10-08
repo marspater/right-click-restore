@@ -32,5 +32,9 @@
    - Introduced a springy pop-in entrance micro-animation (`@keyframes popIn`) for the Force Unlock status icons upon success or error, offering responsive visual feedback.
    - Added subtle theme-aware hover brightness adjustments on active Apple switch tracks for polished tactile depth.
 
+8. **Restricted System Page Context Handling & Visual Clarity (`src/popup/App.svelte`)**:
+   - Refined `isSiteActive` derived calculation to require `isToggleableDomain` so internal browser/system tabs (e.g. `Safari Page`, `Active Page`, internal browser settings) do not claim active shield protection or show misleading pulsing green beacon dots.
+   - Updated the non-toggleable domain card view to explicitly display "System / Restricted Page" status tag with neutral status indicators.
+   - Enhanced Force Unlock button tooltips and footer tip messages on non-supported pages to clearly announce "Protection is unavailable on system pages", preventing confusion and eliminating non-functional user actions.
 
 

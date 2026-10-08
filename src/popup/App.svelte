@@ -23,7 +23,9 @@ const isSiteDisabled = $derived(
   ),
 );
 
-const isSiteActive = $derived(settings.enabled && !isSiteDisabled);
+const isSiteActive = $derived(
+  Boolean(settings.enabled && isToggleableDomain && !isSiteDisabled),
+);
 
 // Load state and active tab on mount
 $effect(() => {
@@ -275,7 +277,7 @@ async function forceUnlockPage() {
         <!-- Domain Labels Stack -->
         <div class="min-w-0 flex flex-col justify-center">
           <span class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
-            {!settings.enabled ? 'Extension Paused' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
+            {!settings.enabled ? 'Extension Paused' : !isToggleableDomain ? 'System / Restricted Page' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
           </span>
           <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-0.5" title={currentHostname}>
             {currentHostname || 'Loading…'}
@@ -310,7 +312,7 @@ async function forceUnlockPage() {
         <!-- Domain Labels Stack -->
         <div class="min-w-0 flex flex-col justify-center">
           <span class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
-            {!settings.enabled ? 'Extension Paused' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
+            {!settings.enabled ? 'Extension Paused' : !isToggleableDomain ? 'System / Restricted Page' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
           </span>
           <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-0.5" title={currentHostname}>
             {currentHostname || 'Loading…'}
@@ -455,7 +457,13 @@ async function forceUnlockPage() {
       type="button"
       onclick={forceUnlockPage}
       disabled={unlockStatus !== 'idle' || !isSiteActive}
-      title={isSiteActive ? 'Force unlock context menu and selection on active page' : 'Protection is inactive on this page'}
+      title={isSiteActive
+        ? 'Force unlock context menu and selection on active page'
+        : !settings.enabled
+          ? 'Extension is paused globally'
+          : !isToggleableDomain
+            ? 'Protection is unavailable on system pages'
+            : 'Protection is inactive on this domain'}
       class={`w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none disabled:cursor-not-allowed ${
         isSiteActive && unlockStatus === 'idle' ? 'active:scale-[0.985]' : ''
       } ${
@@ -507,6 +515,8 @@ async function forceUnlockPage() {
     <p class="text-[10px] text-[var(--text-tertiary)] leading-tight m-0 inline">
       {#if !settings.enabled}
         Extension is paused globally
+      {:else if !isToggleableDomain}
+        Protection is unavailable on system pages
       {:else if isSiteDisabled}
         Protection is disabled on this domain
       {:else if settings.bypassModifierKey}

@@ -28,4 +28,8 @@
 **Learning:** Calling `.call()` or `.apply()` directly relies on `Function.prototype` methods remaining unmodified in the current JS realm.
 **Prevention:** Implement `safeApply` using snapshotted native `Reflect.apply` (or fallback `Function.prototype.call.bind(Function.prototype.apply)`), ensuring untrusted host script modifications to `Function.prototype` cannot compromise DOM operations.
 
+## 2025-05-22 - Domain Normalization & Array Type Enforcement for Domain Exclusion Lookups
+**Vulnerability:** Passing unnormalized domain strings (containing uppercase letters, schemes/ports, or leading dots) or non-array objects into `isDomainDisabled` caused domain exclusion lookups to fail or throw unhandled `TypeError`s during iteration, bypassing protection settings on disabled domains.
+**Learning:** Checking domain exemptions requires strict normalization of both target and candidate domain strings, plus explicit `Array.isArray` validation before iterating over dynamic settings collections.
+**Prevention:** Always validate `Array.isArray` and apply `normalizeHostname` dynamically to each domain candidate during domain matching operations.
 

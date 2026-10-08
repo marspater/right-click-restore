@@ -69,8 +69,8 @@ export function normalizeHostname(hostname: string): string {
   // 4. Strip port if present (e.g. host:8080)
   clean = clean.replace(/:\d+$/, '');
 
-  // 5. Strip www. prefix and trailing dots without backtracking
-  clean = clean.slice(0, MAX_HOSTNAME_LENGTH).replace(/^www\./, '');
+  // 5. Strip www., leading dots, and wildcard prefixes without backtracking
+  clean = clean.slice(0, MAX_HOSTNAME_LENGTH).replace(/^(\*\.|\.+|www\.)+/, '');
   while (clean.endsWith('.')) {
     clean = clean.slice(0, -1);
   }
@@ -156,7 +156,12 @@ export function isDomainDisabled(
   hostname: string,
   disabledDomains: string[],
 ): boolean {
-  if (!hostname || !disabledDomains || disabledDomains.length === 0) {
+  if (
+    !hostname ||
+    !disabledDomains ||
+    !Array.isArray(disabledDomains) ||
+    disabledDomains.length === 0
+  ) {
     return false;
   }
 
@@ -164,7 +169,12 @@ export function isDomainDisabled(
   if (!host) return false;
 
   for (const disabled of disabledDomains) {
-    if (disabled && (disabled === host || host.endsWith(`.${disabled}`))) {
+    if (typeof disabled !== 'string' || !disabled) continue;
+    const normDisabled = normalizeHostname(disabled);
+    if (
+      normDisabled &&
+      (normDisabled === host || host.endsWith(`.${normDisabled}`))
+    ) {
       return true;
     }
   }

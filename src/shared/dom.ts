@@ -80,8 +80,13 @@ export function getUnshadowedGetter(
   return null;
 }
 
+// Fast-path: Directly call prototype method via safeApply when element is standard Element,
+// bypassing expensive getUnshadowedMethod prototype chain traversal and descriptor checks.
 export function safeMatches(element: Element, selector: string): boolean {
   try {
+    if (typeof Element !== 'undefined' && element instanceof Element) {
+      return Boolean(safeApply(Element.prototype.matches, element, [selector]));
+    }
     const fn = getUnshadowedMethod(element, 'matches');
     if (fn) {
       return Boolean(safeApply(fn, element, [selector]));
@@ -95,6 +100,9 @@ export function safeMatches(element: Element, selector: string): boolean {
 
 export function safeHasAttributes(element: Element): boolean {
   try {
+    if (typeof Element !== 'undefined' && element instanceof Element) {
+      return Boolean(safeApply(Element.prototype.hasAttributes, element, []));
+    }
     const fn = getUnshadowedMethod(element, 'hasAttributes');
     if (fn) {
       return Boolean(safeApply(fn, element, []));
@@ -111,6 +119,11 @@ export function safeClosest(
   selector: string,
 ): Element | null {
   try {
+    if (typeof Element !== 'undefined' && element instanceof Element) {
+      return safeApply(Element.prototype.closest, element, [
+        selector,
+      ]) as Element | null;
+    }
     const fn = getUnshadowedMethod(element, 'closest');
     if (fn) {
       return safeApply(fn, element, [selector]) as Element | null;
@@ -127,6 +140,11 @@ export function safeGetElementById(
   id: string,
 ): HTMLElement | null {
   try {
+    if (typeof Document !== 'undefined' && doc instanceof Document) {
+      return safeApply(Document.prototype.getElementById, doc, [
+        id,
+      ]) as HTMLElement | null;
+    }
     const fn = getUnshadowedMethod(doc, 'getElementById');
     if (fn) {
       return safeApply(fn, doc, [id]) as HTMLElement | null;
@@ -143,6 +161,30 @@ export function safeQuerySelectorAll(
   selector: string,
 ): Element[] {
   try {
+    if (typeof Element !== 'undefined' && root instanceof Element) {
+      return Array.from(
+        safeApply(Element.prototype.querySelectorAll, root, [
+          selector,
+        ]) as NodeListOf<Element>,
+      );
+    }
+    if (typeof Document !== 'undefined' && root instanceof Document) {
+      return Array.from(
+        safeApply(Document.prototype.querySelectorAll, root, [
+          selector,
+        ]) as NodeListOf<Element>,
+      );
+    }
+    if (
+      typeof DocumentFragment !== 'undefined' &&
+      root instanceof DocumentFragment
+    ) {
+      return Array.from(
+        safeApply(DocumentFragment.prototype.querySelectorAll, root, [
+          selector,
+        ]) as NodeListOf<Element>,
+      );
+    }
     const fn = getUnshadowedMethod(root, 'querySelectorAll');
     if (fn) {
       return Array.from(safeApply(fn, root, [selector]) as NodeListOf<Element>);
@@ -156,6 +198,11 @@ export function safeQuerySelectorAll(
 
 export function safeHasAttribute(element: Element, attr: string): boolean {
   try {
+    if (typeof Element !== 'undefined' && element instanceof Element) {
+      return Boolean(
+        safeApply(Element.prototype.hasAttribute, element, [attr]),
+      );
+    }
     const fn = getUnshadowedMethod(element, 'hasAttribute');
     if (fn) {
       return Boolean(safeApply(fn, element, [attr]));
@@ -170,6 +217,10 @@ export function safeHasAttribute(element: Element, attr: string): boolean {
 export function safeRemoveAttribute(element: Element, attr: string): void {
   try {
     if (!safeHasAttribute(element, attr)) return;
+    if (typeof Element !== 'undefined' && element instanceof Element) {
+      safeApply(Element.prototype.removeAttribute, element, [attr]);
+      return;
+    }
     const fn = getUnshadowedMethod(element, 'removeAttribute');
     if (fn) {
       safeApply(fn, element, [attr]);

@@ -28,4 +28,8 @@
 **Learning:** Calling `.call()` or `.apply()` directly relies on `Function.prototype` methods remaining unmodified in the current JS realm.
 **Prevention:** Implement `safeApply` using snapshotted native `Reflect.apply` (or fallback `Function.prototype.call.bind(Function.prototype.apply)`), ensuring untrusted host script modifications to `Function.prototype` cannot compromise DOM operations.
 
+## 2025-05-22 - DOM Clobbering Resistance for Coordinate Lookup Methods
+**Vulnerability:** Untrusted web pages could clobber or shadow `document.elementsFromPoint` (e.g. using `<input name="elementsFromPoint">` or instance overrides), causing Anti-Shield media unmasking routines to throw TypeErrors or fail silently.
+**Learning:** Document coordinate lookup methods invoked in main-world page scripts are susceptible to element named-property clobbering and instance shadowing.
+**Prevention:** Use `safeElementsFromPoint` (built on `getUnshadowedMethod` and `safeApply`) to retrieve `Document.prototype.elementsFromPoint` unshadowed and invoke it safely.
 

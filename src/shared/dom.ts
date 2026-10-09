@@ -57,6 +57,28 @@ export function getUnshadowedMethod(
   return null;
 }
 
+export function safeElementsFromPoint(
+  doc: Document,
+  x: number,
+  y: number,
+): Element[] {
+  try {
+    const fn = getUnshadowedMethod(doc, 'elementsFromPoint');
+    if (fn) {
+      const result = safeApply(fn, doc, [x, y]);
+      if (Array.isArray(result)) {
+        return result as Element[];
+      }
+    }
+    if (typeof doc.elementsFromPoint === 'function') {
+      return Array.from(doc.elementsFromPoint(x, y));
+    }
+  } catch {
+    // Return empty array if elementsFromPoint fails on restricted or detached documents
+  }
+  return [];
+}
+
 export function getUnshadowedGetter(
   obj: object,
   propName: string,

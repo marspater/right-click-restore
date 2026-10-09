@@ -5,6 +5,7 @@ import {
   getUnshadowedMethod,
   safeApply,
   safeClosest,
+  safeElementsFromPoint,
   safeGetElementById,
   safeGetShadowRoot,
   safeGetStyle,
@@ -366,6 +367,49 @@ describe('shared DOM utilities', () => {
       const results = safeQuerySelectorAll(container, '.target');
       expect(results).toHaveLength(1);
       expect(results[0]).toBe(target);
+    });
+  });
+
+  describe('safeElementsFromPoint', () => {
+    test('retrieves elements from coordinates', () => {
+      const div = document.createElement('div');
+      (document as unknown as Record<string, unknown>).elementsFromPoint = (
+        _x: number,
+        _y: number,
+      ) => [div];
+
+      const elements = safeElementsFromPoint(document, 10, 20);
+      expect(elements).toHaveLength(1);
+      expect(elements[0]).toBe(div);
+    });
+
+    test('resists DOM clobbering when elementsFromPoint is overridden by input element', () => {
+      const div = document.createElement('div');
+      const docProto = Object.getPrototypeOf(document);
+      docProto.elementsFromPoint = (_x: number, _y: number) => [div];
+
+      const input = document.createElement('input');
+      input.setAttribute('name', 'elementsFromPoint');
+
+      // Clobber elementsFromPoint on document instance
+      Object.defineProperty(document, 'elementsFromPoint', {
+        value: input,
+        configurable: true,
+      });
+
+      const results = safeElementsFromPoint(document, 10, 20);
+      expect(results).toHaveLength(1);
+      expect(results[0]).toBe(div);
+    });
+
+    test('handles exceptions gracefully and returns empty array on failure', () => {
+      const faultyDoc = {
+        elementsFromPoint: () => {
+          throw new Error('fail');
+        },
+      } as unknown as Document;
+
+      expect(safeElementsFromPoint(faultyDoc, 10, 20)).toEqual([]);
     });
   });
 });

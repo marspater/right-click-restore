@@ -18,4 +18,7 @@
 **Learning:** Caching native prototype getters (`Element.prototype.shadowRoot` and `HTMLElement.prototype.style`) at module load and invoking them via `safeApply` bypasses prototype chain searches and `Object.getOwnPropertyDescriptor` object allocations during frequent DOM inspections, achieving high speedups on `safeGetShadowRoot` and `safeGetStyle` while remaining completely resistant to DOM clobbering and prototype monkey-patching.
 **Action:** Cache native DOM prototype getter functions once and invoke them directly via `safeApply` on fast-paths when inspecting standard DOM properties.
 
+## 2025-05-22 - Early short-circuiting of O(1) guards in event interception
+**Learning:** Ordering fast O(1) checks (`restoreRightClick`/`restoreSelection` feature flags and `bypassModifierKey` modifier state) BEFORE calling `isInteractiveEvent()` during event interception prevents expensive `composedPath()` array allocations and CSS selector evaluations (`safeMatches`) whenever features are toggled off or modifier keys are held.
+**Action:** Place lightweight O(1) settings and event property checks ahead of O(N) DOM tree traversals or selector match routines in event handler wrappers.
 

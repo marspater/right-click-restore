@@ -7,6 +7,7 @@ import {
   isInteractiveEvent,
   isInteractiveNode,
   isModifierPressed,
+  shouldBlockEvent,
 } from './index';
 
 describe('page-script helpers', () => {
@@ -304,6 +305,108 @@ describe('page-script helpers', () => {
 
       expect(accepted).toBe(true);
       expect(unlocked).toBe(true);
+    });
+  });
+
+  describe('shouldBlockEvent', () => {
+    test('returns false for null event or when shield is disabled', () => {
+      expect(shouldBlockEvent(null as unknown as Event)).toBe(false);
+      const event = { type: 'contextmenu' } as Event;
+      expect(shouldBlockEvent(event, { enabled: false } as never)).toBe(false);
+    });
+
+    test('returns false for non-target event types in O(1)', () => {
+      const clickEvent = { type: 'click' } as Event;
+      const mousemoveEvent = { type: 'mousemove' } as Event;
+      const keydownEvent = { type: 'keydown' } as Event;
+
+      expect(shouldBlockEvent(clickEvent)).toBe(false);
+      expect(shouldBlockEvent(mousemoveEvent)).toBe(false);
+      expect(shouldBlockEvent(keydownEvent)).toBe(false);
+    });
+
+    test('short-circuits when restoreRightClick is disabled without calling composedPath', () => {
+      let composedPathCalled = false;
+      const event = {
+        type: 'contextmenu',
+        composedPath: () => {
+          composedPathCalled = true;
+          return [];
+        },
+      } as unknown as Event;
+
+      const result = shouldBlockEvent(event, {
+        enabled: true,
+        restoreRightClick: false,
+        restoreSelection: true,
+      } as never);
+
+      expect(result).toBe(false);
+      expect(composedPathCalled).toBe(false);
+    });
+
+    test('short-circuits when restoreSelection is disabled without calling composedPath', () => {
+      let composedPathCalled = false;
+      const event = {
+        type: 'selectstart',
+        composedPath: () => {
+          composedPathCalled = true;
+          return [];
+        },
+      } as unknown as Event;
+
+      const result = shouldBlockEvent(event, {
+        enabled: true,
+        restoreRightClick: true,
+        restoreSelection: false,
+      } as never);
+
+      expect(result).toBe(false);
+      expect(composedPathCalled).toBe(false);
+    });
+
+    test('short-circuits when modifier key is pressed without calling composedPath', () => {
+      let composedPathCalled = false;
+      const event = {
+        type: 'contextmenu',
+        shiftKey: true,
+        composedPath: () => {
+          composedPathCalled = true;
+          return [];
+        },
+      } as unknown as Event;
+
+      const result = shouldBlockEvent(event, {
+        enabled: true,
+        restoreRightClick: true,
+        restoreSelection: true,
+        bypassModifierKey: true,
+      } as never);
+
+      expect(result).toBe(false);
+      expect(composedPathCalled).toBe(false);
+    });
+
+    test('returns false for interactive target elements', () => {
+      const button = document.createElement('button');
+      const event = {
+        type: 'contextmenu',
+        target: button,
+        composedPath: () => [button],
+      } as unknown as Event;
+
+      expect(shouldBlockEvent(event)).toBe(false);
+    });
+
+    test('returns true for non-interactive elements when feature is active and no modifier is pressed', () => {
+      const div = document.createElement('div');
+      const event = {
+        type: 'contextmenu',
+        target: div,
+        composedPath: () => [div],
+      } as unknown as Event;
+
+      expect(shouldBlockEvent(event)).toBe(true);
     });
   });
 });

@@ -115,6 +115,46 @@ export const SELECTION_EVENTS = new Set([
   'beforecopy',
 ]);
 
+// Performance optimization: Short-circuit evaluation order in event interception hot-path.
+// Checking O(1) feature flags (restoreRightClick, restoreSelection) and O(1) modifier keys
+// (bypassModifierKey & shift/alt key press) BEFORE running isInteractiveEvent() avoids
+// expensive DOM tree traversals (composedPath and Element.matches selector evaluation)
+// when features are toggled off or modifier keys are held.
+export function shouldBlockEvent(
+  event: Event,
+  config: Settings = DEFAULT_SETTINGS,
+): boolean {
+  if (!event || config.enabled === false) {
+    return false;
+  }
+
+  const isContextMenu = event.type === 'contextmenu';
+  const isSelection = SELECTION_EVENTS.has(event.type);
+  if (!isContextMenu && !isSelection) {
+    return false;
+  }
+
+  // Fast O(1) guard: Verify if feature for this specific event type is active
+  const featureActive = isContextMenu
+    ? config.restoreRightClick !== false
+    : config.restoreSelection !== false;
+  if (!featureActive) {
+    return false;
+  }
+
+  // Fast O(1) guard: Allow native action if modifier key bypass is active and held
+  if (config.bypassModifierKey !== false && isModifierPressed(event)) {
+    return false;
+  }
+
+  // Expensive O(N) DOM traversal guard: check if event target/path is interactive element
+  if (isInteractiveEvent(event)) {
+    return false;
+  }
+
+  return true;
+}
+
 const unmaskTimers = new WeakMap<Element, number>();
 
 export function handlePageScriptMessage(
@@ -423,14 +463,6 @@ if (typeof window !== 'undefined') {
       return activeConfig.enabled !== false;
     }
 
-    function isRightClickActive(): boolean {
-      return isShieldActive() && activeConfig.restoreRightClick !== false;
-    }
-
-    function isSelectionActive(): boolean {
-      return isShieldActive() && activeConfig.restoreSelection !== false;
-    }
-
     function isAntiShieldActive(): boolean {
       return isShieldActive() && activeConfig.antiShield !== false;
     }
@@ -439,43 +471,7 @@ if (typeof window !== 'undefined') {
       return isShieldActive() && activeConfig.absoluteForce !== false;
     }
 
-    function isModifierBypassActive(): boolean {
-      return isShieldActive() && activeConfig.bypassModifierKey !== false;
-    }
-
-    // Hot-path optimization: Check event type BEFORE inspecting DOM path or running
-    // CSS selector matches via isInteractiveEvent(). 99.9% of web page events (click,
-    // mousemove, keydown, scroll, etc.) are non-target types and exit immediately in O(1),
-    // eliminating expensive composedPath() and Element.matches() DOM traversals.
-    function shouldBlockEvent(event: Event): boolean {
-      if (!event || !isShieldActive()) {
-        return false;
-      }
-
-      const isContextMenu = event.type === 'contextmenu';
-      const isSelection = SELECTION_EVENTS.has(event.type);
-      if (!isContextMenu && !isSelection) {
-        return false;
-      }
-
-      if (isInteractiveEvent(event)) {
-        return false;
-      }
-
-      // If modifier bypass is active and modifier key is held, allow native page action
-      if (isModifierBypassActive() && isModifierPressed(event)) {
-        return false;
-      }
-      if (isContextMenu && isRightClickActive()) {
-        return true;
-      }
-      if (isSelection && isSelectionActive()) {
-        return true;
-      }
-      return false;
-    }
-
-    setupEventInterception(shouldBlockEvent);
+    setupEventInterception((e) => shouldBlockEvent(e, activeConfig));
     setupPropertyTraps(isForceModeActive);
 
     function isMediaOrTextElement(el: Element): boolean {

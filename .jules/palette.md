@@ -32,5 +32,9 @@
    - Introduced a springy pop-in entrance micro-animation (`@keyframes popIn`) for the Force Unlock status icons upon success or error, offering responsive visual feedback.
    - Added subtle theme-aware hover brightness adjustments on active Apple switch tracks for polished tactile depth.
 
+8. **Seamless Rounded Focus Rings & Force Unlock Micro-Interactions (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+   - Replaced standard rectangular CSS outlines on `.domain-card` and `.settings-row` elements with rounded `box-shadow: 0 0 0 2px var(--accent-blue)` rings, preserving native border radius curvature on keyboard focus navigation.
+   - Added tactile spring hover/active micro-scaling (`group-hover:scale-110 group-active:scale-95`) on the Force Unlock button action icon.
+   - Refined non-toggleable page status messaging to display "Page Active" for clear context on internal/local pages.
 
 

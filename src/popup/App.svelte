@@ -275,7 +275,7 @@ async function forceUnlockPage() {
         <!-- Domain Labels Stack -->
         <div class="min-w-0 flex flex-col justify-center">
           <span class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
-            {!settings.enabled ? 'Extension Paused' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
+            {!settings.enabled ? 'Extension Paused' : isSiteDisabled ? 'Disabled on Domain' : 'Page Active'}
           </span>
           <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-0.5" title={currentHostname}>
             {currentHostname || 'Loading…'}
@@ -456,7 +456,7 @@ async function forceUnlockPage() {
       onclick={forceUnlockPage}
       disabled={unlockStatus !== 'idle' || !isSiteActive}
       title={isSiteActive ? 'Force unlock context menu and selection on active page' : 'Protection is inactive on this page'}
-      class={`w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none disabled:cursor-not-allowed ${
+      class={`group w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none disabled:cursor-not-allowed ${
         isSiteActive && unlockStatus === 'idle' ? 'active:scale-[0.985]' : ''
       } ${
         unlockStatus === 'unlocking'
@@ -489,7 +489,7 @@ async function forceUnlockPage() {
         </svg>
         <span>Unable to Unlock Page</span>
       {:else}
-        <svg class="w-3.5 h-3.5 text-[var(--accent-blue)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <svg class="w-3.5 h-3.5 text-[var(--accent-blue)] transition-transform duration-200 ease-out group-hover:scale-110 group-active:scale-95" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
         </svg>
         <span>Force Unlock Page</span>

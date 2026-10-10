@@ -443,10 +443,10 @@ if (typeof window !== 'undefined') {
       return isShieldActive() && activeConfig.bypassModifierKey !== false;
     }
 
-    // Hot-path optimization: Check event type BEFORE inspecting DOM path or running
-    // CSS selector matches via isInteractiveEvent(). 99.9% of web page events (click,
-    // mousemove, keydown, scroll, etc.) are non-target types and exit immediately in O(1),
-    // eliminating expensive composedPath() and Element.matches() DOM traversals.
+    // Hot-path optimization: Short-circuit event blocking checks in O(1) time before
+    // inspecting DOM composedPath or running CSS selector matches via isInteractiveEvent().
+    // 1. Exit immediately if restoration for the specific event type is inactive.
+    // 2. Exit immediately in O(1) time if modifier bypass key (Shift or Option) is held down.
     function shouldBlockEvent(event: Event): boolean {
       if (!event || !isShieldActive()) {
         return false;
@@ -458,21 +458,23 @@ if (typeof window !== 'undefined') {
         return false;
       }
 
+      const isFeatureActive =
+        (isContextMenu && isRightClickActive()) ||
+        (isSelection && isSelectionActive());
+      if (!isFeatureActive) {
+        return false;
+      }
+
+      // Fast O(1) check: If modifier bypass is active and modifier key is held, allow native page action immediately
+      if (isModifierBypassActive() && isModifierPressed(event)) {
+        return false;
+      }
+
       if (isInteractiveEvent(event)) {
         return false;
       }
 
-      // If modifier bypass is active and modifier key is held, allow native page action
-      if (isModifierBypassActive() && isModifierPressed(event)) {
-        return false;
-      }
-      if (isContextMenu && isRightClickActive()) {
-        return true;
-      }
-      if (isSelection && isSelectionActive()) {
-        return true;
-      }
-      return false;
+      return true;
     }
 
     setupEventInterception(shouldBlockEvent);

@@ -5,6 +5,8 @@ import {
   getUnshadowedMethod,
   safeApply,
   safeClosest,
+  safeCreateElement,
+  safeElementsFromPoint,
   safeGetElementById,
   safeGetShadowRoot,
   safeGetStyle,
@@ -28,6 +30,7 @@ describe('shared DOM utilities', () => {
       Node: window.Node,
       Element: window.Element,
       HTMLElement: window.HTMLElement,
+      Document: window.Document,
     });
   });
 
@@ -299,6 +302,68 @@ describe('shared DOM utilities', () => {
       };
       const context = { offset: 10 };
       expect(safeApply(add, context, [5, 3])).toBe(18);
+    });
+  });
+
+  describe('safeCreateElement', () => {
+    test('creates element by tag name', () => {
+      const div = safeCreateElement(document, 'div');
+      expect(div).toBeInstanceOf(window.HTMLElement);
+      expect(div.tagName).toBe('DIV');
+    });
+
+    test('resists DOM clobbering when createElement property is overridden on document', () => {
+      const form = document.createElement('form');
+      form.id = 'createElement';
+      document.body.appendChild(form);
+
+      // Clobber createElement on document
+      Object.defineProperty(document, 'createElement', {
+        value: form,
+        configurable: true,
+      });
+
+      const span = safeCreateElement(document, 'span');
+      expect(span).toBeInstanceOf(window.HTMLElement);
+      expect(span.tagName).toBe('SPAN');
+    });
+  });
+
+  describe('safeElementsFromPoint', () => {
+    test('returns array of elements at point when elementsFromPoint is available', () => {
+      const div = document.createElement('div');
+      document.body.appendChild(div);
+
+      const proto = Object.getPrototypeOf(document);
+      const orig = proto.elementsFromPoint;
+      proto.elementsFromPoint = (_x: number, _y: number) => [div];
+
+      try {
+        const elements = safeElementsFromPoint(document, 10, 10);
+        expect(Array.isArray(elements)).toBe(true);
+        expect(elements).toContain(div);
+      } finally {
+        if (orig) {
+          proto.elementsFromPoint = orig;
+        } else {
+          proto.elementsFromPoint = undefined;
+        }
+      }
+    });
+
+    test('resists DOM clobbering when elementsFromPoint property is overridden on document instance', () => {
+      const form = document.createElement('form');
+      form.id = 'elementsFromPoint';
+      document.body.appendChild(form);
+
+      // Clobber elementsFromPoint on document
+      Object.defineProperty(document, 'elementsFromPoint', {
+        value: form,
+        configurable: true,
+      });
+
+      const elements = safeElementsFromPoint(document, 10, 10);
+      expect(Array.isArray(elements)).toBe(true);
     });
   });
 

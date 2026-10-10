@@ -122,6 +122,42 @@ export function safeClosest(
   }
 }
 
+export function safeCreateElement<K extends keyof HTMLElementTagNameMap>(
+  doc: Document,
+  tagName: K,
+): HTMLElementTagNameMap[K];
+export function safeCreateElement(doc: Document, tagName: string): HTMLElement;
+export function safeCreateElement(doc: Document, tagName: string): HTMLElement {
+  try {
+    const fn = getUnshadowedMethod(doc, 'createElement');
+    if (fn) {
+      return safeApply(fn, doc, [tagName]) as HTMLElement;
+    }
+    return doc.createElement(tagName);
+  } catch {
+    return doc.createElement(tagName);
+  }
+}
+
+export function safeElementsFromPoint(
+  doc: Document,
+  x: number,
+  y: number,
+): Element[] {
+  try {
+    const fn = getUnshadowedMethod(doc, 'elementsFromPoint');
+    if (fn) {
+      return Array.from(safeApply(fn, doc, [x, y]) as Element[]);
+    }
+    if (typeof doc.elementsFromPoint === 'function') {
+      return Array.from(doc.elementsFromPoint(x, y));
+    }
+  } catch {
+    // Suppress errors if elementsFromPoint fails
+  }
+  return [];
+}
+
 export function safeGetElementById(
   doc: Document,
   id: string,

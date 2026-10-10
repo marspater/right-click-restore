@@ -4,6 +4,7 @@ import {
   getUnshadowedMethod,
   safeApply,
   safeClosest,
+  safeElementsFromPoint,
   safeHasAttributes,
   safeMatches,
 } from '../shared/dom';
@@ -538,13 +539,9 @@ if (typeof window !== 'undefined') {
         return;
       try {
         if (isInteractiveEvent(e)) return;
-        if (
-          typeof document === 'undefined' ||
-          typeof document.elementsFromPoint !== 'function'
-        )
-          return;
+        if (typeof document === 'undefined') return;
 
-        const elements = document.elementsFromPoint(e.clientX, e.clientY);
+        const elements = safeElementsFromPoint(document, e.clientX, e.clientY);
         if (!elements || elements.length <= 1) return;
 
         const isPlayerOrInteractive = elements.some((el) =>

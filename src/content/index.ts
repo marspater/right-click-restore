@@ -1,4 +1,5 @@
 import { getSecureRandomString } from '../shared/crypto';
+import { safeCreateElement } from '../shared/dom';
 import {
   DEFAULT_SETTINGS,
   type Settings,
@@ -249,7 +250,7 @@ export function handleContentMessage(
       ) as HTMLStyleElement | null;
       if (currentSettings.enabled && currentSettings.restoreSelection) {
         if (!styleEl) {
-          styleEl = document.createElement('style');
+          styleEl = safeCreateElement(document, 'style') as HTMLStyleElement;
           styleEl.id = STYLE_ID;
           styleEl.textContent = `
             body, p, div:not([class*="ytp-"]):not(.html5-video-player):not(.ProseMirror):not(.monaco-editor),
@@ -351,7 +352,7 @@ export function handleContentMessage(
 
       safeGetElementById(document, '__rcr_toast_host__')?.remove();
 
-      const host = document.createElement('div');
+      const host = safeCreateElement(document, 'div');
       host.id = '__rcr_toast_host__';
       host.style.cssText =
         'position:fixed;top:0;left:0;width:100%;pointer-events:none;z-index:2147483647;';
@@ -360,7 +361,7 @@ export function handleContentMessage(
         ? host.attachShadow({ mode: 'closed' })
         : host;
 
-      const style = document.createElement('style');
+      const style = safeCreateElement(document, 'style');
       style.textContent = `
         .toast {
           position: fixed;
@@ -386,7 +387,7 @@ export function handleContentMessage(
         }
       `;
 
-      const toast = document.createElement('div');
+      const toast = safeCreateElement(document, 'div');
       toast.className = 'toast';
       toast.textContent = '🔓 Right-click & selection unlocked';
 

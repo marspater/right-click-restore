@@ -276,7 +276,7 @@ button:focus-visible {
   transition: background-color 0.12s ease, opacity 0.12s ease;
 }
 
-.settings-row .w-6 {
+.settings-row .setting-icon-badge {
   transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s
     cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -285,12 +285,12 @@ button:focus-visible {
   background-color: var(--bg-row-hover);
 }
 
-.settings-row:hover:not(.is-disabled) .w-6,
-.settings-row:focus-within:not(.is-disabled) .w-6 {
+.settings-row:hover:not(.is-disabled) .setting-icon-badge,
+.settings-row:focus-within:not(.is-disabled) .setting-icon-badge {
   transform: scale(1.05);
 }
 
-.settings-row:active:not(.is-disabled) .w-6 {
+.settings-row:active:not(.is-disabled) .setting-icon-badge {
   transform: scale(0.92);
 }
 

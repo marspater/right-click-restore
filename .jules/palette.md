@@ -32,5 +32,10 @@
    - Introduced a springy pop-in entrance micro-animation (`@keyframes popIn`) for the Force Unlock status icons upon success or error, offering responsive visual feedback.
    - Added subtle theme-aware hover brightness adjustments on active Apple switch tracks for polished tactile depth.
 
+9. **Interactive Footnote Quick-Actions, Force Unlock Visual Hierarchy, and Global Context Badge (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+   - Converted "Enable Modifier Key Bypass" text in the footnote tip into a keyboard-accessible, focusable inline button, allowing users to enable the feature directly in 1 click without locating the setting row manually.
+   - Updated Force Unlock idle icon color when protection is inactive (`!isSiteActive`) to use `text-[var(--text-tertiary)]` instead of `text-[var(--accent-blue)]`, ensuring consistent disabled visual hierarchy.
+   - Added a "Global Protection" badge on non-toggleable domain cards (e.g. system contexts) to maintain symmetrical horizontal layout balance.
+   - Refactored setting row icon selector from fragile `.settings-row .w-6` to explicit `.setting-icon-badge` class styling in Svelte and CSS.
 
 

@@ -7,6 +7,7 @@ import {
   isInteractiveEvent,
   isInteractiveNode,
   isModifierPressed,
+  setupLegacyScriptFallback,
 } from './index';
 
 describe('page-script helpers', () => {
@@ -21,6 +22,7 @@ describe('page-script helpers', () => {
       document,
       Node: window.Node,
       Element: window.Element,
+      HTMLScriptElement: window.HTMLScriptElement,
     });
   });
 
@@ -303,6 +305,92 @@ describe('page-script helpers', () => {
       );
 
       expect(accepted).toBe(true);
+      expect(unlocked).toBe(true);
+    });
+  });
+
+  describe('setupLegacyScriptFallback', () => {
+    test('validates cryptographic nonce on legacy update and unlock events', () => {
+      let updatedConfig: Settings | null = null;
+      let unlocked = false;
+
+      const scriptEl = document.createElement('script');
+      scriptEl.dataset.initialConfig = JSON.stringify({ enabled: true });
+      scriptEl.dataset.updateEvent = '__rcr_legacy_update__';
+      scriptEl.dataset.unlockEvent = '__rcr_legacy_unlock__';
+      document.body.appendChild(scriptEl);
+
+      Object.defineProperty(document, 'currentScript', {
+        value: scriptEl,
+        configurable: true,
+      });
+
+      setupLegacyScriptFallback(
+        (cfg) => {
+          updatedConfig = cfg;
+        },
+        () => {
+          unlocked = true;
+        },
+        'secret-legacy-nonce-123',
+      );
+
+      // Initial config from script tag dataset should be applied immediately
+      expect(updatedConfig).not.toBeNull();
+      expect(updatedConfig?.enabled).toBe(true);
+
+      // Reset test indicators
+      updatedConfig = null;
+      unlocked = false;
+
+      // Unauthenticated event (without nonce) should be ignored
+      window.dispatchEvent(
+        new window.CustomEvent('__rcr_legacy_update__', {
+          detail: { enabled: false },
+        }),
+      );
+      expect(updatedConfig).toBeNull();
+
+      // Mismatched nonce should be ignored
+      window.dispatchEvent(
+        new window.CustomEvent('__rcr_legacy_update__', {
+          detail: {
+            nonce: 'wrong-nonce',
+            type: 'UPDATE',
+            config: { enabled: false },
+          },
+        }),
+      );
+      expect(updatedConfig).toBeNull();
+
+      // Valid update event with matching nonce should update config
+      window.dispatchEvent(
+        new window.CustomEvent('__rcr_legacy_update__', {
+          detail: {
+            nonce: 'secret-legacy-nonce-123',
+            type: 'UPDATE',
+            config: { enabled: false },
+          },
+        }),
+      );
+      expect(updatedConfig).not.toBeNull();
+      expect(updatedConfig?.enabled).toBe(false);
+
+      // Unauthenticated unlock event should be ignored
+      window.dispatchEvent(
+        new window.CustomEvent('__rcr_legacy_unlock__', { detail: {} }),
+      );
+      expect(unlocked).toBe(false);
+
+      // Valid unlock event with matching nonce should trigger unlock
+      window.dispatchEvent(
+        new window.CustomEvent('__rcr_legacy_unlock__', {
+          detail: {
+            nonce: 'secret-legacy-nonce-123',
+            type: 'UNLOCK',
+          },
+        }),
+      );
       expect(unlocked).toBe(true);
     });
   });

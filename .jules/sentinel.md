@@ -28,4 +28,8 @@
 **Learning:** Calling `.call()` or `.apply()` directly relies on `Function.prototype` methods remaining unmodified in the current JS realm.
 **Prevention:** Implement `safeApply` using snapshotted native `Reflect.apply` (or fallback `Function.prototype.call.bind(Function.prototype.apply)`), ensuring untrusted host script modifications to `Function.prototype` cannot compromise DOM operations.
 
+## 2025-05-22 - Nonce Validation for Legacy Script Fallback Event Handlers
+**Vulnerability:** Legacy fallback custom event listeners attached to `window` processed unauthenticated event payloads directly without cryptographic nonce verification, allowing untrusted page scripts to override extension configuration or trigger page unlocks.
+**Learning:** All custom event channels across the page-script boundary, including legacy fallback listeners, must enforce strict cryptographic nonce checks before acting on message payloads.
+**Prevention:** Route legacy update and unlock event details through `handlePageScriptMessage(detail, sessionNonce, ...)` to guarantee cryptographic nonce validation across all messaging vectors.
 

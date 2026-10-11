@@ -154,9 +154,10 @@ export function handlePageScriptMessage(
   return false;
 }
 
-function setupLegacyScriptFallback(
+export function setupLegacyScriptFallback(
   onUpdate: (config: Settings) => void,
   onUnlock: () => void,
+  expectedNonce: string,
 ) {
   try {
     const scriptEl = document.currentScript;
@@ -176,17 +177,31 @@ function setupLegacyScriptFallback(
       if (legacyUpdate) {
         window.addEventListener(legacyUpdate, (e: Event) => {
           try {
-            const customEvent = e as CustomEvent<Settings>;
-            if (customEvent.detail && typeof customEvent.detail === 'object') {
-              onUpdate(validateSettings(customEvent.detail));
-            }
+            const customEvent = e as CustomEvent;
+            handlePageScriptMessage(
+              customEvent.detail,
+              expectedNonce,
+              onUpdate,
+            );
           } catch {
             // Suppress errors applying legacy config update
           }
         });
       }
       if (legacyUnlock) {
-        window.addEventListener(legacyUnlock, onUnlock);
+        window.addEventListener(legacyUnlock, (e: Event) => {
+          try {
+            const customEvent = e as CustomEvent;
+            handlePageScriptMessage(
+              customEvent.detail,
+              expectedNonce,
+              undefined,
+              onUnlock,
+            );
+          } catch {
+            // Suppress errors applying legacy unlock
+          }
+        });
       }
     }
   } catch {
@@ -415,9 +430,13 @@ if (typeof window !== 'undefined') {
     sendHandshake();
 
     // Fallback support for legacy injected script element
-    setupLegacyScriptFallback((newConfig) => {
-      activeConfig = newConfig;
-    }, unlockPage);
+    setupLegacyScriptFallback(
+      (newConfig) => {
+        activeConfig = newConfig;
+      },
+      unlockPage,
+      sessionNonce,
+    );
 
     function isShieldActive(): boolean {
       return activeConfig.enabled !== false;

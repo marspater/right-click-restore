@@ -32,5 +32,8 @@
    - Introduced a springy pop-in entrance micro-animation (`@keyframes popIn`) for the Force Unlock status icons upon success or error, offering responsive visual feedback.
    - Added subtle theme-aware hover brightness adjustments on active Apple switch tracks for polished tactile depth.
 
+8. **Pill Focus Halos & Force Unlock Icon Micro-Interactions (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+   - Refined Apple switch keyboard focus rings with pill-conforming outer halos (`box-shadow: 0 0 0 2px var(--bg-popover), 0 0 0 4px var(--accent-blue)`) to replace harsh rectangular outlines.
+   - Enhanced the Force Unlock CTA button with a dedicated `.force-unlock-btn` class, custom radius-matched inset focus outline, and subtle hover/focus icon scale and rotation micro-interaction (`transform: scale(1.12) rotate(-6deg)`).
 
 

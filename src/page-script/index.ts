@@ -66,6 +66,22 @@ export function isInteractiveNode(node: Node | null): boolean {
   return false;
 }
 
+let nativeComposedPath: ((...args: unknown[]) => unknown) | null | undefined;
+function getNativeComposedPath(): ((...args: unknown[]) => unknown) | null {
+  if (nativeComposedPath === undefined) {
+    try {
+      nativeComposedPath =
+        typeof Event !== 'undefined' &&
+        typeof Event.prototype.composedPath === 'function'
+          ? Event.prototype.composedPath
+          : null;
+    } catch {
+      nativeComposedPath = null;
+    }
+  }
+  return nativeComposedPath;
+}
+
 // Fast-path interactive event check. When composedPath is available and non-empty,
 // iterating over path elements already inspects target and all parent ancestors.
 // Returning false directly avoids a redundant call to isInteractiveNode() which
@@ -73,7 +89,12 @@ export function isInteractiveNode(node: Node | null): boolean {
 export function isInteractiveEvent(event: Event): boolean {
   if (!event) return false;
   try {
-    const composedPathFn = getUnshadowedMethod(event, 'composedPath');
+    const nativeFn = getNativeComposedPath();
+    const composedPathFn =
+      nativeFn && typeof Event !== 'undefined' && event instanceof Event
+        ? nativeFn
+        : getUnshadowedMethod(event, 'composedPath');
+
     if (composedPathFn) {
       const path = safeApply(composedPathFn, event, []) as unknown[];
       if (Array.isArray(path) && path.length > 0) {

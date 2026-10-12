@@ -119,6 +119,14 @@ body {
     ease;
 }
 
+.domain-card:active:not(.dimmed) {
+  opacity: 0.88;
+}
+
+.domain-card:active:not(.dimmed) .relative > .rounded-full {
+  transform: scale(0.95);
+}
+
 .domain-card .relative > .rounded-full {
   transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), background-color
     0.2s ease, box-shadow 0.2s ease;

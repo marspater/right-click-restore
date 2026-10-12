@@ -32,5 +32,9 @@
    - Introduced a springy pop-in entrance micro-animation (`@keyframes popIn`) for the Force Unlock status icons upon success or error, offering responsive visual feedback.
    - Added subtle theme-aware hover brightness adjustments on active Apple switch tracks for polished tactile depth.
 
+9. **Force Unlock State Cursors, Dynamic Tooltips & Domain Card Micro-Interactions (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+   - Refined Force Unlock button state cursors (`cursor-wait` during active unlocking, `cursor-default` during success/error feedback) to eliminate confusing `not-allowed` forbidden cursors on active button states.
+   - Dynamically context-aligned `title` tooltips on the Force Unlock button based on `unlockStatus` (`Unlocking active page…`, `Page unlocked successfully`, `Unable to unlock active page`).
+   - Added `:active` tactile press feedback (`opacity: 0.88`, status beacon `scale(0.95)`) to `.domain-card` in `popup.css`, unifying card press responsiveness with setting rows.
 
 

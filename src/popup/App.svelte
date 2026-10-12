@@ -455,19 +455,25 @@ async function forceUnlockPage() {
       type="button"
       onclick={forceUnlockPage}
       disabled={unlockStatus !== 'idle' || !isSiteActive}
-      title={isSiteActive ? 'Force unlock context menu and selection on active page' : 'Protection is inactive on this page'}
-      class={`w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none disabled:cursor-not-allowed ${
-        isSiteActive && unlockStatus === 'idle' ? 'active:scale-[0.985]' : ''
-      } ${
+      title={unlockStatus === 'unlocking'
+        ? 'Unlocking active page…'
+        : unlockStatus === 'success'
+          ? 'Page unlocked successfully'
+          : unlockStatus === 'error'
+            ? 'Unable to unlock active page'
+            : isSiteActive
+              ? 'Force unlock context menu and selection on active page'
+              : 'Protection is inactive on this page'}
+      class={`w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 select-none ${
         unlockStatus === 'unlocking'
-          ? 'bg-[var(--bg-badge-active)] text-[var(--accent-blue)] border border-[var(--accent-blue)]/30 shadow-sm disabled:opacity-100'
+          ? 'bg-[var(--bg-badge-active)] text-[var(--accent-blue)] border border-[var(--accent-blue)]/30 shadow-sm cursor-wait disabled:opacity-100'
           : unlockStatus === 'success'
-            ? 'bg-[var(--accent-green)] text-white shadow-sm border border-transparent disabled:opacity-100'
+            ? 'bg-[var(--accent-green)] text-white shadow-sm border border-transparent cursor-default disabled:opacity-100'
             : unlockStatus === 'error'
-              ? 'bg-[var(--accent-red)] text-white shadow-sm border border-transparent disabled:opacity-100'
+              ? 'bg-[var(--accent-red)] text-white shadow-sm border border-transparent cursor-default disabled:opacity-100'
               : isSiteActive
-                ? 'bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] hover:border-[var(--border-subtle)] text-[var(--text-primary)] border border-[var(--border-subtle)] shadow-[var(--shadow-btn)]'
-                : 'bg-[var(--bg-card)] text-[var(--text-tertiary)] border border-[var(--border-subtle)] opacity-50'
+                ? 'bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] hover:border-[var(--border-subtle)] text-[var(--text-primary)] border border-[var(--border-subtle)] shadow-[var(--shadow-btn)] cursor-pointer active:scale-[0.985]'
+                : 'bg-[var(--bg-card)] text-[var(--text-tertiary)] border border-[var(--border-subtle)] opacity-50 cursor-not-allowed'
       }`}
     >
       {#if unlockStatus === 'unlocking'}

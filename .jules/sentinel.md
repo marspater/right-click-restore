@@ -28,4 +28,7 @@
 **Learning:** Calling `.call()` or `.apply()` directly relies on `Function.prototype` methods remaining unmodified in the current JS realm.
 **Prevention:** Implement `safeApply` using snapshotted native `Reflect.apply` (or fallback `Function.prototype.call.bind(Function.prototype.apply)`), ensuring untrusted host script modifications to `Function.prototype` cannot compromise DOM operations.
 
-
+## 2025-05-22 - Unauthenticated Window Event Fallbacks Bypass Cryptographic Nonces
+**Vulnerability:** Legacy fallback event handlers listening on global `window` events (`updateEvent`, `unlockEvent`) and reading `document.currentScript.dataset` allowed host page scripts to override extension configuration and trigger unlock callbacks without possessing the 128-bit session nonce.
+**Learning:** Maintaining legacy unauthenticated DOM custom event listeners alongside a secure nonce-based bridge creates an unauthenticated control vector that untrusted page scripts can exploit.
+**Prevention:** Eliminate all unauthenticated global DOM event listeners and dataset attributes; enforce that all inter-script communications strictly require cryptographically verified session nonces over isolated bridge channels.

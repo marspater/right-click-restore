@@ -1,4 +1,3 @@
-import { getSecureRandomString } from '../shared/crypto';
 import {
   DEFAULT_SETTINGS,
   type Settings,
@@ -16,8 +15,6 @@ import {
 export interface ContentMessageHandlers {
   onUnlockTriggered?: () => void;
   onCleanDOMTree?: () => void;
-  onDispatchEvent?: (name: string) => void;
-  unlockEventName?: string;
   onShowUnlockToast?: () => void;
   onApplySettings?: (config: Settings) => void;
 }
@@ -65,13 +62,6 @@ function executeForceUnlock(handlers: ContentMessageHandlers) {
   } catch {
     // Suppress DOM cleaning errors
   }
-  if (handlers.unlockEventName && handlers.onDispatchEvent) {
-    try {
-      handlers.onDispatchEvent(handlers.unlockEventName);
-    } catch {
-      // Suppress custom event dispatch errors
-    }
-  }
   try {
     handlers.onShowUnlockToast?.();
   } catch {
@@ -118,9 +108,6 @@ export function handleContentMessage(
 }
 
 (() => {
-  const updateEventName = `__rcr_update_${getSecureRandomString()}`;
-  const unlockEventName = `__rcr_unlock_${getSecureRandomString()}`;
-
   let currentSettings: Settings = { ...DEFAULT_SETTINGS };
   let observer: MutationObserver | null = null;
   let unlockToastTimer: ReturnType<typeof setTimeout> | null = null;
@@ -292,13 +279,6 @@ export function handleContentMessage(
 
       // Secure cryptographic bridge notification
       notifyPageScript('UPDATE', currentSettings);
-
-      // Legacy fallback event dispatch
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(
-          new CustomEvent(updateEventName, { detail: currentSettings }),
-        );
-      }
     } catch {
       // Suppress errors applying settings
     }
@@ -509,8 +489,6 @@ export function handleContentMessage(
         notifyPageScript('UNLOCK');
       },
       onCleanDOMTree,
-      onDispatchEvent: (name) => window.dispatchEvent(new CustomEvent(name)),
-      unlockEventName,
       onShowUnlockToast: showUnlockToast,
       onApplySettings: applySettings,
     });

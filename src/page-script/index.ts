@@ -154,46 +154,6 @@ export function handlePageScriptMessage(
   return false;
 }
 
-function setupLegacyScriptFallback(
-  onUpdate: (config: Settings) => void,
-  onUnlock: () => void,
-) {
-  try {
-    const scriptEl = document.currentScript;
-    if (
-      scriptEl instanceof HTMLScriptElement &&
-      scriptEl.dataset.initialConfig
-    ) {
-      onUpdate(validateSettings(JSON.parse(scriptEl.dataset.initialConfig)));
-      const legacyUpdate = scriptEl.dataset.updateEvent;
-      const legacyUnlock = scriptEl.dataset.unlockEvent;
-
-      delete scriptEl.dataset.initialConfig;
-      delete scriptEl.dataset.updateEvent;
-      delete scriptEl.dataset.unlockEvent;
-      scriptEl.remove();
-
-      if (legacyUpdate) {
-        window.addEventListener(legacyUpdate, (e: Event) => {
-          try {
-            const customEvent = e as CustomEvent<Settings>;
-            if (customEvent.detail && typeof customEvent.detail === 'object') {
-              onUpdate(validateSettings(customEvent.detail));
-            }
-          } catch {
-            // Suppress errors applying legacy config update
-          }
-        });
-      }
-      if (legacyUnlock) {
-        window.addEventListener(legacyUnlock, onUnlock);
-      }
-    }
-  } catch {
-    // Suppress errors reading legacy script element
-  }
-}
-
 function setupEventInterception(shouldBlockEvent: (event: Event) => boolean) {
   const origPD = Event.prototype.preventDefault;
   const origSP = Event.prototype.stopPropagation;
@@ -413,11 +373,6 @@ if (typeof window !== 'undefined') {
 
     // Announce presence immediately in case content script is already listening
     sendHandshake();
-
-    // Fallback support for legacy injected script element
-    setupLegacyScriptFallback((newConfig) => {
-      activeConfig = newConfig;
-    }, unlockPage);
 
     function isShieldActive(): boolean {
       return activeConfig.enabled !== false;

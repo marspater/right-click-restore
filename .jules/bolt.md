@@ -18,4 +18,7 @@
 **Learning:** Caching native prototype getters (`Element.prototype.shadowRoot` and `HTMLElement.prototype.style`) at module load and invoking them via `safeApply` bypasses prototype chain searches and `Object.getOwnPropertyDescriptor` object allocations during frequent DOM inspections, achieving high speedups on `safeGetShadowRoot` and `safeGetStyle` while remaining completely resistant to DOM clobbering and prototype monkey-patching.
 **Action:** Cache native DOM prototype getter functions once and invoke them directly via `safeApply` on fast-paths when inspecting standard DOM properties.
 
+## 2025-05-22 - Fast-pathing prototype checks in unshadowed DOM utilities
+**Learning:** Checking `Element.prototype` and `Document.prototype` directly in `getUnshadowedMethod` and `getUnshadowedGetter` before initiating `Object.getPrototypeOf` loops and `Object.getOwnPropertyDescriptor` descriptor allocations bypasses repetitive prototype chain traversals for standard DOM instances, significantly reducing overhead on frequent DOM queries (`safeMatches`, `safeClosest`, `safeHasAttribute`).
+**Action:** Direct prototype property fast-paths should precede full prototype chain while-loop traversals for standard DOM instances.
 

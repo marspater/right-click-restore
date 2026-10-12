@@ -38,6 +38,25 @@ export function getUnshadowedMethod(
       }
     }
 
+    // Fast-path for shadowed methods on standard DOM instances (Element, Document)
+    if (typeof Element !== 'undefined' && obj instanceof Element) {
+      const protoFn = (Element.prototype as Record<string, unknown>)[
+        methodName
+      ];
+      if (typeof protoFn === 'function') {
+        return protoFn as (...args: unknown[]) => unknown;
+      }
+    }
+
+    if (typeof Document !== 'undefined' && obj instanceof Document) {
+      const protoFn = (Document.prototype as Record<string, unknown>)[
+        methodName
+      ];
+      if (typeof protoFn === 'function') {
+        return protoFn as (...args: unknown[]) => unknown;
+      }
+    }
+
     let proto = Object.getPrototypeOf(obj);
     while (proto && proto !== Object.prototype) {
       const desc = Object.getOwnPropertyDescriptor(proto, methodName);
@@ -62,6 +81,23 @@ export function getUnshadowedGetter(
   propName: string,
 ): ((this: unknown) => unknown) | null {
   try {
+    // Fast-path for getters on standard DOM instances (Element, HTMLElement)
+    if (typeof Element !== 'undefined' && obj instanceof Element) {
+      const desc = Object.getOwnPropertyDescriptor(Element.prototype, propName);
+      if (desc && typeof desc.get === 'function') {
+        return desc.get;
+      }
+    }
+    if (typeof HTMLElement !== 'undefined' && obj instanceof HTMLElement) {
+      const desc = Object.getOwnPropertyDescriptor(
+        HTMLElement.prototype,
+        propName,
+      );
+      if (desc && typeof desc.get === 'function') {
+        return desc.get;
+      }
+    }
+
     let proto = Object.getPrototypeOf(obj);
     while (proto && proto !== Object.prototype) {
       const desc = Object.getOwnPropertyDescriptor(proto, propName);

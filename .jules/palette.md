@@ -32,5 +32,8 @@
    - Introduced a springy pop-in entrance micro-animation (`@keyframes popIn`) for the Force Unlock status icons upon success or error, offering responsive visual feedback.
    - Added subtle theme-aware hover brightness adjustments on active Apple switch tracks for polished tactile depth.
 
-
-
+8. **Rounded Focus Rings, Status Feedback Cursors & Header Shield State Polish (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+   - Replaced sharp CSS `outline` focus rings with rounded `box-shadow: 0 0 0 2px var(--accent-blue)` on `.domain-card` and `.settings-row` components, ensuring keyboard focus indicators cleanly follow container border radii.
+   - Added dynamic header shield badge styling, transitioning the shield icon container to a subtle muted silver gradient (`from-[#8E8E93] to-[#636366]`) when protection is globally paused for immediate visual state clarity.
+   - Refined Force Unlock button cursors to show `cursor-wait` during page unlocking and `cursor-default` during success/error feedback state, eliminating misleading `not-allowed` cursors on completion feedback.
+   - Updated status label for special/non-toggleable pages (e.g., local files or internal browser views) to "Active on Page" for clear context.

@@ -18,4 +18,7 @@
 **Learning:** Caching native prototype getters (`Element.prototype.shadowRoot` and `HTMLElement.prototype.style`) at module load and invoking them via `safeApply` bypasses prototype chain searches and `Object.getOwnPropertyDescriptor` object allocations during frequent DOM inspections, achieving high speedups on `safeGetShadowRoot` and `safeGetStyle` while remaining completely resistant to DOM clobbering and prototype monkey-patching.
 **Action:** Cache native DOM prototype getter functions once and invoke them directly via `safeApply` on fast-paths when inspecting standard DOM properties.
 
+## 2025-05-22 - Fast-pathing native DOM prototype method execution via safeApply
+**Learning:** Checking `!Object.hasOwn(obj, methodName)` (and validating receiver type for `Document`) to fast-path cached native prototype methods (`matches`, `closest`, `hasAttribute`, `hasAttributes`, `removeAttribute`, `getElementById`) using `safeApply` bypasses `getUnshadowedMethod` prototype hierarchy searches, `OBJECT_PROTO_METHODS` Set lookups, and dynamic index property reads on thousands of DOM operations during DOM sweeps and event dispatch without sacrificing DOM clobbering resistance or throwing Web IDL illegal invocation errors on mismatched receiver types.
+**Action:** Fast-path DOM method calls on unclobbered nodes by pairing `!Object.hasOwn(obj, methodName)` checks with type-verified cached native prototype methods invoked via `safeApply`.
 

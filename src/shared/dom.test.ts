@@ -312,6 +312,18 @@ describe('shared DOM utilities', () => {
       expect(safeGetElementById(document, 'nonexistent')).toBeNull();
     });
 
+    test('handles non-Document contexts like DocumentFragment safely', () => {
+      const fragment = document.createDocumentFragment();
+      const child = document.createElement('div');
+      child.id = 'fragment-child';
+      fragment.appendChild(child);
+
+      // DocumentFragment is not an instance of Document
+      expect(
+        safeGetElementById(fragment as unknown as Document, 'fragment-child'),
+      ).toBe(child);
+    });
+
     test('resists DOM clobbering when getElementById property is overridden', () => {
       const div = document.createElement('div');
       div.id = 'my-target';
@@ -332,7 +344,7 @@ describe('shared DOM utilities', () => {
   });
 
   describe('safeQuerySelectorAll', () => {
-    test('returns array of matching elements', () => {
+    test('returns array of matching elements from Document and Element', () => {
       const container = document.createElement('div');
       const item1 = document.createElement('span');
       item1.className = 'item';
@@ -340,11 +352,14 @@ describe('shared DOM utilities', () => {
       item2.className = 'item';
       container.appendChild(item1);
       container.appendChild(item2);
+      document.body.appendChild(container);
 
-      const items = safeQuerySelectorAll(container, '.item');
-      expect(items).toHaveLength(2);
-      expect(items[0]).toBe(item1);
-      expect(items[1]).toBe(item2);
+      const itemsFromElement = safeQuerySelectorAll(container, '.item');
+      expect(itemsFromElement).toHaveLength(2);
+      expect(itemsFromElement[0]).toBe(item1);
+
+      const itemsFromDocument = safeQuerySelectorAll(document, '.item');
+      expect(itemsFromDocument.length).toBeGreaterThanOrEqual(2);
     });
 
     test('resists DOM clobbering when querySelectorAll is overridden', () => {

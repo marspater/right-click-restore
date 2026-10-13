@@ -22,6 +22,7 @@ export {
   safeMatches,
   safeQuerySelectorAll,
   safeRemoveAttribute,
+  safeRemoveElement,
 } from '../shared/dom';
 
 const FAST_INTERACTIVE_TAGS = new Set([

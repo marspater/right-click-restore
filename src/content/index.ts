@@ -11,6 +11,7 @@ import {
   cleanDOMTree as cleanDOMTreeBase,
   cleanNode as cleanNodeBase,
   safeGetElementById,
+  safeRemoveElement,
 } from './cleaner';
 
 export interface ContentMessageHandlers {
@@ -271,7 +272,7 @@ export function handleContentMessage(
           (document.head || document.documentElement)?.appendChild(styleEl);
         }
       } else {
-        styleEl?.remove();
+        safeRemoveElement(styleEl);
       }
     } catch {
       // Suppress errors injecting selection styles
@@ -349,7 +350,7 @@ export function handleContentMessage(
       if (unlockToastTimer) clearTimeout(unlockToastTimer);
       if (unlockToastRemoveTimer) clearTimeout(unlockToastRemoveTimer);
 
-      safeGetElementById(document, '__rcr_toast_host__')?.remove();
+      safeRemoveElement(safeGetElementById(document, '__rcr_toast_host__'));
 
       const host = document.createElement('div');
       host.id = '__rcr_toast_host__';
@@ -406,7 +407,7 @@ export function handleContentMessage(
         } catch (_e) {}
         unlockToastRemoveTimer = setTimeout(() => {
           try {
-            host.remove();
+            safeRemoveElement(host);
           } catch {
             // Suppress errors removing toast host
           }

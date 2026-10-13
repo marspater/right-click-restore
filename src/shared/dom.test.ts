@@ -13,6 +13,7 @@ import {
   safeMatches,
   safeQuerySelectorAll,
   safeRemoveAttribute,
+  safeRemoveElement,
 } from './dom';
 
 describe('shared DOM utilities', () => {
@@ -366,6 +367,60 @@ describe('shared DOM utilities', () => {
       const results = safeQuerySelectorAll(container, '.target');
       expect(results).toHaveLength(1);
       expect(results[0]).toBe(target);
+    });
+  });
+
+  describe('safeRemoveElement', () => {
+    test('removes element from parent node', () => {
+      const parent = document.createElement('div');
+      const child = document.createElement('span');
+      parent.appendChild(child);
+
+      expect(parent.contains(child)).toBe(true);
+      safeRemoveElement(child);
+      expect(parent.contains(child)).toBe(false);
+    });
+
+    test('resists DOM clobbering when remove method is overridden by child input', () => {
+      const form = document.createElement('form');
+      const input = document.createElement('input');
+      input.setAttribute('name', 'remove');
+      form.appendChild(input);
+
+      document.body.appendChild(form);
+
+      // Clobber remove property on form instance
+      Object.defineProperty(form, 'remove', {
+        value: input,
+        configurable: true,
+      });
+
+      expect(document.body.contains(form)).toBe(true);
+      safeRemoveElement(form);
+      expect(document.body.contains(form)).toBe(false);
+    });
+
+    test('falls back to parent removeChild if remove throws or is unavailable', () => {
+      const parent = document.createElement('div');
+      const child = document.createElement('span');
+      parent.appendChild(child);
+
+      Object.defineProperty(child, 'remove', {
+        value: () => {
+          throw new Error('remove failed');
+        },
+        configurable: true,
+      });
+
+      expect(parent.contains(child)).toBe(true);
+      safeRemoveElement(child);
+      expect(parent.contains(child)).toBe(false);
+    });
+
+    test('handles null, undefined or non-Element inputs safely without throwing', () => {
+      expect(() => safeRemoveElement(null)).not.toThrow();
+      expect(() => safeRemoveElement(undefined)).not.toThrow();
+      expect(() => safeRemoveElement({} as unknown as Element)).not.toThrow();
     });
   });
 });

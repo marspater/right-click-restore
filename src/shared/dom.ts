@@ -181,6 +181,39 @@ export function safeRemoveAttribute(element: Element, attr: string): void {
   }
 }
 
+export function safeRemoveElement(element: Element | null | undefined): void {
+  if (
+    !element ||
+    typeof Element === 'undefined' ||
+    !(element instanceof Element)
+  ) {
+    return;
+  }
+  try {
+    const fn = getUnshadowedMethod(element, 'remove');
+    if (fn) {
+      safeApply(fn, element, []);
+      return;
+    }
+  } catch {
+    // Suppress remove method execution error and fallback to parentNode.removeChild
+  }
+
+  try {
+    const parent = element.parentNode;
+    if (parent) {
+      const removeChildFn = getUnshadowedMethod(parent, 'removeChild');
+      if (removeChildFn) {
+        safeApply(removeChildFn, parent, [element]);
+      } else {
+        parent.removeChild(element);
+      }
+    }
+  } catch {
+    // Suppress element removal errors on restricted DOM trees
+  }
+}
+
 let nativeShadowRootGetter: ((this: unknown) => unknown) | null | undefined;
 function getNativeShadowRootGetter(): ((this: unknown) => unknown) | null {
   if (nativeShadowRootGetter === undefined) {

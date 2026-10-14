@@ -60,6 +60,21 @@ describe('settings & domain matching', () => {
     expect(
       isDomainDisabled('example.com', [null as unknown as string, '']),
     ).toBe(false);
+    expect(isDomainDisabled('example.com', {} as unknown as string[])).toBe(
+      false,
+    );
+    expect(isDomainDisabled('example.com', 123 as unknown as string[])).toBe(
+      false,
+    );
+  });
+
+  test('normalizes domain entries when checking disabled domains', () => {
+    expect(isDomainDisabled('example.com', ['WWW.EXAMPLE.COM'])).toBe(true);
+    expect(
+      isDomainDisabled('sub.example.com', ['https://example.com/path']),
+    ).toBe(true);
+    expect(isDomainDisabled('example.com', ['.example.com'])).toBe(true);
+    expect(isDomainDisabled('example.com', ['*.example.com'])).toBe(true);
   });
 
   test('effective settings disable only the matching site', () => {

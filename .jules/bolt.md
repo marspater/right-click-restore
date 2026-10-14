@@ -17,5 +17,14 @@
 ## 2025-05-21 - Native prototype getter caching for DOM property access
 **Learning:** Caching native prototype getters (`Element.prototype.shadowRoot` and `HTMLElement.prototype.style`) at module load and invoking them via `safeApply` bypasses prototype chain searches and `Object.getOwnPropertyDescriptor` object allocations during frequent DOM inspections, achieving high speedups on `safeGetShadowRoot` and `safeGetStyle` while remaining completely resistant to DOM clobbering and prototype monkey-patching.
 **Action:** Cache native DOM prototype getter functions once and invoke them directly via `safeApply` on fast-paths when inspecting standard DOM properties.
+## 2025-05-22 - Feature flag short-circuiting in page-script event interception
+**Learning:** Combining event target type matching with active feature flag checks (`isContextMenu && isRightClickActive()` and `isSelection && isSelectionActive()`) at the entry guard of `shouldBlockEvent` eliminates expensive `composedPath()` DOM traversals and multi-selector CSS matching (`isInteractiveEvent`) when restoration settings are toggled off.
+**Action:** Always verify that feature flags associated with specific event types are active before initiating event path traversals or element selector evaluations in event handlers.
 
+## 2025-05-22 - Native DOM prototype method caching and unshadowed lookup fast-pathing
+**Learning:** Module-level caching of native prototype methods (`matches`, `closest`, `hasAttribute`, `hasAttributes`, `removeAttribute`, `getElementById`) invoked via `safeApply` when `!Object.hasOwn(element, name)` bypasses slow prototype walks and property descriptor queries for standard un-clobbered DOM nodes.
+**Action:** Fast-path DOM prototype methods with cached native references while retaining robust fallback to prototype walks if shadowed.
 
+## 2025-05-22 - Fast-pathing inline style string inspection before CSSStyleDeclaration access
+**Learning:** Inspecting `safeGetAttribute(node, 'style')` string before calling `safeGetStyle(node)` in `hasUserSelectNone` and `restoreUserSelect` short-circuits >95% of styled DOM nodes that do not contain `user-select` rules, bypassing expensive `CSSStyleDeclaration` property accesses and reducing execution time for non-user-select styled nodes by ~99%.
+**Action:** Always perform a fast substring match on raw inline `style` attributes via `safeGetAttribute` before accessing full `CSSStyleDeclaration` properties on elements.

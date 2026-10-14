@@ -32,5 +32,13 @@
    - Introduced a springy pop-in entrance micro-animation (`@keyframes popIn`) for the Force Unlock status icons upon success or error, offering responsive visual feedback.
    - Added subtle theme-aware hover brightness adjustments on active Apple switch tracks for polished tactile depth.
 
+8. **Tactile Card Press Feedback, Icon Hover Micro-Interactions & Disabled Row Tooltips (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+   - Added `.domain-card:active:not(.dimmed)` scale (`scale(0.99)`) and press opacity (`0.88`) transition to give tactile click feedback on the domain card matching setting row interaction patterns.
+   - Added a hover/focus icon rotation and scale micro-interaction (`.force-unlock-icon`) on the Force Unlock button for playful interactive affordance.
+   - Added contextual `title` tooltips (`title={isSiteActive ? undefined : 'Protection is inactive on this page'}`) to feature setting rows so users hovering over dimmed controls receive immediate feedback on why features are disabled.
+   - Added interactive shortcut button to enable Modifier Key Bypass from the footer tip when disabled.
 
-
+9. **Restricted System Page Context Handling & Visual Balance (`src/popup/App.svelte`)**:
+   - Refined `isSiteActive` derived calculation to require `isToggleableDomain` so internal browser/system tabs (e.g. `Safari Page`, `Active Page`, internal browser settings) do not claim active shield protection or show misleading pulsing green beacon dots.
+   - Updated the non-toggleable domain card view to explicitly display "System / Restricted Page" status tag with neutral status indicators and "Global Protection" badge.
+   - Enhanced Force Unlock button tooltips and footer tip messages on non-supported pages to clearly announce "Protection is unavailable on system pages".

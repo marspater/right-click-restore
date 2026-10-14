@@ -305,5 +305,25 @@ describe('page-script helpers', () => {
       expect(accepted).toBe(true);
       expect(unlocked).toBe(true);
     });
+
+    test('rejects unauthenticated custom types or malformed payloads without valid nonce', () => {
+      let updated = false;
+      let unlocked = false;
+
+      const accepted = handlePageScriptMessage(
+        { nonce: 'invalid-nonce', type: 'UPDATE', config: { enabled: false } },
+        'expected-nonce-123',
+        () => {
+          updated = true;
+        },
+        () => {
+          unlocked = true;
+        },
+      );
+
+      expect(accepted).toBe(false);
+      expect(updated).toBe(false);
+      expect(unlocked).toBe(false);
+    });
   });
 });

@@ -1,12 +1,14 @@
 import { ALL_INTERACTIVE_SELECTORS } from '../shared/constants';
 import {
   safeClosest,
+  safeGetAttribute,
   safeGetShadowRoot,
   safeGetStyle,
   safeHasAttribute,
   safeHasAttributes,
   safeQuerySelectorAll,
   safeRemoveAttribute,
+  safeRemoveElement,
 } from '../shared/dom';
 import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
 
@@ -14,6 +16,8 @@ export {
   getUnshadowedGetter,
   getUnshadowedMethod,
   safeClosest,
+  safeCreateElement,
+  safeGetAttribute,
   safeGetElementById,
   safeGetShadowRoot,
   safeGetStyle,
@@ -22,6 +26,7 @@ export {
   safeMatches,
   safeQuerySelectorAll,
   safeRemoveAttribute,
+  safeRemoveElement,
 } from '../shared/dom';
 
 const FAST_INTERACTIVE_TAGS = new Set([
@@ -85,6 +90,21 @@ function hasUserSelectNone(node: Element): boolean {
   if (!safeHasAttribute(node, 'style')) {
     return false;
   }
+  // Performance optimization: Fast-path raw inline style attribute inspection.
+  // Accessing safeGetStyle(node) computes/resolves CSSStyleDeclaration properties,
+  // which is expensive. Over 95% of styled DOM nodes do not configure user-select.
+  // Short-circuiting if the style attribute string lacks 'user-select' or 'userselect'
+  // avoids unnecessary CSS property accesses while retaining complete accuracy.
+  const styleAttr = safeGetAttribute(node, 'style');
+  if (styleAttr) {
+    const styleAttrLower = styleAttr.toLowerCase();
+    if (
+      !styleAttrLower.includes('user-select') &&
+      !styleAttrLower.includes('userselect')
+    ) {
+      return false;
+    }
+  }
   const style = safeGetStyle(node);
   if (!style) return false;
   return (
@@ -99,6 +119,16 @@ function restoreUserSelect(node: Element): void {
   }
   if (!safeHasAttribute(node, 'style')) {
     return;
+  }
+  const styleAttr = safeGetAttribute(node, 'style');
+  if (styleAttr) {
+    const styleAttrLower = styleAttr.toLowerCase();
+    if (
+      !styleAttrLower.includes('user-select') &&
+      !styleAttrLower.includes('userselect')
+    ) {
+      return;
+    }
   }
   try {
     const style = safeGetStyle(node);

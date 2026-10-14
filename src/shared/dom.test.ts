@@ -5,6 +5,9 @@ import {
   getUnshadowedMethod,
   safeApply,
   safeClosest,
+  safeCreateElement,
+  safeElementsFromPoint,
+  safeGetAttribute,
   safeGetElementById,
   safeGetShadowRoot,
   safeGetStyle,
@@ -13,6 +16,7 @@ import {
   safeMatches,
   safeQuerySelectorAll,
   safeRemoveAttribute,
+  safeRemoveElement,
 } from './dom';
 
 describe('shared DOM utilities', () => {
@@ -150,14 +154,51 @@ describe('shared DOM utilities', () => {
     });
   });
 
-  describe('safeHasAttribute, safeHasAttributes, and safeRemoveAttribute', () => {
-    test('safely checks and removes attributes', () => {
+  describe('safeHasAttribute, safeGetAttribute, safeHasAttributes, safeRemoveAttribute, and safeRemoveElement', () => {
+    test('safely checks, reads, and removes attributes', () => {
       const el = document.createElement('div');
       el.setAttribute('oncontextmenu', 'return false');
 
       expect(safeHasAttribute(el, 'oncontextmenu')).toBe(true);
+      expect(safeGetAttribute(el, 'oncontextmenu')).toBe('return false');
+      expect(safeGetAttribute(el, 'style')).toBeNull();
       safeRemoveAttribute(el, 'oncontextmenu');
       expect(safeHasAttribute(el, 'oncontextmenu')).toBe(false);
+      expect(safeGetAttribute(el, 'oncontextmenu')).toBeNull();
+    });
+
+    test('safeGetAttribute resists DOM clobbering', () => {
+      const form = document.createElement('form');
+      form.setAttribute('style', 'color: red;');
+      const input = document.createElement('input');
+      input.setAttribute('name', 'getAttribute');
+      form.appendChild(input);
+
+      Object.defineProperty(form, 'getAttribute', {
+        value: input,
+        configurable: true,
+      });
+
+      expect(safeGetAttribute(form, 'style')).toBe('color: red;');
+    });
+
+    test('safeRemoveElement removes element and resists DOM clobbering', () => {
+      const parent = document.createElement('div');
+      const form = document.createElement('form');
+      const input = document.createElement('input');
+      input.setAttribute('name', 'remove');
+      form.appendChild(input);
+      parent.appendChild(form);
+
+      // Clobber remove property on form instance
+      Object.defineProperty(form, 'remove', {
+        value: input,
+        configurable: true,
+      });
+
+      expect(parent.contains(form)).toBe(true);
+      safeRemoveElement(form);
+      expect(parent.contains(form)).toBe(false);
     });
 
     test('safeHasAttributes checks attribute presence accurately and resists DOM clobbering', () => {
@@ -299,6 +340,68 @@ describe('shared DOM utilities', () => {
       };
       const context = { offset: 10 };
       expect(safeApply(add, context, [5, 3])).toBe(18);
+    });
+  });
+
+  describe('safeCreateElement', () => {
+    test('creates element by tag name', () => {
+      const div = safeCreateElement(document, 'div');
+      expect(div).toBeInstanceOf(window.HTMLElement);
+      expect(div.tagName).toBe('DIV');
+    });
+
+    test('resists DOM clobbering when createElement property is overridden on document', () => {
+      const form = document.createElement('form');
+      form.id = 'createElement';
+      document.body.appendChild(form);
+
+      // Clobber createElement on document
+      Object.defineProperty(document, 'createElement', {
+        value: form,
+        configurable: true,
+      });
+
+      const span = safeCreateElement(document, 'span');
+      expect(span).toBeInstanceOf(window.HTMLElement);
+      expect(span.tagName).toBe('SPAN');
+    });
+  });
+
+  describe('safeElementsFromPoint', () => {
+    test('returns array of elements at point when elementsFromPoint is available', () => {
+      const div = document.createElement('div');
+      document.body.appendChild(div);
+
+      const proto = Object.getPrototypeOf(document);
+      const orig = proto.elementsFromPoint;
+      proto.elementsFromPoint = (_x: number, _y: number) => [div];
+
+      try {
+        const elements = safeElementsFromPoint(document, 10, 10);
+        expect(Array.isArray(elements)).toBe(true);
+        expect(elements).toContain(div);
+      } finally {
+        if (orig) {
+          proto.elementsFromPoint = orig;
+        } else {
+          proto.elementsFromPoint = undefined;
+        }
+      }
+    });
+
+    test('resists DOM clobbering when elementsFromPoint property is overridden on document instance', () => {
+      const form = document.createElement('form');
+      form.id = 'elementsFromPoint';
+      document.body.appendChild(form);
+
+      // Clobber elementsFromPoint on document
+      Object.defineProperty(document, 'elementsFromPoint', {
+        value: form,
+        configurable: true,
+      });
+
+      const elements = safeElementsFromPoint(document, 10, 10);
+      expect(Array.isArray(elements)).toBe(true);
     });
   });
 

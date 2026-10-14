@@ -27,5 +27,22 @@
 **Vulnerability:** Malicious host scripts could monkey-patch or shadow `Function.prototype.apply` and `Function.prototype.call`, causing extension DOM helpers and event traps to fail or execute attacker-controlled logic.
 **Learning:** Calling `.call()` or `.apply()` directly relies on `Function.prototype` methods remaining unmodified in the current JS realm.
 **Prevention:** Implement `safeApply` using snapshotted native `Reflect.apply` (or fallback `Function.prototype.call.bind(Function.prototype.apply)`), ensuring untrusted host script modifications to `Function.prototype` cannot compromise DOM operations.
+## 2025-05-22 - DOM Clobbering Resistance for Element Removal & Document Utilities
+**Vulnerability:** Invoking `.remove()`, `document.createElement`, or `document.elementsFromPoint` directly on DOM objects allowed untrusted page scripts to shadow methods using named inputs (e.g. `<form><input name="remove"></form>` or `<form id="createElement">`), throwing TypeErrors and bypassing style restoration, element unmasking, or toast notifications.
+**Learning:** Calling instance methods directly assumes instance properties remain unshadowed by child form inputs or named properties.
+**Prevention:** Use `safeRemoveElement`, `safeCreateElement`, and `safeElementsFromPoint` across all DOM operations to unshadow methods via `getUnshadowedMethod` and `safeApply`.
 
+## 2025-05-22 - Nonce Enforcement on Bridge Channels & Removal of Legacy Window Event Fallbacks
+**Vulnerability:** Maintaining legacy fallback event listeners on `window` and reading `document.currentScript.dataset` allowed host page scripts to override extension configuration and trigger unlock callbacks without possessing the cryptographic session nonce.
+**Learning:** Maintaining legacy unauthenticated DOM custom event listeners alongside a secure nonce-based bridge creates an unauthenticated control vector that untrusted page scripts can exploit.
+**Prevention:** Eliminate all unauthenticated global DOM event listeners and dataset attributes; enforce that all inter-script communications strictly require cryptographically verified session nonces over isolated bridge channels.
 
+## 2025-05-22 - Domain Normalization & Array Type Enforcement for Domain Exclusion Lookups
+**Vulnerability:** Passing unnormalized domain strings (containing uppercase letters, schemes/ports, or leading dots) or non-array objects into `isDomainDisabled` caused domain exclusion lookups to fail or throw unhandled `TypeError`s during iteration, bypassing protection settings on disabled domains.
+**Learning:** Checking domain exemptions requires strict normalization of both target and candidate domain strings, plus explicit `Array.isArray` validation before iterating over dynamic settings collections.
+**Prevention:** Always validate `Array.isArray` and apply `normalizeHostname` dynamically to each domain candidate during domain matching operations.
+
+## 2025-05-22 - State Mutation Prevention on Dispatched CustomEvents
+**Vulnerability:** Dispatched CustomEvents carrying references to the extension's live settings object allowed untrusted host page scripts to mutate internal settings objects (such as pushing malicious domains to `disabledDomains`).
+**Learning:** Objects passed in CustomEvent details across JS contexts can be mutated in-place by listening scripts.
+**Prevention:** Deep-clone settings (`cloneSettings`) before dispatching CustomEvents over bridge channels.

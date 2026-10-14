@@ -80,8 +80,118 @@ export function getUnshadowedGetter(
   return null;
 }
 
+// Performance optimization: Lazy-cached native DOM prototype methods invoked directly via safeApply.
+// Fast-paths execution for standard DOM nodes when the instance does not own a clobbered property,
+// bypassing Object.prototype checks, index property reads, and unshadowed prototype chain walks.
+
+let nativeMatchesMethod: ((...args: unknown[]) => unknown) | null | undefined;
+function getNativeMatchesMethod(): ((...args: unknown[]) => unknown) | null {
+  if (nativeMatchesMethod === undefined) {
+    try {
+      nativeMatchesMethod =
+        typeof Element !== 'undefined' ? Element.prototype.matches : null;
+    } catch {
+      nativeMatchesMethod = null;
+    }
+  }
+  return nativeMatchesMethod;
+}
+
+let nativeClosestMethod: ((...args: unknown[]) => unknown) | null | undefined;
+function getNativeClosestMethod(): ((...args: unknown[]) => unknown) | null {
+  if (nativeClosestMethod === undefined) {
+    try {
+      nativeClosestMethod =
+        typeof Element !== 'undefined' ? Element.prototype.closest : null;
+    } catch {
+      nativeClosestMethod = null;
+    }
+  }
+  return nativeClosestMethod;
+}
+
+let nativeHasAttributeMethod:
+  | ((...args: unknown[]) => unknown)
+  | null
+  | undefined;
+function getNativeHasAttributeMethod():
+  | ((...args: unknown[]) => unknown)
+  | null {
+  if (nativeHasAttributeMethod === undefined) {
+    try {
+      nativeHasAttributeMethod =
+        typeof Element !== 'undefined' ? Element.prototype.hasAttribute : null;
+    } catch {
+      nativeHasAttributeMethod = null;
+    }
+  }
+  return nativeHasAttributeMethod;
+}
+
+let nativeHasAttributesMethod:
+  | ((...args: unknown[]) => unknown)
+  | null
+  | undefined;
+function getNativeHasAttributesMethod():
+  | ((...args: unknown[]) => unknown)
+  | null {
+  if (nativeHasAttributesMethod === undefined) {
+    try {
+      nativeHasAttributesMethod =
+        typeof Element !== 'undefined' ? Element.prototype.hasAttributes : null;
+    } catch {
+      nativeHasAttributesMethod = null;
+    }
+  }
+  return nativeHasAttributesMethod;
+}
+
+let nativeRemoveAttributeMethod:
+  | ((...args: unknown[]) => unknown)
+  | null
+  | undefined;
+function getNativeRemoveAttributeMethod():
+  | ((...args: unknown[]) => unknown)
+  | null {
+  if (nativeRemoveAttributeMethod === undefined) {
+    try {
+      nativeRemoveAttributeMethod =
+        typeof Element !== 'undefined'
+          ? Element.prototype.removeAttribute
+          : null;
+    } catch {
+      nativeRemoveAttributeMethod = null;
+    }
+  }
+  return nativeRemoveAttributeMethod;
+}
+
+let nativeGetElementByIdMethod:
+  | ((...args: unknown[]) => unknown)
+  | null
+  | undefined;
+function getNativeGetElementByIdMethod():
+  | ((...args: unknown[]) => unknown)
+  | null {
+  if (nativeGetElementByIdMethod === undefined) {
+    try {
+      nativeGetElementByIdMethod =
+        typeof Document !== 'undefined'
+          ? Document.prototype.getElementById
+          : null;
+    } catch {
+      nativeGetElementByIdMethod = null;
+    }
+  }
+  return nativeGetElementByIdMethod;
+}
+
 export function safeMatches(element: Element, selector: string): boolean {
   try {
+    const nativeFn = getNativeMatchesMethod();
+    if (nativeFn && !Object.hasOwn(element, 'matches')) {
+      return Boolean(safeApply(nativeFn, element, [selector]));
+    }
     const fn = getUnshadowedMethod(element, 'matches');
     if (fn) {
       return Boolean(safeApply(fn, element, [selector]));
@@ -95,6 +205,10 @@ export function safeMatches(element: Element, selector: string): boolean {
 
 export function safeHasAttributes(element: Element): boolean {
   try {
+    const nativeFn = getNativeHasAttributesMethod();
+    if (nativeFn && !Object.hasOwn(element, 'hasAttributes')) {
+      return Boolean(safeApply(nativeFn, element, []));
+    }
     const fn = getUnshadowedMethod(element, 'hasAttributes');
     if (fn) {
       return Boolean(safeApply(fn, element, []));
@@ -111,6 +225,10 @@ export function safeClosest(
   selector: string,
 ): Element | null {
   try {
+    const nativeFn = getNativeClosestMethod();
+    if (nativeFn && !Object.hasOwn(element, 'closest')) {
+      return safeApply(nativeFn, element, [selector]) as Element | null;
+    }
     const fn = getUnshadowedMethod(element, 'closest');
     if (fn) {
       return safeApply(fn, element, [selector]) as Element | null;
@@ -122,11 +240,56 @@ export function safeClosest(
   }
 }
 
+export function safeCreateElement<K extends keyof HTMLElementTagNameMap>(
+  doc: Document,
+  tagName: K,
+): HTMLElementTagNameMap[K];
+export function safeCreateElement(doc: Document, tagName: string): HTMLElement;
+export function safeCreateElement(doc: Document, tagName: string): HTMLElement {
+  try {
+    const fn = getUnshadowedMethod(doc, 'createElement');
+    if (fn) {
+      return safeApply(fn, doc, [tagName]) as HTMLElement;
+    }
+    return doc.createElement(tagName);
+  } catch {
+    return doc.createElement(tagName);
+  }
+}
+
+export function safeElementsFromPoint(
+  doc: Document,
+  x: number,
+  y: number,
+): Element[] {
+  try {
+    const fn = getUnshadowedMethod(doc, 'elementsFromPoint');
+    if (fn) {
+      return Array.from(safeApply(fn, doc, [x, y]) as Element[]);
+    }
+    if (typeof doc.elementsFromPoint === 'function') {
+      return Array.from(doc.elementsFromPoint(x, y));
+    }
+  } catch {
+    // Suppress errors if elementsFromPoint fails
+  }
+  return [];
+}
+
 export function safeGetElementById(
   doc: Document,
   id: string,
 ): HTMLElement | null {
   try {
+    const nativeFn = getNativeGetElementByIdMethod();
+    if (
+      nativeFn &&
+      typeof Document !== 'undefined' &&
+      doc instanceof Document &&
+      !Object.hasOwn(doc, 'getElementById')
+    ) {
+      return safeApply(nativeFn, doc, [id]) as HTMLElement | null;
+    }
     const fn = getUnshadowedMethod(doc, 'getElementById');
     if (fn) {
       return safeApply(fn, doc, [id]) as HTMLElement | null;
@@ -154,8 +317,28 @@ export function safeQuerySelectorAll(
   }
 }
 
+export function safeGetAttribute(
+  element: Element,
+  attr: string,
+): string | null {
+  try {
+    const fn = getUnshadowedMethod(element, 'getAttribute');
+    if (fn) {
+      return (safeApply(fn, element, [attr]) as string | null) ?? null;
+    }
+    return element.getAttribute(attr);
+  } catch {
+    // Return null if reading attribute throws on restricted elements
+    return null;
+  }
+}
+
 export function safeHasAttribute(element: Element, attr: string): boolean {
   try {
+    const nativeFn = getNativeHasAttributeMethod();
+    if (nativeFn && !Object.hasOwn(element, 'hasAttribute')) {
+      return Boolean(safeApply(nativeFn, element, [attr]));
+    }
     const fn = getUnshadowedMethod(element, 'hasAttribute');
     if (fn) {
       return Boolean(safeApply(fn, element, [attr]));
@@ -170,6 +353,11 @@ export function safeHasAttribute(element: Element, attr: string): boolean {
 export function safeRemoveAttribute(element: Element, attr: string): void {
   try {
     if (!safeHasAttribute(element, attr)) return;
+    const nativeFn = getNativeRemoveAttributeMethod();
+    if (nativeFn && !Object.hasOwn(element, 'removeAttribute')) {
+      safeApply(nativeFn, element, [attr]);
+      return;
+    }
     const fn = getUnshadowedMethod(element, 'removeAttribute');
     if (fn) {
       safeApply(fn, element, [attr]);
@@ -178,6 +366,27 @@ export function safeRemoveAttribute(element: Element, attr: string): void {
     }
   } catch {
     // Suppress attribute removal errors on cross-origin or read-only elements
+  }
+}
+
+export function safeRemoveElement(element: Element): void {
+  try {
+    const fn = getUnshadowedMethod(element, 'remove');
+    if (fn) {
+      safeApply(fn, element, []);
+      return;
+    }
+    const parent = element.parentNode;
+    if (parent) {
+      const removeChildFn = getUnshadowedMethod(parent, 'removeChild');
+      if (removeChildFn) {
+        safeApply(removeChildFn, parent, [element]);
+      } else {
+        parent.removeChild(element);
+      }
+    }
+  } catch {
+    // Suppress element removal errors on cross-origin or restricted elements
   }
 }
 

@@ -1,4 +1,3 @@
-import { getSecureRandomString } from '../shared/crypto';
 import {
   DEFAULT_SETTINGS,
   type Settings,
@@ -10,16 +9,26 @@ import {
   cleanAddedNode as cleanAddedNodeBase,
   cleanDOMTree as cleanDOMTreeBase,
   cleanNode as cleanNodeBase,
+  safeCreateElement,
   safeGetElementById,
+  safeRemoveElement,
 } from './cleaner';
 
 export interface ContentMessageHandlers {
   onUnlockTriggered?: () => void;
   onCleanDOMTree?: () => void;
-  onDispatchEvent?: (name: string) => void;
-  unlockEventName?: string;
   onShowUnlockToast?: () => void;
   onApplySettings?: (config: Settings) => void;
+}
+
+export function cloneSettings(config?: Settings): Settings | undefined {
+  if (!config) return undefined;
+  return {
+    ...config,
+    disabledDomains: Array.isArray(config.disabledDomains)
+      ? [...config.disabledDomains]
+      : [],
+  };
 }
 
 function isAuthorizedSender(
@@ -64,13 +73,6 @@ function executeForceUnlock(handlers: ContentMessageHandlers) {
     handlers.onCleanDOMTree?.();
   } catch {
     // Suppress DOM cleaning errors
-  }
-  if (handlers.unlockEventName && handlers.onDispatchEvent) {
-    try {
-      handlers.onDispatchEvent(handlers.unlockEventName);
-    } catch {
-      // Suppress custom event dispatch errors
-    }
   }
   try {
     handlers.onShowUnlockToast?.();
@@ -118,9 +120,6 @@ export function handleContentMessage(
 }
 
 (() => {
-  const updateEventName = `__rcr_update_${getSecureRandomString()}`;
-  const unlockEventName = `__rcr_unlock_${getSecureRandomString()}`;
-
   let currentSettings: Settings = { ...DEFAULT_SETTINGS };
   let observer: MutationObserver | null = null;
   let unlockToastTimer: ReturnType<typeof setTimeout> | null = null;
@@ -201,7 +200,7 @@ export function handleContentMessage(
             detail: {
               nonce: bridgeNonce,
               type,
-              config,
+              config: cloneSettings(config),
             },
           }),
         );
@@ -249,7 +248,7 @@ export function handleContentMessage(
       ) as HTMLStyleElement | null;
       if (currentSettings.enabled && currentSettings.restoreSelection) {
         if (!styleEl) {
-          styleEl = document.createElement('style');
+          styleEl = safeCreateElement(document, 'style') as HTMLStyleElement;
           styleEl.id = STYLE_ID;
           styleEl.textContent = `
             body, p, div:not([class*="ytp-"]):not(.html5-video-player):not(.ProseMirror):not(.monaco-editor),
@@ -270,8 +269,8 @@ export function handleContentMessage(
           `;
           (document.head || document.documentElement)?.appendChild(styleEl);
         }
-      } else {
-        styleEl?.remove();
+      } else if (styleEl) {
+        safeRemoveElement(styleEl);
       }
     } catch {
       // Suppress errors injecting selection styles
@@ -292,13 +291,6 @@ export function handleContentMessage(
 
       // Secure cryptographic bridge notification
       notifyPageScript('UPDATE', currentSettings);
-
-      // Legacy fallback event dispatch
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(
-          new CustomEvent(updateEventName, { detail: currentSettings }),
-        );
-      }
     } catch {
       // Suppress errors applying settings
     }
@@ -349,9 +341,12 @@ export function handleContentMessage(
       if (unlockToastTimer) clearTimeout(unlockToastTimer);
       if (unlockToastRemoveTimer) clearTimeout(unlockToastRemoveTimer);
 
-      safeGetElementById(document, '__rcr_toast_host__')?.remove();
+      const existingToast = safeGetElementById(document, '__rcr_toast_host__');
+      if (existingToast) {
+        safeRemoveElement(existingToast);
+      }
 
-      const host = document.createElement('div');
+      const host = safeCreateElement(document, 'div');
       host.id = '__rcr_toast_host__';
       host.style.cssText =
         'position:fixed;top:0;left:0;width:100%;pointer-events:none;z-index:2147483647;';
@@ -360,7 +355,7 @@ export function handleContentMessage(
         ? host.attachShadow({ mode: 'closed' })
         : host;
 
-      const style = document.createElement('style');
+      const style = safeCreateElement(document, 'style');
       style.textContent = `
         .toast {
           position: fixed;
@@ -386,7 +381,7 @@ export function handleContentMessage(
         }
       `;
 
-      const toast = document.createElement('div');
+      const toast = safeCreateElement(document, 'div');
       toast.className = 'toast';
       toast.textContent = '🔓 Right-click & selection unlocked';
 
@@ -406,7 +401,7 @@ export function handleContentMessage(
         } catch (_e) {}
         unlockToastRemoveTimer = setTimeout(() => {
           try {
-            host.remove();
+            safeRemoveElement(host);
           } catch {
             // Suppress errors removing toast host
           }
@@ -509,8 +504,6 @@ export function handleContentMessage(
         notifyPageScript('UNLOCK');
       },
       onCleanDOMTree,
-      onDispatchEvent: (name) => window.dispatchEvent(new CustomEvent(name)),
-      unlockEventName,
       onShowUnlockToast: showUnlockToast,
       onApplySettings: applySettings,
     });

@@ -4,8 +4,10 @@ import {
   getUnshadowedMethod,
   safeApply,
   safeClosest,
+  safeElementsFromPoint,
   safeHasAttributes,
   safeMatches,
+  safeRemoveElement,
 } from '../shared/dom';
 import {
   DEFAULT_SETTINGS,
@@ -152,46 +154,6 @@ export function handlePageScriptMessage(
   }
 
   return false;
-}
-
-function setupLegacyScriptFallback(
-  onUpdate: (config: Settings) => void,
-  onUnlock: () => void,
-) {
-  try {
-    const scriptEl = document.currentScript;
-    if (
-      scriptEl instanceof HTMLScriptElement &&
-      scriptEl.dataset.initialConfig
-    ) {
-      onUpdate(validateSettings(JSON.parse(scriptEl.dataset.initialConfig)));
-      const legacyUpdate = scriptEl.dataset.updateEvent;
-      const legacyUnlock = scriptEl.dataset.unlockEvent;
-
-      delete scriptEl.dataset.initialConfig;
-      delete scriptEl.dataset.updateEvent;
-      delete scriptEl.dataset.unlockEvent;
-      scriptEl.remove();
-
-      if (legacyUpdate) {
-        window.addEventListener(legacyUpdate, (e: Event) => {
-          try {
-            const customEvent = e as CustomEvent<Settings>;
-            if (customEvent.detail && typeof customEvent.detail === 'object') {
-              onUpdate(validateSettings(customEvent.detail));
-            }
-          } catch {
-            // Suppress errors applying legacy config update
-          }
-        });
-      }
-      if (legacyUnlock) {
-        window.addEventListener(legacyUnlock, onUnlock);
-      }
-    }
-  } catch {
-    // Suppress errors reading legacy script element
-  }
 }
 
 function setupEventInterception(shouldBlockEvent: (event: Event) => boolean) {
@@ -414,11 +376,6 @@ if (typeof window !== 'undefined') {
     // Announce presence immediately in case content script is already listening
     sendHandshake();
 
-    // Fallback support for legacy injected script element
-    setupLegacyScriptFallback((newConfig) => {
-      activeConfig = newConfig;
-    }, unlockPage);
-
     function isShieldActive(): boolean {
       return activeConfig.enabled !== false;
     }
@@ -443,10 +400,10 @@ if (typeof window !== 'undefined') {
       return isShieldActive() && activeConfig.bypassModifierKey !== false;
     }
 
-    // Hot-path optimization: Check event type BEFORE inspecting DOM path or running
-    // CSS selector matches via isInteractiveEvent(). 99.9% of web page events (click,
-    // mousemove, keydown, scroll, etc.) are non-target types and exit immediately in O(1),
-    // eliminating expensive composedPath() and Element.matches() DOM traversals.
+    // Hot-path optimization: Check event type and active restoration setting BEFORE
+    // inspecting DOM path or running CSS selector matches via isInteractiveEvent().
+    // Bypasses expensive composedPath() traversals and CSS selector evaluations when
+    // features are disabled or events are non-targets.
     function shouldBlockEvent(event: Event): boolean {
       if (!event || !isShieldActive()) {
         return false;
@@ -454,7 +411,10 @@ if (typeof window !== 'undefined') {
 
       const isContextMenu = event.type === 'contextmenu';
       const isSelection = SELECTION_EVENTS.has(event.type);
-      if (!isContextMenu && !isSelection) {
+
+      const isRightClickTarget = isContextMenu && isRightClickActive();
+      const isSelectionTarget = isSelection && isSelectionActive();
+      if (!isRightClickTarget && !isSelectionTarget) {
         return false;
       }
 
@@ -466,13 +426,8 @@ if (typeof window !== 'undefined') {
       if (isModifierBypassActive() && isModifierPressed(event)) {
         return false;
       }
-      if (isContextMenu && isRightClickActive()) {
-        return true;
-      }
-      if (isSelection && isSelectionActive()) {
-        return true;
-      }
-      return false;
+
+      return true;
     }
 
     setupEventInterception(shouldBlockEvent);
@@ -538,13 +493,9 @@ if (typeof window !== 'undefined') {
         return;
       try {
         if (isInteractiveEvent(e)) return;
-        if (
-          typeof document === 'undefined' ||
-          typeof document.elementsFromPoint !== 'function'
-        )
-          return;
+        if (typeof document === 'undefined') return;
 
-        const elements = document.elementsFromPoint(e.clientX, e.clientY);
+        const elements = safeElementsFromPoint(document, e.clientX, e.clientY);
         if (!elements || elements.length <= 1) return;
 
         const isPlayerOrInteractive = elements.some((el) =>

@@ -23,7 +23,9 @@ const isSiteDisabled = $derived(
   ),
 );
 
-const isSiteActive = $derived(settings.enabled && !isSiteDisabled);
+const isSiteActive = $derived(
+  Boolean(settings.enabled && isToggleableDomain && !isSiteDisabled),
+);
 
 // Load state and active tab on mount
 $effect(() => {
@@ -310,22 +312,26 @@ async function forceUnlockPage() {
         <!-- Domain Labels Stack -->
         <div class="min-w-0 flex flex-col justify-center">
           <span class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
-            {!settings.enabled ? 'Extension Paused' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
+            {!settings.enabled ? 'Extension Paused' : !isToggleableDomain ? 'System / Restricted Page' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
           </span>
           <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-0.5" title={currentHostname}>
             {currentHostname || 'Loading…'}
           </span>
         </div>
       </div>
+
+      <span class="text-[9.5px] font-medium text-[var(--text-tertiary)] bg-[var(--bg-badge)] px-2 py-0.5 rounded-full border border-[var(--border-subtle)] flex-shrink-0 select-none">
+        Global Protection
+      </span>
     </section>
   {/if}
 
   <!-- Settings List Group -->
   <section class={`glass-card p-1 mb-2 flex flex-col ${isSiteActive ? '' : 'dimmed'}`}>
     <!-- Feature 1: Restore Right Click -->
-    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive}>
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={isSiteActive ? undefined : 'Protection is inactive on this page'}>
       <div class="flex items-center gap-2.5 min-w-0">
-        <div class={`w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
+        <div class={`setting-icon-badge w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
           isSiteActive && settings.restoreRightClick
             ? 'bg-[var(--bg-badge-active)] text-[var(--accent-blue)]'
             : 'bg-[var(--bg-badge)] text-[var(--text-secondary)]'
@@ -349,9 +355,9 @@ async function forceUnlockPage() {
     <div class="settings-divider" aria-hidden="true"></div>
 
     <!-- Feature 2: Allow Selection & Copy -->
-    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive}>
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={isSiteActive ? undefined : 'Protection is inactive on this page'}>
       <div class="flex items-center gap-2.5 min-w-0">
-        <div class={`w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
+        <div class={`setting-icon-badge w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
           isSiteActive && settings.restoreSelection
             ? 'bg-[var(--bg-badge-active)] text-[var(--accent-blue)]'
             : 'bg-[var(--bg-badge)] text-[var(--text-secondary)]'
@@ -375,9 +381,9 @@ async function forceUnlockPage() {
     <div class="settings-divider" aria-hidden="true"></div>
 
     <!-- Feature 3: Anti-Shield Overlay -->
-    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive}>
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={isSiteActive ? undefined : 'Protection is inactive on this page'}>
       <div class="flex items-center gap-2.5 min-w-0">
-        <div class={`w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
+        <div class={`setting-icon-badge w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
           isSiteActive && settings.antiShield
             ? 'bg-[var(--bg-badge-active)] text-[var(--accent-blue)]'
             : 'bg-[var(--bg-badge)] text-[var(--text-secondary)]'
@@ -400,9 +406,9 @@ async function forceUnlockPage() {
     <div class="settings-divider" aria-hidden="true"></div>
 
     <!-- Feature 4: Absolute Force Mode -->
-    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive}>
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={isSiteActive ? undefined : 'Protection is inactive on this page'}>
       <div class="flex items-center gap-2.5 min-w-0">
-        <div class={`w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
+        <div class={`setting-icon-badge w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
           isSiteActive && settings.absoluteForce
             ? 'bg-[var(--bg-badge-active)] text-[var(--accent-blue)]'
             : 'bg-[var(--bg-badge)] text-[var(--text-secondary)]'
@@ -425,9 +431,9 @@ async function forceUnlockPage() {
     <div class="settings-divider" aria-hidden="true"></div>
 
     <!-- Feature 5: Modifier Key Bypass -->
-    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive}>
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={isSiteActive ? undefined : 'Protection is inactive on this page'}>
       <div class="flex items-center gap-2.5 min-w-0">
-        <div class={`w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
+        <div class={`setting-icon-badge w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
           isSiteActive && settings.bypassModifierKey
             ? 'bg-[var(--bg-badge-active)] text-[var(--accent-blue)]'
             : 'bg-[var(--bg-badge)] text-[var(--text-secondary)]'
@@ -455,7 +461,13 @@ async function forceUnlockPage() {
       type="button"
       onclick={forceUnlockPage}
       disabled={unlockStatus !== 'idle' || !isSiteActive}
-      title={isSiteActive ? 'Force unlock context menu and selection on active page' : 'Protection is inactive on this page'}
+      title={isSiteActive
+        ? 'Force unlock context menu and selection on active page'
+        : !settings.enabled
+          ? 'Extension is paused globally'
+          : !isToggleableDomain
+            ? 'Protection is unavailable on system pages'
+            : 'Protection is inactive on this domain'}
       class={`w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none disabled:cursor-not-allowed ${
         isSiteActive && unlockStatus === 'idle' ? 'active:scale-[0.985]' : ''
       } ${
@@ -489,7 +501,7 @@ async function forceUnlockPage() {
         </svg>
         <span>Unable to Unlock Page</span>
       {:else}
-        <svg class="w-3.5 h-3.5 text-[var(--accent-blue)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <svg class={`w-3.5 h-3.5 force-unlock-icon transition-transform duration-150 ${isSiteActive ? 'text-[var(--accent-blue)]' : 'text-[var(--text-tertiary)]'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
         </svg>
         <span>Force Unlock Page</span>
@@ -502,17 +514,25 @@ async function forceUnlockPage() {
     </div>
   </div>
 
-  <!-- Footnote Tip with Dynamic Context Awareness -->
+  <!-- Footnote Tip with Dynamic Context Awareness & Quick-Action -->
   <footer class="pt-0.5 text-center select-none">
     <p class="text-[10px] text-[var(--text-tertiary)] leading-tight m-0 inline">
       {#if !settings.enabled}
         Extension is paused globally
+      {:else if !isToggleableDomain}
+        Protection is unavailable on system pages
       {:else if isSiteDisabled}
         Protection is disabled on this domain
       {:else if settings.bypassModifierKey}
         Tip: Hold <kbd>⇧ Shift</kbd> or <kbd>⌥ Option</kbd> for native menu
       {:else}
-        Tip: Enable Modifier Key Bypass to hold <kbd>⇧ Shift</kbd>
+        Tip: <button
+          type="button"
+          onclick={() => toggleFeature('bypassModifierKey')}
+          disabled={!isSiteActive}
+          class="text-[var(--accent-blue)] font-medium hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent-blue)] rounded-[2px] cursor-pointer inline disabled:no-underline disabled:cursor-not-allowed disabled:text-[var(--text-tertiary)]"
+          title="Enable Modifier Key Bypass setting"
+        >Enable Modifier Key Bypass</button> to hold <kbd>⇧ Shift</kbd>
       {/if}
     </p>
   </footer>

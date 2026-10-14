@@ -8,6 +8,11 @@ import {
 } from './settings';
 
 describe('settings & domain matching', () => {
+  test('video unblur is opt-in and requires a boolean setting', () => {
+    expect(validateSettings({}).unblurVideos).toBe(false);
+    expect(validateSettings({ unblurVideos: 'true' }).unblurVideos).toBe(false);
+    expect(validateSettings({ unblurVideos: true }).unblurVideos).toBe(true);
+  });
   test('normalizes hostnames consistently', () => {
     expect(normalizeHostname('example.com')).toBe('example.com');
     expect(normalizeHostname('WWW.Example.COM')).toBe('example.com');

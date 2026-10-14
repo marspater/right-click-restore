@@ -2,6 +2,7 @@ export interface Settings {
   enabled: boolean;
   restoreRightClick: boolean;
   restoreSelection: boolean;
+  unblurVideos: boolean;
   antiShield: boolean;
   absoluteForce: boolean;
   bypassModifierKey: boolean;
@@ -12,6 +13,7 @@ export const DEFAULT_SETTINGS: Settings = {
   enabled: true,
   restoreRightClick: true,
   restoreSelection: true,
+  unblurVideos: false,
   antiShield: true,
   absoluteForce: false, // Default to false for reduced blast radius; opt-in escalation
   bypassModifierKey: true,
@@ -139,6 +141,7 @@ export function validateSettings(raw: unknown): Settings {
       'restoreSelection',
       DEFAULT_SETTINGS.restoreSelection,
     ),
+    unblurVideos: sanitizeBool('unblurVideos', DEFAULT_SETTINGS.unblurVideos),
     antiShield: sanitizeBool('antiShield', DEFAULT_SETTINGS.antiShield),
     absoluteForce: sanitizeBool(
       'absoluteForce',

@@ -220,6 +220,12 @@ export function cleanNode(
   }
 
   if (isInteractiveOrDescendant(node)) {
+    if (
+      settings.restoreRightClick &&
+      /^(VIDEO|AUDIO|IMG)$/.test(node.tagName)
+    ) {
+      safeRemoveAttribute(node, 'oncontextmenu');
+    }
     return;
   }
 

@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleIconFile</key>
-	<string>AppIcon</string>
+	<string>RestoreIcon</string>
 	<key>CFBundleIconName</key>
-	<string>AppIcon</string>
+	<string>RestoreIcon</string>
 	<key>SFSafariWebExtensionConverterVersion</key>
 	<string>27.0</string>
 </dict>

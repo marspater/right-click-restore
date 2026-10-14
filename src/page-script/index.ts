@@ -1,4 +1,7 @@
-import { ALL_INTERACTIVE_SELECTORS } from '../shared/constants';
+import {
+  ALL_INTERACTIVE_SELECTORS,
+  INTERACTIVE_ELEMENTS,
+} from '../shared/constants';
 import { getSecureRandomString } from '../shared/crypto';
 import {
   getUnshadowedMethod,
@@ -117,7 +120,25 @@ export const SELECTION_EVENTS = new Set([
   'beforecopy',
 ]);
 
-const unmaskTimers = new WeakMap<Element, number>();
+// Player wrappers must not exempt the media itself from native-menu restoration.
+export function isMediaContextEvent(event: Event): boolean {
+  if (event.type !== 'contextmenu') return false;
+  const method = getUnshadowedMethod(event, 'composedPath');
+  const path = method ? safeApply(method, event, []) : [];
+  return (
+    Array.isArray(path) &&
+    path.some(
+      (node) =>
+        node instanceof Element && /^(VIDEO|AUDIO|IMG)$/.test(node.tagName),
+    )
+  );
+}
+
+export function findUnderlyingMedia(elements: Element[]): Element | undefined {
+  return elements.find((el) => /^(VIDEO|AUDIO|IMG)$/.test(el.tagName));
+}
+
+const unmaskTimers = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>();
 
 export function handlePageScriptMessage(
   detail: unknown,
@@ -161,13 +182,10 @@ function setupEventInterception(shouldBlockEvent: (event: Event) => boolean) {
   const origSP = Event.prototype.stopPropagation;
   const origSIP = Event.prototype.stopImmediatePropagation;
 
-  Event.prototype.preventDefault = function (
-    this: Event,
-    ...args: unknown[]
-  ): void {
+  Event.prototype.preventDefault = function (this: Event): void {
     if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
     try {
-      safeApply(origPD, this, args);
+      safeApply(origPD, this, []);
     } catch {
       // Suppress errors calling original preventDefault
     }
@@ -207,25 +225,19 @@ function setupEventInterception(shouldBlockEvent: (event: Event) => boolean) {
     // Suppress errors intercepting returnValue property
   }
 
-  Event.prototype.stopPropagation = function (
-    this: Event,
-    ...args: unknown[]
-  ): void {
+  Event.prototype.stopPropagation = function (this: Event): void {
     if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
     try {
-      safeApply(origSP, this, args);
+      safeApply(origSP, this, []);
     } catch {
       // Suppress errors calling original stopPropagation
     }
   };
 
-  Event.prototype.stopImmediatePropagation = function (
-    this: Event,
-    ...args: unknown[]
-  ): void {
+  Event.prototype.stopImmediatePropagation = function (this: Event): void {
     if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
     try {
-      safeApply(origSIP, this, args);
+      safeApply(origSIP, this, []);
     } catch {
       // Suppress errors calling original stopImmediatePropagation
     }
@@ -418,12 +430,11 @@ if (typeof window !== 'undefined') {
         return false;
       }
 
-      if (isInteractiveEvent(event)) {
-        return false;
-      }
-
-      // If modifier bypass is active and modifier key is held, allow native page action
-      if (isModifierBypassActive() && isModifierPressed(event)) {
+      if (
+        isInteractiveEvent(event) &&
+        !isMediaContextEvent(event) &&
+        !(isContextMenu && isModifierBypassActive() && isModifierPressed(event))
+      ) {
         return false;
       }
 
@@ -431,40 +442,21 @@ if (typeof window !== 'undefined') {
     }
 
     setupEventInterception(shouldBlockEvent);
+    Object.defineProperty(Event.prototype.preventDefault, INIT_SYMBOL, {
+      value: true,
+    });
     setupPropertyTraps(isForceModeActive);
-
-    function isMediaOrTextElement(el: Element): boolean {
-      return (
-        el.tagName === 'IMG' ||
-        el.tagName === 'VIDEO' ||
-        el.tagName === 'CANVAS' ||
-        el.tagName === 'PICTURE' ||
-        el.tagName === 'SVG' ||
-        (el instanceof HTMLElement &&
-          (el.innerText || el.textContent || '').trim().length > 0)
-      );
-    }
-
-    function findUnderlyingTarget(elements: Element[]): Element | undefined {
-      return elements.find(
-        (el, idx) => idx > 0 && el && isMediaOrTextElement(el),
-      );
-    }
 
     function applyUnmaskOverlay(
       el: HTMLElement,
-      timers: Map<HTMLElement, number>,
+      timers: WeakMap<HTMLElement, ReturnType<typeof setTimeout>>,
     ) {
+      if (timers.has(el)) return;
       const prevPointerEvents = el.style.pointerEvents;
       const prevPriority = el.style.getPropertyPriority('pointer-events');
 
       el.classList.add('rcr-unmasked-overlay');
       el.style.setProperty('pointer-events', 'none', 'important');
-
-      const existingTimer = timers.get(el);
-      if (existingTimer) {
-        clearTimeout(existingTimer);
-      }
 
       const timer = setTimeout(() => {
         try {
@@ -482,7 +474,7 @@ if (typeof window !== 'undefined') {
         } catch {
           // Suppress errors restoring pointer-events
         }
-      }, 1000) as unknown as number;
+      }, 1000);
 
       timers.set(el, timer);
     }
@@ -492,18 +484,26 @@ if (typeof window !== 'undefined') {
       if (!e || typeof e.clientX !== 'number' || typeof e.clientY !== 'number')
         return;
       try {
-        if (isInteractiveEvent(e)) return;
+        // Preserve buttons/editors, but allow transparent player surfaces to yield.
+        if (
+          e.target instanceof Element &&
+          safeClosest(e.target, INTERACTIVE_ELEMENTS)
+        )
+          return;
         if (typeof document === 'undefined') return;
 
         const elements = safeElementsFromPoint(document, e.clientX, e.clientY);
         if (!elements || elements.length <= 1) return;
 
-        const isPlayerOrInteractive = elements.some((el) =>
-          isInteractiveNode(el),
-        );
-        if (isPlayerOrInteractive) return;
-
-        const target = findUnderlyingTarget(elements);
+        const target =
+          findUnderlyingMedia(elements) ??
+          elements.find(
+            (el, index) =>
+              index > 0 &&
+              (/^(CANVAS|PICTURE|SVG)$/.test(el.tagName) ||
+                (el instanceof HTMLElement &&
+                  (el.innerText || el.textContent || '').trim().length > 0)),
+          );
         if (target && elements[0] !== target) {
           for (const el of elements) {
             if (el === target) break;
@@ -518,7 +518,27 @@ if (typeof window !== 'undefined') {
     }
 
     try {
-      document.addEventListener('contextmenu', (e) => unmaskMedia(e), false);
+      // A contextmenu event cannot change the browser's already hit-tested target.
+      // Prepare media on hover in force/modifier mode, or on secondary-button down.
+      document.addEventListener(
+        'mousemove',
+        (e) => {
+          if (
+            isForceModeActive() ||
+            (isModifierBypassActive() && isModifierPressed(e))
+          ) {
+            unmaskMedia(e);
+          }
+        },
+        true,
+      );
+      document.addEventListener(
+        'mousedown',
+        (e) => {
+          if (e.button === 2) unmaskMedia(e);
+        },
+        true,
+      );
     } catch {
       // Suppress errors attaching contextmenu listener
     }

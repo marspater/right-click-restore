@@ -226,12 +226,7 @@ async function forceUnlockPage() {
   <!-- Apple-Style Header -->
   <header class="flex items-center justify-between pb-3 select-none">
     <div class="flex items-center gap-2.5">
-      <div class="w-7 h-7 rounded-[8px] bg-gradient-to-b from-[#007AFF] to-[#0062CC] flex items-center justify-center shadow-sm">
-        <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-          <polyline points="9 12 11 14 15 10" />
-        </svg>
-      </div>
+      <img src="../icons/icon-64.png" class="w-7 h-7" alt="" />
       <div>
         <h1 class="text-[13.5px] font-semibold tracking-[-0.01em] text-[var(--text-primary)] leading-tight">
           RightClickRestore
@@ -399,6 +394,31 @@ async function forceUnlockPage() {
       </div>
       <span class="apple-switch apple-switch-sm">
         <input type="checkbox" role="switch" checked={settings.antiShield} aria-checked={settings.antiShield} aria-describedby="desc-anti-shield" disabled={!isSiteActive} onchange={() => toggleFeature('antiShield')} aria-label="Anti-Shield Overlay" />
+        <span class="apple-slider"></span>
+      </span>
+    </label>
+
+    <div class="settings-divider" aria-hidden="true"></div>
+
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive}>
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div class={`w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
+          isSiteActive && settings.unblurVideos
+            ? 'bg-[var(--bg-badge-active)] text-[var(--accent-blue)]'
+            : 'bg-[var(--bg-badge)] text-[var(--text-secondary)]'
+        }`} aria-hidden="true">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="5" width="14" height="14" rx="2" />
+            <path d="m17 10 4-3v10l-4-3" />
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <div class="text-[12px] font-medium text-[var(--text-primary)] leading-tight">Unblur Videos</div>
+          <div id="desc-unblur-videos" class="text-[10px] text-[var(--text-secondary)] leading-tight">Removes site CSS blur; protected capture stays blocked</div>
+        </div>
+      </div>
+      <span class="apple-switch apple-switch-sm">
+        <input type="checkbox" role="switch" checked={settings.unblurVideos} aria-checked={settings.unblurVideos} aria-describedby="desc-unblur-videos" disabled={!isSiteActive} onchange={() => toggleFeature('unblurVideos')} aria-label="Unblur Videos" />
         <span class="apple-slider"></span>
       </span>
     </label>

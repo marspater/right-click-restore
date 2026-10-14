@@ -1,0 +1,284 @@
+{
+  "color-space-for-untagged-svg-colors": "display-p3",
+  "fill-specializations": [
+    {
+      "value": {
+        "linear-gradient": [
+          "display-p3:0.01500,0.39000,0.46000,1.00000",
+          "display-p3:0.00500,0.16000,0.20000,1.00000"
+        ]
+      }
+    },
+    {
+      "appearance": "dark",
+      "value": {
+        "linear-gradient": [
+          "display-p3:0.01000,0.25000,0.30000,1.00000",
+          "display-p3:0.00300,0.08000,0.11000,1.00000"
+        ]
+      }
+    }
+  ],
+  "groups": [
+    {
+      "layers": [
+        {
+          "glass": false,
+          "image-name": "CursorHighlight.svg",
+          "name": "CursorHighlight",
+          "position": {
+            "scale": 1,
+            "translation-in-points": [91.31636363636358, 98.07384615384626]
+          }
+        },
+        {
+          "glass": false,
+          "image-name": "CursorFacet.svg",
+          "name": "CursorFacet",
+          "position": {
+            "scale": 1,
+            "translation-in-points": [91.31636363636358, 98.07384615384626]
+          }
+        },
+        {
+          "fill-specializations": [
+            {
+              "value": {
+                "linear-gradient": [
+                  "display-p3:0.70000,1.00000,0.98000,1.00000",
+                  "display-p3:0.22000,0.87000,0.87000,1.00000"
+                ]
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "linear-gradient": [
+                  "display-p3:0.59000,0.99000,1.00000,1.00000",
+                  "display-p3:0.14000,0.73000,0.79000,1.00000"
+                ]
+              }
+            },
+            {
+              "appearance": "tinted",
+              "value": {
+                "solid": "gray:0.90000,1.00000"
+              }
+            }
+          ],
+          "glass": true,
+          "image-name": "Cursor.svg",
+          "name": "Cursor",
+          "position": {
+            "scale": 1,
+            "translation-in-points": [91.31636363636358, 98.07384615384626]
+          }
+        }
+      ],
+      "lighting": "individual",
+      "name": "Cursor",
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.15
+      },
+      "specular": true,
+      "translucency": {
+        "enabled": true,
+        "value": 0.3
+      }
+    },
+    {
+      "layers": [
+        {
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "display-p3:0.94000,1.00000,1.00000,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "display-p3:0.83000,1.00000,1.00000,1.00000"
+              }
+            },
+            {
+              "appearance": "tinted",
+              "value": {
+                "solid": "gray:1.00000,1.00000"
+              }
+            }
+          ],
+          "glass": false,
+          "image-name": "SelectedLine.svg",
+          "name": "SelectedLine"
+        },
+        {
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "display-p3:0.54063,0.98211,1.00000,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "display-p3:0.83000,1.00000,1.00000,1.00000"
+              }
+            },
+            {
+              "appearance": "tinted",
+              "value": {
+                "solid": "gray:1.00000,1.00000"
+              }
+            }
+          ],
+          "glass": false,
+          "image-name": "Rows.svg",
+          "name": "Rows"
+        },
+        {
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "display-p3:0.01000,0.49000,0.57000,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "display-p3:0.01000,0.36000,0.43000,1.00000"
+              }
+            },
+            {
+              "appearance": "tinted",
+              "value": {
+                "solid": "gray:0.60000,1.00000"
+              }
+            }
+          ],
+          "glass": true,
+          "image-name": "SelectedRow.svg",
+          "name": "SelectedRow"
+        },
+        {
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "display-p3:0.16000,0.79000,0.83000,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "display-p3:0.09000,0.59000,0.66000,1.00000"
+              }
+            },
+            {
+              "appearance": "tinted",
+              "value": {
+                "solid": "gray:0.60000,1.00000"
+              }
+            }
+          ],
+          "glass": true,
+          "image-name": "Menu.svg",
+          "name": "Menu"
+        }
+      ],
+      "lighting": "individual",
+      "name": "Menu",
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.18
+      },
+      "specular": true,
+      "translucency": {
+        "enabled": true,
+        "value": 0.55
+      }
+    },
+    {
+      "layers": [
+        {
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "display-p3:0.02000,0.67000,0.76000,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "display-p3:0.02500,0.45000,0.54000,1.00000"
+              }
+            },
+            {
+              "appearance": "tinted",
+              "value": {
+                "solid": "gray:0.60000,1.00000"
+              }
+            }
+          ],
+          "glass": true,
+          "image-name": "MiddleSheet.svg",
+          "name": "MiddleSheet"
+        }
+      ],
+      "lighting": "individual",
+      "name": "MiddleSheet",
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.18
+      },
+      "specular": true,
+      "translucency": {
+        "enabled": true,
+        "value": 0.65
+      }
+    },
+    {
+      "layers": [
+        {
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "display-p3:0.02000,0.48000,0.57000,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "display-p3:0.02000,0.32000,0.40000,1.00000"
+              }
+            },
+            {
+              "appearance": "tinted",
+              "value": {
+                "solid": "gray:0.60000,1.00000"
+              }
+            }
+          ],
+          "glass": true,
+          "image-name": "BackSheet.svg",
+          "name": "BackSheet"
+        }
+      ],
+      "lighting": "individual",
+      "name": "BackSheet",
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.18
+      },
+      "specular": true,
+      "translucency": {
+        "enabled": true,
+        "value": 0.65
+      }
+    }
+  ],
+  "supported-platforms": {
+    "circles": ["watchOS"],
+    "squares": "shared"
+  }
+}

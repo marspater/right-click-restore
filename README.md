@@ -37,6 +37,7 @@ RightClickRestore adopts the forward-looking **macOS 27** Apple Human Interface 
 - **Anti-Shield Protection**: Dynamically disables invisible transparent overlays swallowing mouse clicks above images and videos without breaking web layouts.
 - **Editor & Video Protection**: Intelligently safeguards interactive elements (`input`, `textarea`, `button`, Monaco Editor, ProseMirror, and HTML5 / YouTube video players).
 - **Global & Per-Domain Controls**: Disable restoration per site or toggle features individually via the Svelte 5 popup.
+- **Unblur Videos (opt-in)**: Removes CSS `blur()` filters on videos and their ancestors, including filters reapplied through class or inline-style changes. Enable **Unblur Videos** in the popup; disabling it or the extension restores the affected styles. Other filter effects and playback controls are preserved. This cannot recover blur baked into a video, remove separate blur overlays, or bypass DRM/FairPlay screen-capture protection.
 - **Force Unlock**: One-click nuclear unlock button for extreme obfuscation cases.
 - **Bounded DOM Observer**: Batched mutation processing prevents memory leaks on high-churn single-page applications.
 

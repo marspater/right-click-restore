@@ -34,25 +34,10 @@ struct ContentView: View {
         VStack(spacing: 18) {
             // Header: App Icon & Title
             VStack(spacing: 12) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Color(red: 0.0, green: 0.48, blue: 1.0),
-                                    Color(red: 0.0, green: 0.38, blue: 0.8)
-                                ],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        .frame(width: 64, height: 64)
-                        .shadow(color: Color.blue.opacity(0.28), radius: 8, x: 0, y: 4)
-
-                    Image(systemName: "checkmark.shield.fill")
-                        .font(.system(size: 32, weight: .medium))
-                        .foregroundStyle(.white)
-                }
+                Image("LargeIcon")
+                    .resizable()
+                    .frame(width: 64, height: 64)
+                    .accessibilityHidden(true)
 
                 VStack(spacing: 4) {
                     Text("RightClickRestore")

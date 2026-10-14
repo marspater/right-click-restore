@@ -75,14 +75,30 @@ if [[ "${ALLOW_UNSIGNED:-0}" == "1" ]]; then
     codesign -s - --force "$APPEX_PATH"
     codesign -s - --force "$APP_PATH"
   fi
-  echo "🔌 Registering extension with PlugInKit & LaunchServices..."
-  pluginkit -a -e use -i com.antigravity.RightClickRestore.Extension "$APPEX_PATH" 2>/dev/null || true
-  /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f -R -trusted "$APP_PATH" 2>/dev/null || true
+  # Register only the installed app; registering build copies creates duplicate Safari entries.
   echo "⚠️ Unsigned development build ready. Enable Safari's unsigned extension development mode to test it."
 else
   echo "🔏 Validating signed app bundle..."
   codesign --verify --deep --strict --verbose=2 "$APP_PATH"
   spctl --assess --type execute --verbose=2 "$APP_PATH"
+fi
+
+codesign --verify --strict "$APPEX_PATH"
+codesign --verify --strict "$APP_PATH"
+
+# Xcode automatically registers macOS build products. Keep the installed copy
+# as Safari's sole registration, unless explicitly testing the development copy.
+INSTALLED_APP="/Applications/$APP_NAME.app"
+if [[ "${REGISTER_BUILD_APP:-0}" != "1" && -d "$INSTALLED_APP" ]]; then
+  BUILT_ID="$(plutil -extract CFBundleIdentifier raw "$APP_PATH/Contents/Info.plist")"
+  INSTALLED_ID="$(plutil -extract CFBundleIdentifier raw "$INSTALLED_APP/Contents/Info.plist")"
+  if [[ "$BUILT_ID" == "$INSTALLED_ID" ]]; then
+    codesign --verify --strict "$INSTALLED_APP"
+    if pluginkit -m -A -D -v | grep -Fq -- "$APPEX_PATH"; then
+      pluginkit -r "$APPEX_PATH"
+    fi
+    /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -u "$APP_PATH"
+  fi
 fi
 
 echo ""

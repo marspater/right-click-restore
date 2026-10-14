@@ -2,10 +2,12 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 import { Window } from 'happy-dom';
 import type { Settings } from '../shared/settings';
 import {
+  findUnderlyingMedia,
   handlePageScriptMessage,
   isInteractiveElement,
   isInteractiveEvent,
   isInteractiveNode,
+  isMediaContextEvent,
   isModifierPressed,
 } from './index';
 
@@ -325,5 +327,33 @@ describe('page-script helpers', () => {
       expect(updated).toBe(false);
       expect(unlocked).toBe(false);
     });
+  });
+});
+
+describe('native media targets', () => {
+  test('media inside player wrappers remains eligible and takes priority over text', () => {
+    const window = new Window();
+    Object.assign(globalThis, { Node: window.Node, Element: window.Element });
+    const player = window.document.createElement('div');
+    player.className = 'html5-video-player';
+    const overlay = window.document.createElement('div');
+    overlay.textContent = 'Player overlay';
+    const video = window.document.createElement('video');
+    player.append(overlay, video);
+    expect(
+      findUnderlyingMedia([overlay, video, player] as unknown as Element[]),
+    ).toBe(video);
+    expect(
+      isMediaContextEvent({
+        type: 'contextmenu',
+        composedPath: () => [video, player],
+      } as unknown as Event),
+    ).toBe(true);
+    expect(
+      isMediaContextEvent({
+        type: 'copy',
+        composedPath: () => [video, player],
+      } as unknown as Event),
+    ).toBe(false);
   });
 });

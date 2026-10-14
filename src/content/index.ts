@@ -13,6 +13,7 @@ import {
   safeGetElementById,
   safeRemoveElement,
 } from './cleaner';
+import { VideoUnblur } from './video';
 
 export interface ContentMessageHandlers {
   onUnlockTriggered?: () => void;
@@ -121,6 +122,7 @@ export function handleContentMessage(
 
 (() => {
   let currentSettings: Settings = { ...DEFAULT_SETTINGS };
+  const videoUnblur = new VideoUnblur();
   let observer: MutationObserver | null = null;
   let unlockToastTimer: ReturnType<typeof setTimeout> | null = null;
   let unlockToastRemoveTimer: ReturnType<typeof setTimeout> | null = null;
@@ -150,6 +152,9 @@ export function handleContentMessage(
       pendingNodes.delete(node);
       try {
         cleanAddedNodeBase(node, currentSettings);
+        if (currentSettings.unblurVideos && node instanceof Element) {
+          videoUnblur.scan(node);
+        }
       } catch (_e) {}
       processed++;
     }
@@ -167,7 +172,7 @@ export function handleContentMessage(
     if (batchScheduled) return;
     batchScheduled = true;
     try {
-      if (typeof requestAnimationFrame === 'function') {
+      if (typeof requestAnimationFrame === 'function' && !document.hidden) {
         requestAnimationFrame(processPendingMutations);
       } else {
         setTimeout(processPendingMutations, 16);
@@ -186,6 +191,9 @@ export function handleContentMessage(
   function cleanDOMTree(root: ParentNode = document) {
     try {
       cleanDOMTreeBase(root, currentSettings);
+      if (currentSettings.enabled && currentSettings.unblurVideos) {
+        videoUnblur.scan(root);
+      }
     } catch (_e) {}
   }
 
@@ -288,6 +296,11 @@ export function handleContentMessage(
 
       // Dynamically apply selection styles without polluting root DOM dataset
       updateInjectedStyles();
+      if (currentSettings.enabled && currentSettings.unblurVideos) {
+        videoUnblur.scan(document);
+      } else {
+        videoUnblur.restore();
+      }
 
       // Secure cryptographic bridge notification
       notifyPageScript('UPDATE', currentSettings);
@@ -416,6 +429,9 @@ export function handleContentMessage(
 
   function handleMutation(mutation: MutationRecord) {
     if (mutation.type === 'childList') {
+      if (currentSettings.unblurVideos && mutation.target instanceof Element) {
+        pendingNodes.add(mutation.target);
+      }
       for (const node of mutation.addedNodes) {
         // Only queue Element nodes; ignore Text, Comment, etc.
         if (node?.nodeType === 1) {
@@ -427,6 +443,15 @@ export function handleContentMessage(
       mutation.target instanceof Element
     ) {
       cleanNode(mutation.target);
+      if (currentSettings.unblurVideos) {
+        if (
+          mutation.attributeName === 'class' ||
+          mutation.attributeName === 'id'
+        ) {
+          videoUnblur.restore(mutation.target);
+        }
+        pendingNodes.add(mutation.target);
+      }
     }
   }
 
@@ -464,11 +489,36 @@ export function handleContentMessage(
         childList: true,
         subtree: true,
         attributes: true,
-        attributeFilter: SCRUB_ATTRS,
+        attributeFilter: [...SCRUB_ATTRS, 'style', 'class', 'id'],
       });
     } catch {
       // Suppress errors initializing MutationObserver
     }
+  }
+
+  // Recheck when a player loads or focus changes, without polling or changing playback.
+  if (typeof document !== 'undefined') {
+    document.addEventListener(
+      'loadeddata',
+      () => {
+        if (currentSettings.enabled && currentSettings.unblurVideos) {
+          videoUnblur.scan(document);
+        }
+      },
+      true,
+    );
+    document.addEventListener('visibilitychange', () => {
+      if (currentSettings.enabled) cleanDOMTree();
+    });
+  }
+  if (typeof window !== 'undefined') {
+    window.addEventListener(
+      'focus',
+      () => {
+        if (currentSettings.enabled) cleanDOMTree();
+      },
+      { passive: true },
+    );
   }
 
   // SPA Navigation hooks
@@ -501,9 +551,17 @@ export function handleContentMessage(
     return handleContentMessage(message, sender, sendResponse, {
       onUnlockTriggered: () => {
         diagnostics.unlockTriggered++;
+        currentSettings = {
+          ...currentSettings,
+          enabled: true,
+          restoreRightClick: true,
+          restoreSelection: true,
+          absoluteForce: true,
+        };
+        notifyPageScript('UPDATE', currentSettings);
         notifyPageScript('UNLOCK');
       },
-      onCleanDOMTree,
+      onCleanDOMTree: cleanDOMTree,
       onShowUnlockToast: showUnlockToast,
       onApplySettings: applySettings,
     });

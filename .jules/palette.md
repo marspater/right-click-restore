@@ -32,5 +32,9 @@
    - Introduced a springy pop-in entrance micro-animation (`@keyframes popIn`) for the Force Unlock status icons upon success or error, offering responsive visual feedback.
    - Added subtle theme-aware hover brightness adjustments on active Apple switch tracks for polished tactile depth.
 
+8. **Tactile Card Press Feedback, Icon Hover Micro-Interactions & Disabled Row Tooltips (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+   - Added `.domain-card:active:not(.dimmed)` scale (`scale(0.99)`) and press opacity (`0.88`) transition to give tactile click feedback on the domain card matching setting row interaction patterns.
+   - Added a hover/focus icon rotation and scale micro-interaction (`.force-unlock-icon`) on the Force Unlock button for playful interactive affordance.
+   - Added contextual `title` tooltips (`title={isSiteActive ? undefined : 'Protection is inactive on this page'}`) to feature setting rows so users hovering over dimmed controls receive immediate feedback on why features are disabled.
 
 

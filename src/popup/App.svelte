@@ -323,7 +323,7 @@ async function forceUnlockPage() {
   <!-- Settings List Group -->
   <section class={`glass-card p-1 mb-2 flex flex-col ${isSiteActive ? '' : 'dimmed'}`}>
     <!-- Feature 1: Restore Right Click -->
-    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive}>
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={isSiteActive ? undefined : 'Protection is inactive on this page'}>
       <div class="flex items-center gap-2.5 min-w-0">
         <div class={`w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
           isSiteActive && settings.restoreRightClick
@@ -349,7 +349,7 @@ async function forceUnlockPage() {
     <div class="settings-divider" aria-hidden="true"></div>
 
     <!-- Feature 2: Allow Selection & Copy -->
-    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive}>
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={isSiteActive ? undefined : 'Protection is inactive on this page'}>
       <div class="flex items-center gap-2.5 min-w-0">
         <div class={`w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
           isSiteActive && settings.restoreSelection
@@ -375,7 +375,7 @@ async function forceUnlockPage() {
     <div class="settings-divider" aria-hidden="true"></div>
 
     <!-- Feature 3: Anti-Shield Overlay -->
-    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive}>
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={isSiteActive ? undefined : 'Protection is inactive on this page'}>
       <div class="flex items-center gap-2.5 min-w-0">
         <div class={`w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
           isSiteActive && settings.antiShield
@@ -400,7 +400,7 @@ async function forceUnlockPage() {
     <div class="settings-divider" aria-hidden="true"></div>
 
     <!-- Feature 4: Absolute Force Mode -->
-    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive}>
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={isSiteActive ? undefined : 'Protection is inactive on this page'}>
       <div class="flex items-center gap-2.5 min-w-0">
         <div class={`w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
           isSiteActive && settings.absoluteForce
@@ -425,7 +425,7 @@ async function forceUnlockPage() {
     <div class="settings-divider" aria-hidden="true"></div>
 
     <!-- Feature 5: Modifier Key Bypass -->
-    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive}>
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={isSiteActive ? undefined : 'Protection is inactive on this page'}>
       <div class="flex items-center gap-2.5 min-w-0">
         <div class={`w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
           isSiteActive && settings.bypassModifierKey
@@ -489,7 +489,7 @@ async function forceUnlockPage() {
         </svg>
         <span>Unable to Unlock Page</span>
       {:else}
-        <svg class="w-3.5 h-3.5 text-[var(--accent-blue)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <svg class="w-3.5 h-3.5 text-[var(--accent-blue)] force-unlock-icon transition-transform duration-150" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
         </svg>
         <span>Force Unlock Page</span>

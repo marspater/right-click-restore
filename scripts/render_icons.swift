@@ -119,7 +119,6 @@ for size in [16, 32, 48, 64, 128, 256, 512] {
 
 try resize(image: masterImage, pixelWidth: 256, pixelHeight: 256, to: appDir.appendingPathComponent("Assets.xcassets/LargeIcon.imageset/icon-256.png"))
 try resize(image: masterImage, pixelWidth: 1024, pixelHeight: 1024, to: appDir.appendingPathComponent("Resources/Icon.png"))
-try resize(image: masterImage, pixelWidth: 1024, pixelHeight: 1024, to: appDir.appendingPathComponent("Resources/Base.lproj/Icon.png"))
 
 // MARK: - 4. Generate macOS ICNS Bundle via iconutil
 

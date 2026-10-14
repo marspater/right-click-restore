@@ -16,14 +16,8 @@
 		44B023A8303771BB001C20BE /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 44B023A6303771BB001C20BE /* Main.storyboard */; };
 		44B023AF303771BB001C20BE /* RightClickRestore Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 44B023AE303771BB001C20BE /* RightClickRestore Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		44B023B9303771BB001C20BE /* RightClickRestore Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 44B023B8303771BB001C20BE /* RightClickRestore Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		44B023BE303771BB001C20BE /* Main.html in Resources */ = {isa = PBXBuildFile; fileRef = 44B02383303771BB001C20BE /* Main.html */; };
-		44B023BF303771BB001C20BE /* Main.html in Resources */ = {isa = PBXBuildFile; fileRef = 44B02383303771BB001C20BE /* Main.html */; };
 		44B023C0303771BB001C20BE /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 44B02385303771BB001C20BE /* Icon.png */; };
 		44B023C1303771BB001C20BE /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 44B02385303771BB001C20BE /* Icon.png */; };
-		44B023C2303771BB001C20BE /* Style.css in Resources */ = {isa = PBXBuildFile; fileRef = 44B02386303771BB001C20BE /* Style.css */; };
-		44B023C3303771BB001C20BE /* Style.css in Resources */ = {isa = PBXBuildFile; fileRef = 44B02386303771BB001C20BE /* Style.css */; };
-		44B023C4303771BB001C20BE /* Script.js in Resources */ = {isa = PBXBuildFile; fileRef = 44B02387303771BB001C20BE /* Script.js */; };
-		44B023C5303771BB001C20BE /* Script.js in Resources */ = {isa = PBXBuildFile; fileRef = 44B02387303771BB001C20BE /* Script.js */; };
 		44B023C6303771BB001C20BE /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44B02388303771BB001C20BE /* ViewController.swift */; };
 		44B023C7303771BB001C20BE /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44B02388303771BB001C20BE /* ViewController.swift */; };
 		44B023C8303771BB001C20BE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 44B02389303771BB001C20BE /* Assets.xcassets */; };
@@ -84,10 +78,7 @@
 
 /* Begin PBXFileReference section */
 		AABBCC001122334455667702 /* RestoreIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.icon; name = RestoreIcon.icon; path = ../../Assets/RestoreIcon.icon; sourceTree = SOURCE_ROOT; };
-		44B02384303771BB001C20BE /* Base */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = Base; path = Base.lproj/Main.html; sourceTree = "<group>"; };
 		44B02385303771BB001C20BE /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = "<group>"; };
-		44B02386303771BB001C20BE /* Style.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = Style.css; sourceTree = "<group>"; };
-		44B02387303771BB001C20BE /* Script.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = Script.js; sourceTree = "<group>"; };
 		44B02388303771BB001C20BE /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		44B02389303771BB001C20BE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		44B0238B303771BB001C20BE /* SafariWebExtensionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafariWebExtensionHandler.swift; sourceTree = "<group>"; };
@@ -165,10 +156,7 @@
 		44B02382303771BB001C20BE /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				44B02383303771BB001C20BE /* Main.html */,
 				44B02385303771BB001C20BE /* Icon.png */,
-				44B02386303771BB001C20BE /* Style.css */,
-				44B02387303771BB001C20BE /* Script.js */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -375,23 +363,17 @@
 			files = (
 				44B023C0303771BB001C20BE /* Icon.png in Resources */,
 				44B02399303771BB001C20BE /* LaunchScreen.storyboard in Resources */,
-				44B023BE303771BB001C20BE /* Main.html in Resources */,
-				44B023C4303771BB001C20BE /* Script.js in Resources */,
 				44B023C8303771BB001C20BE /* Assets.xcassets in Resources */,
 				44B0239C303771BB001C20BE /* Main.storyboard in Resources */,
-				44B023C2303771BB001C20BE /* Style.css in Resources */,
 			);
 		};
 		44B023A0303771BB001C20BE /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
 				44B023C1303771BB001C20BE /* Icon.png in Resources */,
-				44B023C3303771BB001C20BE /* Style.css in Resources */,
 				44B023A8303771BB001C20BE /* Main.storyboard in Resources */,
-				44B023C5303771BB001C20BE /* Script.js in Resources */,
 				44B023C9303771BB001C20BE /* Assets.xcassets in Resources */,
 				AABBCC001122334455667701 /* RestoreIcon.icon in Resources */,
-				44B023BF303771BB001C20BE /* Main.html in Resources */,
 			);
 		};
 		44B023AC303771BB001C20BE /* Resources */ = {
@@ -503,14 +485,6 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
-		44B02383303771BB001C20BE /* Main.html */ = {
-			isa = PBXVariantGroup;
-			children = (
-				44B02384303771BB001C20BE /* Base */,
-			);
-			name = Main.html;
-			sourceTree = "<group>";
-		};
 		44B02397303771BB001C20BE /* LaunchScreen.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (

@@ -18,4 +18,6 @@
 **Learning:** Caching native prototype getters (`Element.prototype.shadowRoot` and `HTMLElement.prototype.style`) at module load and invoking them via `safeApply` bypasses prototype chain searches and `Object.getOwnPropertyDescriptor` object allocations during frequent DOM inspections, achieving high speedups on `safeGetShadowRoot` and `safeGetStyle` while remaining completely resistant to DOM clobbering and prototype monkey-patching.
 **Action:** Cache native DOM prototype getter functions once and invoke them directly via `safeApply` on fast-paths when inspecting standard DOM properties.
 
-
+## 2025-05-22 - Feature flag short-circuiting in page-script event interception
+**Learning:** Combining event target type matching with active feature flag checks (`isContextMenu && isRightClickActive()` and `isSelection && isSelectionActive()`) at the entry guard of `shouldBlockEvent` eliminates expensive `composedPath()` DOM traversals and multi-selector CSS matching (`isInteractiveEvent`) when restoration settings are toggled off.
+**Action:** Always verify that feature flags associated with specific event types are active before initiating event path traversals or element selector evaluations in event handlers.

@@ -454,7 +454,13 @@ if (typeof window !== 'undefined') {
 
       const isContextMenu = event.type === 'contextmenu';
       const isSelection = SELECTION_EVENTS.has(event.type);
-      if (!isContextMenu && !isSelection) {
+
+      // Performance optimization: Short-circuit if event is not a restoration target or
+      // if the restoration setting for this event type is disabled.
+      // Bypasses expensive composedPath() traversals and CSS selector evaluations.
+      const isRightClickTarget = isContextMenu && isRightClickActive();
+      const isSelectionTarget = isSelection && isSelectionActive();
+      if (!isRightClickTarget && !isSelectionTarget) {
         return false;
       }
 
@@ -466,13 +472,8 @@ if (typeof window !== 'undefined') {
       if (isModifierBypassActive() && isModifierPressed(event)) {
         return false;
       }
-      if (isContextMenu && isRightClickActive()) {
-        return true;
-      }
-      if (isSelection && isSelectionActive()) {
-        return true;
-      }
-      return false;
+
+      return true;
     }
 
     setupEventInterception(shouldBlockEvent);

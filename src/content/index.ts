@@ -22,6 +22,16 @@ export interface ContentMessageHandlers {
   onApplySettings?: (config: Settings) => void;
 }
 
+export function cloneSettings(config?: Settings): Settings | undefined {
+  if (!config) return undefined;
+  return {
+    ...config,
+    disabledDomains: Array.isArray(config.disabledDomains)
+      ? [...config.disabledDomains]
+      : [],
+  };
+}
+
 function isAuthorizedSender(
   sender: chrome.runtime.MessageSender | undefined,
 ): boolean {
@@ -201,7 +211,7 @@ export function handleContentMessage(
             detail: {
               nonce: bridgeNonce,
               type,
-              config,
+              config: cloneSettings(config),
             },
           }),
         );
@@ -296,7 +306,9 @@ export function handleContentMessage(
       // Legacy fallback event dispatch
       if (typeof window !== 'undefined') {
         window.dispatchEvent(
-          new CustomEvent(updateEventName, { detail: currentSettings }),
+          new CustomEvent(updateEventName, {
+            detail: cloneSettings(currentSettings),
+          }),
         );
       }
     } catch {

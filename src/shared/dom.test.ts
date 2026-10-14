@@ -13,6 +13,7 @@ import {
   safeMatches,
   safeQuerySelectorAll,
   safeRemoveAttribute,
+  safeRemoveElement,
 } from './dom';
 
 describe('shared DOM utilities', () => {
@@ -150,7 +151,7 @@ describe('shared DOM utilities', () => {
     });
   });
 
-  describe('safeHasAttribute, safeHasAttributes, and safeRemoveAttribute', () => {
+  describe('safeHasAttribute, safeHasAttributes, safeRemoveAttribute, and safeRemoveElement', () => {
     test('safely checks and removes attributes', () => {
       const el = document.createElement('div');
       el.setAttribute('oncontextmenu', 'return false');
@@ -158,6 +159,25 @@ describe('shared DOM utilities', () => {
       expect(safeHasAttribute(el, 'oncontextmenu')).toBe(true);
       safeRemoveAttribute(el, 'oncontextmenu');
       expect(safeHasAttribute(el, 'oncontextmenu')).toBe(false);
+    });
+
+    test('safeRemoveElement removes element and resists DOM clobbering', () => {
+      const parent = document.createElement('div');
+      const form = document.createElement('form');
+      const input = document.createElement('input');
+      input.setAttribute('name', 'remove');
+      form.appendChild(input);
+      parent.appendChild(form);
+
+      // Clobber remove property on form instance
+      Object.defineProperty(form, 'remove', {
+        value: input,
+        configurable: true,
+      });
+
+      expect(parent.contains(form)).toBe(true);
+      safeRemoveElement(form);
+      expect(parent.contains(form)).toBe(false);
     });
 
     test('safeHasAttributes checks attribute presence accurately and resists DOM clobbering', () => {

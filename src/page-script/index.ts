@@ -6,6 +6,7 @@ import {
   safeClosest,
   safeHasAttributes,
   safeMatches,
+  safeRemoveElement,
 } from '../shared/dom';
 import {
   DEFAULT_SETTINGS,
@@ -171,7 +172,7 @@ function setupLegacyScriptFallback(
       delete scriptEl.dataset.initialConfig;
       delete scriptEl.dataset.updateEvent;
       delete scriptEl.dataset.unlockEvent;
-      scriptEl.remove();
+      safeRemoveElement(scriptEl);
 
       if (legacyUpdate) {
         window.addEventListener(legacyUpdate, (e: Event) => {

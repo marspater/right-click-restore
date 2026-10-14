@@ -28,4 +28,8 @@
 **Learning:** Calling `.call()` or `.apply()` directly relies on `Function.prototype` methods remaining unmodified in the current JS realm.
 **Prevention:** Implement `safeApply` using snapshotted native `Reflect.apply` (or fallback `Function.prototype.call.bind(Function.prototype.apply)`), ensuring untrusted host script modifications to `Function.prototype` cannot compromise DOM operations.
 
+## 2025-05-22 - DOM Clobbering Resistance for Element Removal
+**Vulnerability:** Invoking `.remove()` directly on DOM elements (such as `<form>` elements containing `<input name="remove">`) allowed untrusted page scripts to shadow `element.remove` with an `HTMLInputElement`, throwing runtime TypeErrors and suppressing extension UI cleanup and toast notifications.
+**Learning:** Calling instance methods like `element.remove()` directly assumes instance property getters remain unshadowed by child form inputs or named properties.
+**Prevention:** Use `safeRemoveElement` across all DOM element removal calls to unshadow `Element.prototype.remove` (or fallback to `removeChild`) via `getUnshadowedMethod` and `safeApply`.
 

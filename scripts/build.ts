@@ -1,9 +1,7 @@
 import { cp, mkdir } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
-import tailwindcss from '@tailwindcss/postcss';
 import esbuild from 'esbuild';
 import esbuildSvelte from 'esbuild-svelte';
-import postcss from 'postcss';
 
 const isWatch = process.argv.includes('--watch');
 const projectRoot = resolve(import.meta.dir, '..');
@@ -13,17 +11,29 @@ const outDir = resolve(
   'SafariExtension/RightClickRestore/Shared (Extension)/Resources',
 );
 
-// 1. Build Popup CSS via Tailwind CSS v4 & PostCSS
+// 1. Build Popup CSS via Tailwind CSS v4 CLI
 async function buildCss() {
   const srcPath = resolve(srcDir, 'popup/popup.css');
   const destPath = resolve(outDir, 'popup/popup.css');
-  const cssContent = await Bun.file(srcPath).text();
-  const result = await postcss([tailwindcss()]).process(cssContent, {
-    from: srcPath,
-    to: destPath,
-  });
   await mkdir(dirname(destPath), { recursive: true });
-  await Bun.write(destPath, result.css);
+  const tailwindBin = resolve(projectRoot, 'node_modules/.bin/tailwindcss');
+  const proc = Bun.spawn(
+    [
+      tailwindBin,
+      '-i',
+      srcPath,
+      '-o',
+      destPath,
+      ...(isWatch ? ['--watch'] : ['--minify']),
+    ],
+    { stdout: 'ignore', stderr: 'inherit' },
+  );
+  if (!isWatch) {
+    const code = await proc.exited;
+    if (code !== 0) {
+      throw new Error(`Tailwind CSS compilation failed with exit code ${code}`);
+    }
+  }
 }
 
 // 2. Configure esbuild compilation context

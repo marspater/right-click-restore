@@ -1,5 +1,39 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Icons",
+    system-ui, sans-serif;
+
+  --color-popover: var(--bg-popover);
+  --color-card: var(--bg-card);
+  --color-card-hover: var(--bg-card-hover);
+  --color-row-hover: var(--bg-row-hover);
+  --color-badge: var(--bg-badge);
+  --color-badge-active: var(--bg-badge-active);
+  --color-kbd: var(--bg-kbd);
+
+  --color-border-subtle: var(--border-subtle);
+  --color-border-divider: var(--border-divider);
+  --color-border-kbd: var(--border-kbd);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+
+  --color-accent-blue: var(--accent-blue);
+  --color-accent-blue-hover: var(--accent-blue-hover);
+  --color-accent-green: var(--accent-green);
+  --color-accent-green-hover: var(--accent-green-hover);
+  --color-accent-orange: var(--accent-orange);
+  --color-accent-red: var(--accent-red);
+  --color-accent-red-hover: var(--accent-red-hover);
+
+  --radius-card: 12px;
+  --radius-btn: 10px;
+  --radius-icon: 8px;
+  --radius-kbd: 5px;
+}
+
 :root {
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Icons",
     system-ui, sans-serif;

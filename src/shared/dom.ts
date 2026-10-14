@@ -84,8 +84,11 @@ export function getUnshadowedGetter(
 // Fast-paths execution for standard DOM nodes when the instance does not own a clobbered property,
 // bypassing Object.prototype checks, index property reads, and unshadowed prototype chain walks.
 
-let nativeMatchesMethod: ((...args: unknown[]) => unknown) | null | undefined;
-function getNativeMatchesMethod(): ((...args: unknown[]) => unknown) | null {
+// biome-ignore lint/suspicious/noExplicitAny: cached prototype DOM methods require loose argument typing
+type NativeDOMMethod = ((this: any, ...args: any[]) => any) | null;
+
+let nativeMatchesMethod: NativeDOMMethod | undefined;
+function getNativeMatchesMethod(): NativeDOMMethod {
   if (nativeMatchesMethod === undefined) {
     try {
       nativeMatchesMethod =
@@ -97,8 +100,8 @@ function getNativeMatchesMethod(): ((...args: unknown[]) => unknown) | null {
   return nativeMatchesMethod;
 }
 
-let nativeClosestMethod: ((...args: unknown[]) => unknown) | null | undefined;
-function getNativeClosestMethod(): ((...args: unknown[]) => unknown) | null {
+let nativeClosestMethod: NativeDOMMethod | undefined;
+function getNativeClosestMethod(): NativeDOMMethod {
   if (nativeClosestMethod === undefined) {
     try {
       nativeClosestMethod =
@@ -110,13 +113,8 @@ function getNativeClosestMethod(): ((...args: unknown[]) => unknown) | null {
   return nativeClosestMethod;
 }
 
-let nativeHasAttributeMethod:
-  | ((...args: unknown[]) => unknown)
-  | null
-  | undefined;
-function getNativeHasAttributeMethod():
-  | ((...args: unknown[]) => unknown)
-  | null {
+let nativeHasAttributeMethod: NativeDOMMethod | undefined;
+function getNativeHasAttributeMethod(): NativeDOMMethod {
   if (nativeHasAttributeMethod === undefined) {
     try {
       nativeHasAttributeMethod =
@@ -128,13 +126,8 @@ function getNativeHasAttributeMethod():
   return nativeHasAttributeMethod;
 }
 
-let nativeHasAttributesMethod:
-  | ((...args: unknown[]) => unknown)
-  | null
-  | undefined;
-function getNativeHasAttributesMethod():
-  | ((...args: unknown[]) => unknown)
-  | null {
+let nativeHasAttributesMethod: NativeDOMMethod | undefined;
+function getNativeHasAttributesMethod(): NativeDOMMethod {
   if (nativeHasAttributesMethod === undefined) {
     try {
       nativeHasAttributesMethod =
@@ -146,13 +139,8 @@ function getNativeHasAttributesMethod():
   return nativeHasAttributesMethod;
 }
 
-let nativeRemoveAttributeMethod:
-  | ((...args: unknown[]) => unknown)
-  | null
-  | undefined;
-function getNativeRemoveAttributeMethod():
-  | ((...args: unknown[]) => unknown)
-  | null {
+let nativeRemoveAttributeMethod: NativeDOMMethod | undefined;
+function getNativeRemoveAttributeMethod(): NativeDOMMethod {
   if (nativeRemoveAttributeMethod === undefined) {
     try {
       nativeRemoveAttributeMethod =
@@ -166,13 +154,8 @@ function getNativeRemoveAttributeMethod():
   return nativeRemoveAttributeMethod;
 }
 
-let nativeGetElementByIdMethod:
-  | ((...args: unknown[]) => unknown)
-  | null
-  | undefined;
-function getNativeGetElementByIdMethod():
-  | ((...args: unknown[]) => unknown)
-  | null {
+let nativeGetElementByIdMethod: NativeDOMMethod | undefined;
+function getNativeGetElementByIdMethod(): NativeDOMMethod {
   if (nativeGetElementByIdMethod === undefined) {
     try {
       nativeGetElementByIdMethod =

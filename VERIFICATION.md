@@ -23,4 +23,4 @@ Safari toolbar uses the transparent menu-and-pointer template at 16/32/64 pixels
 
 ## Editable icon
 
-Assets/RestoreIcon.icon is the native source. Run `python3 scripts/render_icon.py` to regenerate app raster fallbacks, onboarding artwork, popup/toolbar artwork, and the fallback ICNS. The macOS target compiles the native document directly.
+Assets/RestoreIcon.icon is the native source. Run `swift scripts/render_icons.swift` to regenerate app raster fallbacks, onboarding artwork, popup/toolbar artwork, and the fallback ICNS. The macOS target compiles the native document directly.

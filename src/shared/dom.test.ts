@@ -672,5 +672,40 @@ describe('shared DOM utilities', () => {
       } as unknown as ParentNode;
       expect(safeQuerySelectorAll(mockRoot, '.test')).toEqual([child1]);
     });
+
+    test('cached native method accessors safely handle unavailable DOM globals and null inputs', () => {
+      expect(safeGetAttribute(null as unknown as Element, 'id')).toBeNull();
+      expect(
+        safeQuerySelectorAll(null as unknown as ParentNode, 'div'),
+      ).toEqual([]);
+
+      const origElement = globalThis.Element;
+      const origDocument = globalThis.Document;
+      const origDocumentFragment = globalThis.DocumentFragment;
+      try {
+        // @ts-expect-error simulating unavailable globals
+        globalThis.Element = undefined;
+        // @ts-expect-error simulating unavailable globals
+        globalThis.Document = undefined;
+        // @ts-expect-error simulating unavailable globals
+        globalThis.DocumentFragment = undefined;
+
+        const mockEl = {
+          getAttribute: (name: string) => (name === 'id' ? 'safe' : null),
+        } as unknown as Element;
+        expect(safeGetAttribute(mockEl, 'id')).toBe('safe');
+        expect(safeGetAttribute(mockEl, 'missing')).toBeNull();
+
+        const mockDoc = {
+          querySelectorAll: (sel: string) => (sel === 'div' ? [mockEl] : []),
+        } as unknown as Document;
+        expect(safeQuerySelectorAll(mockDoc, 'div')).toEqual([mockEl]);
+        expect(safeQuerySelectorAll(mockDoc, 'span')).toEqual([]);
+      } finally {
+        globalThis.Element = origElement;
+        globalThis.Document = origDocument;
+        globalThis.DocumentFragment = origDocumentFragment;
+      }
+    });
   });
 });

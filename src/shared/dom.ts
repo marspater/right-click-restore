@@ -192,16 +192,17 @@ function getNativeGetElementByIdMethod(): NativeDOMMethod<
   return nativeGetElementByIdMethod;
 }
 
-let nativeGetAttributeMethod:
-  | NativeDOMMethod<typeof Element.prototype.getAttribute>
-  | undefined;
+// eslint-disable-next-line @typescript-eslint/unbound-method
+let nativeGetAttributeMethod: NativeDOMMethod<
+  typeof Element.prototype.getAttribute
+> = typeof Element !== 'undefined' ? Element.prototype.getAttribute : null;
 function getNativeGetAttributeMethod(): NativeDOMMethod<
   typeof Element.prototype.getAttribute
 > {
-  if (nativeGetAttributeMethod === undefined) {
+  if (!nativeGetAttributeMethod && typeof Element !== 'undefined') {
     try {
-      nativeGetAttributeMethod =
-        typeof Element !== 'undefined' ? Element.prototype.getAttribute : null;
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      nativeGetAttributeMethod = Element.prototype.getAttribute;
     } catch {
       nativeGetAttributeMethod = null;
     }
@@ -209,18 +210,17 @@ function getNativeGetAttributeMethod(): NativeDOMMethod<
   return nativeGetAttributeMethod;
 }
 
-let nativeElementQuerySelectorAllMethod:
-  | NativeDOMMethod<typeof Element.prototype.querySelectorAll>
-  | undefined;
+// eslint-disable-next-line @typescript-eslint/unbound-method
+let nativeElementQuerySelectorAllMethod: NativeDOMMethod<
+  typeof Element.prototype.querySelectorAll
+> = typeof Element !== 'undefined' ? Element.prototype.querySelectorAll : null;
 function getNativeElementQuerySelectorAllMethod(): NativeDOMMethod<
   typeof Element.prototype.querySelectorAll
 > {
-  if (nativeElementQuerySelectorAllMethod === undefined) {
+  if (!nativeElementQuerySelectorAllMethod && typeof Element !== 'undefined') {
     try {
-      nativeElementQuerySelectorAllMethod =
-        typeof Element !== 'undefined'
-          ? Element.prototype.querySelectorAll
-          : null;
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      nativeElementQuerySelectorAllMethod = Element.prototype.querySelectorAll;
     } catch {
       nativeElementQuerySelectorAllMethod = null;
     }
@@ -228,18 +228,22 @@ function getNativeElementQuerySelectorAllMethod(): NativeDOMMethod<
   return nativeElementQuerySelectorAllMethod;
 }
 
-let nativeDocumentQuerySelectorAllMethod:
-  | NativeDOMMethod<typeof Document.prototype.querySelectorAll>
-  | undefined;
+// eslint-disable-next-line @typescript-eslint/unbound-method
+let nativeDocumentQuerySelectorAllMethod: NativeDOMMethod<
+  typeof Document.prototype.querySelectorAll
+> =
+  typeof Document !== 'undefined' ? Document.prototype.querySelectorAll : null;
 function getNativeDocumentQuerySelectorAllMethod(): NativeDOMMethod<
   typeof Document.prototype.querySelectorAll
 > {
-  if (nativeDocumentQuerySelectorAllMethod === undefined) {
+  if (
+    !nativeDocumentQuerySelectorAllMethod &&
+    typeof Document !== 'undefined'
+  ) {
     try {
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       nativeDocumentQuerySelectorAllMethod =
-        typeof Document !== 'undefined'
-          ? Document.prototype.querySelectorAll
-          : null;
+        Document.prototype.querySelectorAll;
     } catch {
       nativeDocumentQuerySelectorAllMethod = null;
     }
@@ -247,18 +251,24 @@ function getNativeDocumentQuerySelectorAllMethod(): NativeDOMMethod<
   return nativeDocumentQuerySelectorAllMethod;
 }
 
-let nativeDocumentFragmentQuerySelectorAllMethod:
-  | NativeDOMMethod<typeof DocumentFragment.prototype.querySelectorAll>
-  | undefined;
+// eslint-disable-next-line @typescript-eslint/unbound-method
+let nativeDocumentFragmentQuerySelectorAllMethod: NativeDOMMethod<
+  typeof DocumentFragment.prototype.querySelectorAll
+> =
+  typeof DocumentFragment !== 'undefined'
+    ? DocumentFragment.prototype.querySelectorAll
+    : null;
 function getNativeDocumentFragmentQuerySelectorAllMethod(): NativeDOMMethod<
   typeof DocumentFragment.prototype.querySelectorAll
 > {
-  if (nativeDocumentFragmentQuerySelectorAllMethod === undefined) {
+  if (
+    !nativeDocumentFragmentQuerySelectorAllMethod &&
+    typeof DocumentFragment !== 'undefined'
+  ) {
     try {
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       nativeDocumentFragmentQuerySelectorAllMethod =
-        typeof DocumentFragment !== 'undefined'
-          ? DocumentFragment.prototype.querySelectorAll
-          : null;
+        DocumentFragment.prototype.querySelectorAll;
     } catch {
       nativeDocumentFragmentQuerySelectorAllMethod = null;
     }
@@ -381,40 +391,45 @@ export function safeGetElementById(
   }
 }
 
+function invokeCachedQuerySelectorAll(
+  root: ParentNode,
+  selector: string,
+): Element[] | null {
+  if (Object.hasOwn(root, 'querySelectorAll')) {
+    return null;
+  }
+  if (typeof Element !== 'undefined' && root instanceof Element) {
+    const nativeFn = getNativeElementQuerySelectorAllMethod();
+    if (nativeFn) {
+      return Array.from(safeApply(nativeFn, root, [selector]));
+    }
+  } else if (typeof Document !== 'undefined' && root instanceof Document) {
+    const nativeFn = getNativeDocumentQuerySelectorAllMethod();
+    if (nativeFn) {
+      return Array.from(safeApply(nativeFn, root, [selector]));
+    }
+  } else if (
+    typeof DocumentFragment !== 'undefined' &&
+    root instanceof DocumentFragment
+  ) {
+    const nativeFn = getNativeDocumentFragmentQuerySelectorAllMethod();
+    if (nativeFn) {
+      return Array.from(safeApply(nativeFn, root, [selector]));
+    }
+  }
+  return null;
+}
+
 export function safeQuerySelectorAll(
   root: ParentNode,
   selector: string,
 ): Element[] {
   try {
-    if (!root) return [];
     // Performance optimization: Fast-path native prototype execution for unshadowed querySelectorAll calls.
     // Avoids getUnshadowedMethod lookup overhead and prototype walks on standard DOM subtrees during frequent scans.
-    if (!Object.hasOwn(root, 'querySelectorAll')) {
-      if (typeof Element !== 'undefined' && root instanceof Element) {
-        const nativeFn = getNativeElementQuerySelectorAllMethod();
-        if (nativeFn) {
-          return Array.from(
-            safeApply(nativeFn, root, [selector]) as NodeListOf<Element>,
-          );
-        }
-      } else if (typeof Document !== 'undefined' && root instanceof Document) {
-        const nativeFn = getNativeDocumentQuerySelectorAllMethod();
-        if (nativeFn) {
-          return Array.from(
-            safeApply(nativeFn, root, [selector]) as NodeListOf<Element>,
-          );
-        }
-      } else if (
-        typeof DocumentFragment !== 'undefined' &&
-        root instanceof DocumentFragment
-      ) {
-        const nativeFn = getNativeDocumentFragmentQuerySelectorAllMethod();
-        if (nativeFn) {
-          return Array.from(
-            safeApply(nativeFn, root, [selector]) as NodeListOf<Element>,
-          );
-        }
-      }
+    const cached = invokeCachedQuerySelectorAll(root, selector);
+    if (cached) {
+      return cached;
     }
     const fn = getUnshadowedMethod(root, 'querySelectorAll');
     if (fn) {
@@ -427,22 +442,32 @@ export function safeQuerySelectorAll(
   }
 }
 
+function tryCachedGetAttribute(
+  element: Element,
+  attr: string,
+): string | null | undefined {
+  const nativeFn = getNativeGetAttributeMethod();
+  if (
+    nativeFn &&
+    typeof Element !== 'undefined' &&
+    element instanceof Element &&
+    !Object.hasOwn(element, 'getAttribute')
+  ) {
+    return safeApply(nativeFn, element, [attr]) ?? null;
+  }
+  return undefined;
+}
+
 export function safeGetAttribute(
   element: Element,
   attr: string,
 ): string | null {
   try {
-    if (!element) return null;
     // Performance optimization: Fast-path native prototype execution for unshadowed getAttribute calls.
     // Bypasses getUnshadowedMethod prototype searches during high-frequency attribute checks.
-    const nativeFn = getNativeGetAttributeMethod();
-    if (
-      nativeFn &&
-      typeof Element !== 'undefined' &&
-      element instanceof Element &&
-      !Object.hasOwn(element, 'getAttribute')
-    ) {
-      return (safeApply(nativeFn, element, [attr]) as string | null) ?? null;
+    const cached = tryCachedGetAttribute(element, attr);
+    if (cached !== undefined) {
+      return cached;
     }
     const fn = getUnshadowedMethod(element, 'getAttribute');
     if (fn) {

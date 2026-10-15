@@ -249,7 +249,7 @@ test('selection-style injection and unlock toast survive clobbered container met
       },
       storage: {
         local: {
-          get: (_keys: unknown, callback: (value: unknown) => void) => {
+          get: (_keys: unknown, callback: (_value: unknown) => void) => {
             callback({
               rcr_settings: { enabled: true, restoreSelection: true },
             });

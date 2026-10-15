@@ -192,7 +192,7 @@ function getNativeGetElementByIdMethod(): NativeDOMMethod<
   return nativeGetElementByIdMethod;
 }
 
-// eslint-disable-next-line @typescript-eslint/unbound-method
+/* eslint-disable @typescript-eslint/unbound-method */
 let nativeGetAttributeMethod: NativeDOMMethod<
   typeof Element.prototype.getAttribute
 > = typeof Element !== 'undefined' ? Element.prototype.getAttribute : null;
@@ -201,7 +201,6 @@ function getNativeGetAttributeMethod(): NativeDOMMethod<
 > {
   if (!nativeGetAttributeMethod && typeof Element !== 'undefined') {
     try {
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       nativeGetAttributeMethod = Element.prototype.getAttribute;
     } catch {
       nativeGetAttributeMethod = null;
@@ -210,7 +209,6 @@ function getNativeGetAttributeMethod(): NativeDOMMethod<
   return nativeGetAttributeMethod;
 }
 
-// eslint-disable-next-line @typescript-eslint/unbound-method
 let nativeElementQuerySelectorAllMethod: NativeDOMMethod<
   typeof Element.prototype.querySelectorAll
 > = typeof Element !== 'undefined' ? Element.prototype.querySelectorAll : null;
@@ -219,7 +217,6 @@ function getNativeElementQuerySelectorAllMethod(): NativeDOMMethod<
 > {
   if (!nativeElementQuerySelectorAllMethod && typeof Element !== 'undefined') {
     try {
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       nativeElementQuerySelectorAllMethod = Element.prototype.querySelectorAll;
     } catch {
       nativeElementQuerySelectorAllMethod = null;
@@ -228,7 +225,6 @@ function getNativeElementQuerySelectorAllMethod(): NativeDOMMethod<
   return nativeElementQuerySelectorAllMethod;
 }
 
-// eslint-disable-next-line @typescript-eslint/unbound-method
 let nativeDocumentQuerySelectorAllMethod: NativeDOMMethod<
   typeof Document.prototype.querySelectorAll
 > =
@@ -241,7 +237,6 @@ function getNativeDocumentQuerySelectorAllMethod(): NativeDOMMethod<
     typeof Document !== 'undefined'
   ) {
     try {
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       nativeDocumentQuerySelectorAllMethod =
         Document.prototype.querySelectorAll;
     } catch {
@@ -251,7 +246,6 @@ function getNativeDocumentQuerySelectorAllMethod(): NativeDOMMethod<
   return nativeDocumentQuerySelectorAllMethod;
 }
 
-// eslint-disable-next-line @typescript-eslint/unbound-method
 let nativeDocumentFragmentQuerySelectorAllMethod: NativeDOMMethod<
   typeof DocumentFragment.prototype.querySelectorAll
 > =
@@ -266,7 +260,6 @@ function getNativeDocumentFragmentQuerySelectorAllMethod(): NativeDOMMethod<
     typeof DocumentFragment !== 'undefined'
   ) {
     try {
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       nativeDocumentFragmentQuerySelectorAllMethod =
         DocumentFragment.prototype.querySelectorAll;
     } catch {
@@ -275,6 +268,7 @@ function getNativeDocumentFragmentQuerySelectorAllMethod(): NativeDOMMethod<
   }
   return nativeDocumentFragmentQuerySelectorAllMethod;
 }
+/* eslint-enable @typescript-eslint/unbound-method */
 
 export function safeMatches(element: Element, selector: string): boolean {
   try {
@@ -391,6 +385,16 @@ export function safeGetElementById(
   }
 }
 
+function getTargetQuerySelectorAll(
+  root: ParentNode,
+): ((selectors: string) => NodeListOf<Element>) | null {
+  const nodeType = (root as Node).nodeType;
+  if (nodeType === 1) return getNativeElementQuerySelectorAllMethod();
+  if (nodeType === 9) return getNativeDocumentQuerySelectorAllMethod();
+  if (nodeType === 11) return getNativeDocumentFragmentQuerySelectorAllMethod();
+  return null;
+}
+
 function invokeCachedQuerySelectorAll(
   root: ParentNode,
   selector: string,
@@ -398,24 +402,9 @@ function invokeCachedQuerySelectorAll(
   if (Object.hasOwn(root, 'querySelectorAll')) {
     return null;
   }
-  if (typeof Element !== 'undefined' && root instanceof Element) {
-    const nativeFn = getNativeElementQuerySelectorAllMethod();
-    if (nativeFn) {
-      return Array.from(safeApply(nativeFn, root, [selector]));
-    }
-  } else if (typeof Document !== 'undefined' && root instanceof Document) {
-    const nativeFn = getNativeDocumentQuerySelectorAllMethod();
-    if (nativeFn) {
-      return Array.from(safeApply(nativeFn, root, [selector]));
-    }
-  } else if (
-    typeof DocumentFragment !== 'undefined' &&
-    root instanceof DocumentFragment
-  ) {
-    const nativeFn = getNativeDocumentFragmentQuerySelectorAllMethod();
-    if (nativeFn) {
-      return Array.from(safeApply(nativeFn, root, [selector]));
-    }
+  const nativeFn = getTargetQuerySelectorAll(root);
+  if (nativeFn) {
+    return Array.from(safeApply(nativeFn, root, [selector]));
   }
   return null;
 }

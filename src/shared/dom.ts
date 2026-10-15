@@ -396,73 +396,44 @@ export function safeRemoveElement(element: Element): void {
   }
 }
 
-/* eslint-disable @typescript-eslint/unbound-method */
-let nativeAppendChildMethod: NativeDOMMethod<
-  typeof Node.prototype.appendChild
-> = typeof Node !== 'undefined' ? Node.prototype.appendChild : null;
-function getNativeAppendChildMethod(): NativeDOMMethod<
-  typeof Node.prototype.appendChild
-> {
-  if (!nativeAppendChildMethod && typeof Node !== 'undefined') {
-    try {
-      nativeAppendChildMethod = Node.prototype.appendChild;
-    } catch {
-      nativeAppendChildMethod = null;
-    }
-  }
-  return nativeAppendChildMethod;
-}
-/* eslint-enable @typescript-eslint/unbound-method */
+const nativeAppendChild =
+  typeof Node !== 'undefined' ? Node.prototype.appendChild : null;
 
 export function safeAppendChild<T extends Node>(
   parent: Node,
   child: T,
 ): T | null {
   try {
-    const nativeFn = getNativeAppendChildMethod();
-    if (nativeFn && !Object.hasOwn(parent, 'appendChild')) {
-      return safeApply(nativeFn, parent, [child]);
+    if (nativeAppendChild && !Object.hasOwn(parent, 'appendChild')) {
+      return safeApply(nativeAppendChild, parent, [child]) as T;
     }
     const fn = getUnshadowedMethod(parent, 'appendChild');
     if (fn) {
       return safeApply(fn, parent, [child]) as T;
     }
-    return null;
+    return parent.appendChild(child);
   } catch {
     return null;
   }
 }
 
-/* eslint-disable @typescript-eslint/unbound-method */
-let nativeAttachShadowMethod: NativeDOMMethod<
-  typeof Element.prototype.attachShadow
-> = typeof Element !== 'undefined' ? Element.prototype.attachShadow : null;
-function getNativeAttachShadowMethod(): NativeDOMMethod<
-  typeof Element.prototype.attachShadow
-> {
-  if (!nativeAttachShadowMethod && typeof Element !== 'undefined') {
-    try {
-      nativeAttachShadowMethod = Element.prototype.attachShadow;
-    } catch {
-      nativeAttachShadowMethod = null;
-    }
-  }
-  return nativeAttachShadowMethod;
-}
-/* eslint-enable @typescript-eslint/unbound-method */
+const nativeAttachShadow =
+  typeof Element !== 'undefined' ? Element.prototype.attachShadow : null;
 
 export function safeAttachShadow(
   element: Element,
   init: ShadowRootInit,
 ): ShadowRoot | null {
   try {
-    const nativeFn = getNativeAttachShadowMethod();
-    if (nativeFn && !Object.hasOwn(element, 'attachShadow')) {
-      return safeApply(nativeFn, element, [init]);
+    if (nativeAttachShadow && !Object.hasOwn(element, 'attachShadow')) {
+      return safeApply(nativeAttachShadow, element, [init]) as ShadowRoot;
     }
     const fn = getUnshadowedMethod(element, 'attachShadow');
     if (fn) {
       return safeApply(fn, element, [init]) as ShadowRoot;
+    }
+    if (typeof element.attachShadow === 'function') {
+      return element.attachShadow(init);
     }
   } catch {
     // Suppress attachShadow errors

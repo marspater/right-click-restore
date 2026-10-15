@@ -436,6 +436,18 @@ describe('shared DOM utilities', () => {
     });
   });
 
+  function createClobberedForm(methodName: string): HTMLFormElement {
+    const form = document.createElement('form');
+    const input = document.createElement('input');
+    input.setAttribute('name', methodName);
+    form.appendChild(input);
+    Object.defineProperty(form, methodName, {
+      value: input,
+      configurable: true,
+    });
+    return form;
+  }
+
   describe('safeAppendChild', () => {
     test('appends child element to parent container', () => {
       const parent = document.createElement('div');
@@ -445,16 +457,7 @@ describe('shared DOM utilities', () => {
     });
 
     test('resists DOM clobbering when appendChild is overridden by child input', () => {
-      const form = document.createElement('form');
-      const input = document.createElement('input');
-      input.setAttribute('name', 'appendChild');
-      form.appendChild(input);
-
-      Object.defineProperty(form, 'appendChild', {
-        value: input,
-        configurable: true,
-      });
-
+      const form = createClobberedForm('appendChild');
       const child = document.createElement('span');
       expect(() => safeAppendChild(form, child)).not.toThrow();
       expect(form.contains(child)).toBe(true);
@@ -471,16 +474,7 @@ describe('shared DOM utilities', () => {
     });
 
     test('resists DOM clobbering when attachShadow is overridden on element instance', () => {
-      const form = document.createElement('form');
-      const input = document.createElement('input');
-      input.setAttribute('name', 'attachShadow');
-      form.appendChild(input);
-
-      Object.defineProperty(form, 'attachShadow', {
-        value: input,
-        configurable: true,
-      });
-
+      const form = createClobberedForm('attachShadow');
       expect(() => safeAttachShadow(form, { mode: 'closed' })).not.toThrow();
     });
   });

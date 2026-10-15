@@ -118,6 +118,8 @@ open -a Safari test_page.html
 
 ## Architecture
 
+For a comprehensive deep-dive into the security model, DOM clobbering defenses, multi-world execution architecture, and Git development workflow, see [ARCHITECTURE.md](ARCHITECTURE.md).
+
 ```text
 src/
 ├── background/       Safari MV3 service worker

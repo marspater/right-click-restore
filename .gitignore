@@ -13,3 +13,4 @@ scratch/
 SafariExtension/RightClickRestore/Shared (Extension)/Resources/
 node_modules/
 extension
+.codacy/

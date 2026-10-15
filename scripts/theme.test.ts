@@ -85,3 +85,27 @@ test('Tailwind v4 CLI compiles popup CSS and generates theme token utilities', a
   expect(stdout).toContain('--bg-popover:#f6f6f8eb');
   expect(stdout).toContain('--bg-popover:#1e1e20e6');
 });
+
+test('popup.css declares tactile press micro-interactions and setting-icon-badge selectors', async () => {
+  const cssContent = await Bun.file(popupCssPath).text();
+  expect(cssContent).toContain('.settings-row .setting-icon-badge');
+  expect(cssContent).not.toContain('.settings-row .w-6');
+  expect(cssContent).toContain(
+    '.settings-row:hover:not(.is-disabled) .setting-icon-badge',
+  );
+  expect(cssContent).toContain(
+    '.settings-row:active:not(.is-disabled) .setting-icon-badge',
+  );
+  expect(cssContent).toContain('transform: scale(0.99);');
+  expect(cssContent).toContain('kbd:hover');
+  expect(cssContent).toContain('transform: scale(1.05);');
+});
+
+test('App.svelte declares setting-icon-badge and inactive tooltip on unblur videos row', async () => {
+  const appPath = resolve(projectRoot, 'src/popup/App.svelte');
+  const appContent = await Bun.file(appPath).text();
+  expect(appContent).toContain('setting-icon-badge w-6 h-6');
+  expect(appContent).toContain(
+    "title={isSiteActive ? undefined : 'Protection is inactive on this page'}",
+  );
+});

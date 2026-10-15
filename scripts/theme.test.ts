@@ -3,9 +3,13 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
-const projectRoot = resolve(import.meta.dir, '../..');
+const projectRoot = resolve(import.meta.dir, '..');
 const popupCssPath = resolve(projectRoot, 'src/popup/popup.css');
 const tailwindBin = resolve(projectRoot, 'node_modules/.bin/tailwindcss');
+const compiledCssPath = resolve(
+  projectRoot,
+  'SafariExtension/RightClickRestore/Shared (Extension)/Resources/popup/popup.css',
+);
 
 test('popup.css declares required semantic theme tokens in @theme block', async () => {
   const cssContent = await Bun.file(popupCssPath).text();
@@ -60,23 +64,24 @@ test('popup.css preserves light and dark mode variable values', async () => {
 });
 
 test('Tailwind v4 CLI generates utilities from declared semantic theme tokens', async () => {
-  const scratch = await mkdtemp(join(tmpdir(), 'rcr-tw4-test-'));
+  const scratch = await mkdtemp(join(tmpdir(), 'rcr-tokens-'));
   try {
-    const inputHtml = join(scratch, 'test.html');
-    const inputCss = join(scratch, 'input.css');
-    const outputCss = join(scratch, 'output.css');
+    const tokenSource = join(scratch, 'tokens.txt');
+    const inputStyle = join(scratch, 'input.css');
+    const outputStyle = join(scratch, 'output.css');
 
+    // Feed token classes through plain text source (without HTML tags)
     await Bun.write(
-      inputHtml,
-      '<div class="bg-popover text-primary rounded-card border-subtle text-accent-blue"></div>',
+      tokenSource,
+      'bg-popover text-primary rounded-card border-subtle text-accent-blue',
     );
     await Bun.write(
-      inputCss,
-      `@import "${popupCssPath}";\n@source "${inputHtml}";\n`,
+      inputStyle,
+      `@import "${popupCssPath}";\n@source "${tokenSource}";\n`,
     );
 
     const proc = Bun.spawn(
-      [tailwindBin, '-i', inputCss, '-o', outputCss, '--minify'],
+      [tailwindBin, '-i', inputStyle, '-o', outputStyle, '--minify'],
       {
         cwd: projectRoot,
         stdout: 'pipe',
@@ -87,9 +92,8 @@ test('Tailwind v4 CLI generates utilities from declared semantic theme tokens', 
     const exitCode = await proc.exited;
     expect(exitCode).toBe(0);
 
-    const compiledCss = await Bun.file(outputCss).text();
+    const compiledCss = await Bun.file(outputStyle).text();
 
-    // Verify utilities generated from semantic theme tokens
     expect(compiledCss).toContain('bg-popover');
     expect(compiledCss).toContain('text-primary');
     expect(compiledCss).toContain('rounded-card');
@@ -98,4 +102,28 @@ test('Tailwind v4 CLI generates utilities from declared semantic theme tokens', 
   } finally {
     await rm(scratch, { recursive: true, force: true });
   }
+});
+
+test('compiled extension popup CSS bundle preserves theme variables and utilities', async () => {
+  const compiledCss = await Bun.file(compiledCssPath).text();
+
+  // Verify theme layer and tokens
+  expect(compiledCss).toContain('--color-popover:var(--bg-popover)');
+  expect(compiledCss).toContain('--color-text-primary:var(--text-primary)');
+  expect(compiledCss).toContain('--radius-card:12px');
+
+  // Verify generated utilities
+  expect(compiledCss).toContain(
+    '.bg-popover{background-color:var(--color-popover)}',
+  );
+  expect(compiledCss).toContain(
+    '.text-accent-blue{color:var(--color-accent-blue)}',
+  );
+  expect(compiledCss).toContain(
+    '.rounded-card{border-radius:var(--radius-card)}',
+  );
+
+  // Verify light and dark definitions
+  expect(compiledCss).toContain('--bg-popover:#f6f6f8eb');
+  expect(compiledCss).toContain('--bg-popover:#1e1e20e6');
 });

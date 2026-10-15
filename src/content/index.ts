@@ -277,7 +277,11 @@ export function handleContentMessage(
               user-select: auto !important;
             }
           `;
-          const container = document.head || document.documentElement;
+          const doc = document as {
+            head?: HTMLHeadElement | null;
+            documentElement?: HTMLElement | null;
+          };
+          const container = doc.head ?? doc.documentElement ?? null;
           if (container) {
             safeAppendChild(container, styleEl);
           }

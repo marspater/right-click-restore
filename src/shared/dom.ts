@@ -396,16 +396,17 @@ export function safeRemoveElement(element: Element): void {
   }
 }
 
-let nativeAppendChildMethod:
-  | NativeDOMMethod<typeof Node.prototype.appendChild>
-  | undefined;
+// eslint-disable-next-line @typescript-eslint/unbound-method
+let nativeAppendChildMethod: NativeDOMMethod<
+  typeof Node.prototype.appendChild
+> = typeof Node !== 'undefined' ? Node.prototype.appendChild : null;
 function getNativeAppendChildMethod(): NativeDOMMethod<
   typeof Node.prototype.appendChild
 > {
-  if (nativeAppendChildMethod === undefined) {
+  if (!nativeAppendChildMethod && typeof Node !== 'undefined') {
     try {
-      nativeAppendChildMethod =
-        typeof Node !== 'undefined' ? Node.prototype.appendChild : null;
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      nativeAppendChildMethod = Node.prototype.appendChild;
     } catch {
       nativeAppendChildMethod = null;
     }
@@ -420,28 +421,29 @@ export function safeAppendChild<T extends Node>(
   try {
     const nativeFn = getNativeAppendChildMethod();
     if (nativeFn && !Object.hasOwn(parent, 'appendChild')) {
-      return safeApply(nativeFn, parent, [child]) as T;
+      return safeApply(nativeFn, parent, [child]);
     }
     const fn = getUnshadowedMethod(parent, 'appendChild');
     if (fn) {
       return safeApply(fn, parent, [child]) as T;
     }
-    return parent.appendChild(child);
+    return null;
   } catch {
     return null;
   }
 }
 
-let nativeAttachShadowMethod:
-  | NativeDOMMethod<typeof Element.prototype.attachShadow>
-  | undefined;
+// eslint-disable-next-line @typescript-eslint/unbound-method
+let nativeAttachShadowMethod: NativeDOMMethod<
+  typeof Element.prototype.attachShadow
+> = typeof Element !== 'undefined' ? Element.prototype.attachShadow : null;
 function getNativeAttachShadowMethod(): NativeDOMMethod<
   typeof Element.prototype.attachShadow
 > {
-  if (nativeAttachShadowMethod === undefined) {
+  if (!nativeAttachShadowMethod && typeof Element !== 'undefined') {
     try {
-      nativeAttachShadowMethod =
-        typeof Element !== 'undefined' ? Element.prototype.attachShadow : null;
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      nativeAttachShadowMethod = Element.prototype.attachShadow;
     } catch {
       nativeAttachShadowMethod = null;
     }
@@ -456,14 +458,11 @@ export function safeAttachShadow(
   try {
     const nativeFn = getNativeAttachShadowMethod();
     if (nativeFn && !Object.hasOwn(element, 'attachShadow')) {
-      return safeApply(nativeFn, element, [init]) as ShadowRoot;
+      return safeApply(nativeFn, element, [init]);
     }
     const fn = getUnshadowedMethod(element, 'attachShadow');
     if (fn) {
       return safeApply(fn, element, [init]) as ShadowRoot;
-    }
-    if (typeof element.attachShadow === 'function') {
-      return element.attachShadow(init);
     }
   } catch {
     // Suppress attachShadow errors

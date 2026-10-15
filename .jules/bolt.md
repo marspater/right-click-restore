@@ -28,3 +28,7 @@
 ## 2025-05-22 - Fast-pathing inline style string inspection before CSSStyleDeclaration access
 **Learning:** Inspecting `safeGetAttribute(node, 'style')` string before calling `safeGetStyle(node)` in `hasUserSelectNone` and `restoreUserSelect` short-circuits >95% of styled DOM nodes that do not contain `user-select` rules, bypassing expensive `CSSStyleDeclaration` property accesses and reducing execution time for non-user-select styled nodes by ~99%.
 **Action:** Always perform a fast substring match on raw inline `style` attributes via `safeGetAttribute` before accessing full `CSSStyleDeclaration` properties on elements.
+
+## 2025-05-23 - Strict interface validation for cached native DOM prototype method fast-paths
+**Learning:** Native DOM prototype methods (such as `Element.prototype.getAttribute` or `Element.prototype.querySelectorAll`) throw an "Illegal invocation" TypeError if invoked on non-DOM objects. Fast-paths MUST check `instanceof Element` / `Document` / `DocumentFragment` and verify non-null target before attempting `safeApply` with native prototype references.
+**Action:** Always verify `instanceof` DOM interface constraints alongside `!Object.hasOwn` when invoking lazy-cached native prototype functions on target objects.

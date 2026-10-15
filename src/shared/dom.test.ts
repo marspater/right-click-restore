@@ -609,5 +609,68 @@ describe('shared DOM utilities', () => {
       expect(safeGetElementById(mockDoc, 'mock-id')).toBe(el);
       expect(safeGetElementById(mockDoc, 'unknown')).toBeNull();
     });
+
+    test('cached native getAttribute invokes correctly and falls back when shadowed or on mock element', () => {
+      const el = document.createElement('div');
+      el.setAttribute('data-test', 'cached-value');
+
+      // 1. Invokes cached native method
+      expect(safeGetAttribute(el, 'data-test')).toBe('cached-value');
+      expect(safeGetAttribute(el, 'missing-attr')).toBeNull();
+
+      // 2. Falls back when shadowed on instance
+      Object.defineProperty(el, 'getAttribute', {
+        value: 'hijacked-getAttribute',
+        configurable: true,
+      });
+      expect(safeGetAttribute(el, 'data-test')).toBe('cached-value');
+
+      // 3. Falls back safely on mock plain object
+      const mockEl = {
+        getAttribute: (attr: string) => (attr === 'mock' ? 'mock-val' : null),
+      } as unknown as Element;
+      expect(safeGetAttribute(mockEl, 'mock')).toBe('mock-val');
+      expect(safeGetAttribute(mockEl, 'other')).toBeNull();
+    });
+
+    test('cached native querySelectorAll invokes correctly on Element, Document, DocumentFragment, and falls back when shadowed', () => {
+      const container = document.createElement('div');
+      const child1 = document.createElement('span');
+      child1.className = 'qsa-item';
+      const child2 = document.createElement('span');
+      child2.className = 'qsa-item';
+      container.appendChild(child1);
+      container.appendChild(child2);
+
+      // 1. Invokes cached native method on Element
+      const items = safeQuerySelectorAll(container, '.qsa-item');
+      expect(items).toHaveLength(2);
+      expect(items).toContain(child1);
+      expect(items).toContain(child2);
+
+      // 2. Invokes cached native method on Document
+      document.body.appendChild(container);
+      expect(safeQuerySelectorAll(document, '.qsa-item')).toHaveLength(2);
+
+      // 3. Invokes cached native method on DocumentFragment
+      const fragment = document.createDocumentFragment();
+      const fragChild = document.createElement('div');
+      fragChild.className = 'frag-item';
+      fragment.appendChild(fragChild);
+      expect(safeQuerySelectorAll(fragment, '.frag-item')).toHaveLength(1);
+
+      // 4. Falls back when querySelectorAll is shadowed on instance
+      Object.defineProperty(container, 'querySelectorAll', {
+        value: 'hijacked-qsa',
+        configurable: true,
+      });
+      expect(safeQuerySelectorAll(container, '.qsa-item')).toHaveLength(2);
+
+      // 5. Falls back safely on mock plain object
+      const mockRoot = {
+        querySelectorAll: (sel: string) => (sel === '.test' ? [child1] : []),
+      } as unknown as ParentNode;
+      expect(safeQuerySelectorAll(mockRoot, '.test')).toEqual([child1]);
+    });
   });
 });

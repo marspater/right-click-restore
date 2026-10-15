@@ -192,6 +192,80 @@ function getNativeGetElementByIdMethod(): NativeDOMMethod<
   return nativeGetElementByIdMethod;
 }
 
+let nativeGetAttributeMethod:
+  | NativeDOMMethod<typeof Element.prototype.getAttribute>
+  | undefined;
+function getNativeGetAttributeMethod(): NativeDOMMethod<
+  typeof Element.prototype.getAttribute
+> {
+  if (nativeGetAttributeMethod === undefined) {
+    try {
+      nativeGetAttributeMethod =
+        typeof Element !== 'undefined' ? Element.prototype.getAttribute : null;
+    } catch {
+      nativeGetAttributeMethod = null;
+    }
+  }
+  return nativeGetAttributeMethod;
+}
+
+let nativeElementQuerySelectorAllMethod:
+  | NativeDOMMethod<typeof Element.prototype.querySelectorAll>
+  | undefined;
+function getNativeElementQuerySelectorAllMethod(): NativeDOMMethod<
+  typeof Element.prototype.querySelectorAll
+> {
+  if (nativeElementQuerySelectorAllMethod === undefined) {
+    try {
+      nativeElementQuerySelectorAllMethod =
+        typeof Element !== 'undefined'
+          ? Element.prototype.querySelectorAll
+          : null;
+    } catch {
+      nativeElementQuerySelectorAllMethod = null;
+    }
+  }
+  return nativeElementQuerySelectorAllMethod;
+}
+
+let nativeDocumentQuerySelectorAllMethod:
+  | NativeDOMMethod<typeof Document.prototype.querySelectorAll>
+  | undefined;
+function getNativeDocumentQuerySelectorAllMethod(): NativeDOMMethod<
+  typeof Document.prototype.querySelectorAll
+> {
+  if (nativeDocumentQuerySelectorAllMethod === undefined) {
+    try {
+      nativeDocumentQuerySelectorAllMethod =
+        typeof Document !== 'undefined'
+          ? Document.prototype.querySelectorAll
+          : null;
+    } catch {
+      nativeDocumentQuerySelectorAllMethod = null;
+    }
+  }
+  return nativeDocumentQuerySelectorAllMethod;
+}
+
+let nativeDocumentFragmentQuerySelectorAllMethod:
+  | NativeDOMMethod<typeof DocumentFragment.prototype.querySelectorAll>
+  | undefined;
+function getNativeDocumentFragmentQuerySelectorAllMethod(): NativeDOMMethod<
+  typeof DocumentFragment.prototype.querySelectorAll
+> {
+  if (nativeDocumentFragmentQuerySelectorAllMethod === undefined) {
+    try {
+      nativeDocumentFragmentQuerySelectorAllMethod =
+        typeof DocumentFragment !== 'undefined'
+          ? DocumentFragment.prototype.querySelectorAll
+          : null;
+    } catch {
+      nativeDocumentFragmentQuerySelectorAllMethod = null;
+    }
+  }
+  return nativeDocumentFragmentQuerySelectorAllMethod;
+}
+
 export function safeMatches(element: Element, selector: string): boolean {
   try {
     const nativeFn = getNativeMatchesMethod();
@@ -312,6 +386,36 @@ export function safeQuerySelectorAll(
   selector: string,
 ): Element[] {
   try {
+    if (!root) return [];
+    // Performance optimization: Fast-path native prototype execution for unshadowed querySelectorAll calls.
+    // Avoids getUnshadowedMethod lookup overhead and prototype walks on standard DOM subtrees during frequent scans.
+    if (!Object.hasOwn(root, 'querySelectorAll')) {
+      if (typeof Element !== 'undefined' && root instanceof Element) {
+        const nativeFn = getNativeElementQuerySelectorAllMethod();
+        if (nativeFn) {
+          return Array.from(
+            safeApply(nativeFn, root, [selector]) as NodeListOf<Element>,
+          );
+        }
+      } else if (typeof Document !== 'undefined' && root instanceof Document) {
+        const nativeFn = getNativeDocumentQuerySelectorAllMethod();
+        if (nativeFn) {
+          return Array.from(
+            safeApply(nativeFn, root, [selector]) as NodeListOf<Element>,
+          );
+        }
+      } else if (
+        typeof DocumentFragment !== 'undefined' &&
+        root instanceof DocumentFragment
+      ) {
+        const nativeFn = getNativeDocumentFragmentQuerySelectorAllMethod();
+        if (nativeFn) {
+          return Array.from(
+            safeApply(nativeFn, root, [selector]) as NodeListOf<Element>,
+          );
+        }
+      }
+    }
     const fn = getUnshadowedMethod(root, 'querySelectorAll');
     if (fn) {
       return Array.from(safeApply(fn, root, [selector]) as NodeListOf<Element>);
@@ -328,6 +432,18 @@ export function safeGetAttribute(
   attr: string,
 ): string | null {
   try {
+    if (!element) return null;
+    // Performance optimization: Fast-path native prototype execution for unshadowed getAttribute calls.
+    // Bypasses getUnshadowedMethod prototype searches during high-frequency attribute checks.
+    const nativeFn = getNativeGetAttributeMethod();
+    if (
+      nativeFn &&
+      typeof Element !== 'undefined' &&
+      element instanceof Element &&
+      !Object.hasOwn(element, 'getAttribute')
+    ) {
+      return (safeApply(nativeFn, element, [attr]) as string | null) ?? null;
+    }
     const fn = getUnshadowedMethod(element, 'getAttribute');
     if (fn) {
       return (safeApply(fn, element, [attr]) as string | null) ?? null;

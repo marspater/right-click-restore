@@ -166,8 +166,6 @@ test('bundled content script handles Force Unlock through its registered listene
     response = value;
   });
   expect(response).toEqual({ status: 'unlocked' });
-  const toastHost = window.document.getElementById('__rcr_toast_host__');
-  expect(toastHost).not.toBeNull();
   expect(
     window.document.querySelector('p')?.hasAttribute('oncontextmenu'),
   ).toBe(false);

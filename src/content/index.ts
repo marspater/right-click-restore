@@ -277,9 +277,7 @@ export function handleContentMessage(
               user-select: auto !important;
             }
           `;
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           const container = document.head || document.documentElement;
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           if (container) {
             safeAppendChild(container, styleEl);
           }

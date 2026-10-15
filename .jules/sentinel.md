@@ -46,3 +46,8 @@
 **Vulnerability:** Dispatched CustomEvents carrying references to the extension's live settings object allowed untrusted host page scripts to mutate internal settings objects (such as pushing malicious domains to `disabledDomains`).
 **Learning:** Objects passed in CustomEvent details across JS contexts can be mutated in-place by listening scripts.
 **Prevention:** Deep-clone settings (`cloneSettings`) before dispatching CustomEvents over bridge channels.
+
+## 2025-05-23 - DOM Clobbering Resistance for Element Insertion & Shadow Attachment
+**Vulnerability:** Invoking `.appendChild(...)` or `.attachShadow(...)` directly on elements or shadow roots allowed untrusted host page scripts or named elements (e.g. `<form id="head"><input name="appendChild"></form>` or `<input name="attachShadow">`) to clobber methods on container instances, throwing TypeErrors and breaking selection style injection and toast notifications.
+**Learning:** Container elements and root documents can have instance methods like `appendChild` or `attachShadow` clobbered by named form controls or host-page prototype modifications.
+**Prevention:** Use `safeAppendChild` and `safeAttachShadow` across content script DOM construction to retrieve unshadowed prototype methods via `getUnshadowedMethod` and execute via `safeApply`.

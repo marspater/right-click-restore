@@ -3,7 +3,9 @@ import { Window } from 'happy-dom';
 import {
   getUnshadowedGetter,
   getUnshadowedMethod,
+  safeAppendChild,
   safeApply,
+  safeAttachShadow,
   safeClosest,
   safeCreateElement,
   safeElementsFromPoint,
@@ -431,6 +433,49 @@ describe('shared DOM utilities', () => {
       });
 
       expect(safeGetElementById(document, 'my-target')).toBe(div);
+    });
+  });
+
+  function createClobberedForm(methodName: string): HTMLFormElement {
+    const form = document.createElement('form');
+    const input = document.createElement('input');
+    input.setAttribute('name', methodName);
+    form.appendChild(input);
+    Object.defineProperty(form, methodName, {
+      value: input,
+      configurable: true,
+    });
+    return form;
+  }
+
+  describe('safeAppendChild', () => {
+    test('appends child element to parent container', () => {
+      const parent = document.createElement('div');
+      const child = document.createElement('span');
+      safeAppendChild(parent, child);
+      expect(parent.contains(child)).toBe(true);
+    });
+
+    test('resists DOM clobbering when appendChild is overridden by child input', () => {
+      const form = createClobberedForm('appendChild');
+      const child = document.createElement('span');
+      expect(() => safeAppendChild(form, child)).not.toThrow();
+      expect(form.contains(child)).toBe(true);
+    });
+  });
+
+  describe('safeAttachShadow', () => {
+    test('attaches shadow root to host element when supported', () => {
+      const host = document.createElement('div');
+      if (typeof host.attachShadow === 'function') {
+        const shadow = safeAttachShadow(host, { mode: 'closed' });
+        expect(shadow).not.toBeNull();
+      }
+    });
+
+    test('resists DOM clobbering when attachShadow is overridden on element instance', () => {
+      const form = createClobberedForm('attachShadow');
+      expect(() => safeAttachShadow(form, { mode: 'closed' })).not.toThrow();
     });
   });
 

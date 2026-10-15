@@ -9,6 +9,8 @@ import {
   cleanAddedNode as cleanAddedNodeBase,
   cleanDOMTree as cleanDOMTreeBase,
   cleanNode as cleanNodeBase,
+  safeAppendChild,
+  safeAttachShadow,
   safeCreateElement,
   safeGetElementById,
   safeRemoveElement,
@@ -275,7 +277,12 @@ export function handleContentMessage(
               user-select: auto !important;
             }
           `;
-          (document.head || document.documentElement)?.appendChild(styleEl);
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+          const container = document.head || document.documentElement;
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+          if (container) {
+            safeAppendChild(container, styleEl);
+          }
         }
       } else if (styleEl) {
         safeRemoveElement(styleEl);
@@ -364,9 +371,7 @@ export function handleContentMessage(
       host.style.cssText =
         'position:fixed;top:0;left:0;width:100%;pointer-events:none;z-index:2147483647;';
 
-      const shadow = host.attachShadow
-        ? host.attachShadow({ mode: 'closed' })
-        : host;
+      const shadow = safeAttachShadow(host, { mode: 'closed' }) ?? host;
 
       const style = safeCreateElement(document, 'style');
       style.textContent = `
@@ -398,9 +403,9 @@ export function handleContentMessage(
       toast.className = 'toast';
       toast.textContent = '🔓 Right-click & selection unlocked';
 
-      shadow.appendChild(style);
-      shadow.appendChild(toast);
-      root.appendChild(host);
+      safeAppendChild(shadow, style);
+      safeAppendChild(shadow, toast);
+      safeAppendChild(root, host);
 
       requestAnimationFrame(() => {
         try {

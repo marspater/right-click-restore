@@ -28,6 +28,7 @@
     "build": "bun run scripts/build.ts",
     "watch": "bun run scripts/build.ts --watch",
     "test": "bun test",
+    "type-check": "tsc --noEmit",
     "check": "biome check --config-path=. .",
     "format": "biome format --write --config-path=. .",
     "fix": "biome check --write --unsafe --config-path=. .",

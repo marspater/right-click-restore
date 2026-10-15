@@ -396,6 +396,81 @@ export function safeRemoveElement(element: Element): void {
   }
 }
 
+let nativeAppendChildMethod:
+  | NativeDOMMethod<typeof Node.prototype.appendChild>
+  | undefined;
+function getNativeAppendChildMethod(): NativeDOMMethod<
+  typeof Node.prototype.appendChild
+> {
+  if (nativeAppendChildMethod === undefined) {
+    try {
+      nativeAppendChildMethod =
+        typeof Node !== 'undefined' ? Node.prototype.appendChild : null;
+    } catch {
+      nativeAppendChildMethod = null;
+    }
+  }
+  return nativeAppendChildMethod;
+}
+
+export function safeAppendChild<T extends Node>(
+  parent: Node,
+  child: T,
+): T | null {
+  try {
+    const nativeFn = getNativeAppendChildMethod();
+    if (nativeFn && !Object.hasOwn(parent, 'appendChild')) {
+      return safeApply(nativeFn, parent, [child]) as T;
+    }
+    const fn = getUnshadowedMethod(parent, 'appendChild');
+    if (fn) {
+      return safeApply(fn, parent, [child]) as T;
+    }
+    return parent.appendChild(child);
+  } catch {
+    return null;
+  }
+}
+
+let nativeAttachShadowMethod:
+  | NativeDOMMethod<typeof Element.prototype.attachShadow>
+  | undefined;
+function getNativeAttachShadowMethod(): NativeDOMMethod<
+  typeof Element.prototype.attachShadow
+> {
+  if (nativeAttachShadowMethod === undefined) {
+    try {
+      nativeAttachShadowMethod =
+        typeof Element !== 'undefined' ? Element.prototype.attachShadow : null;
+    } catch {
+      nativeAttachShadowMethod = null;
+    }
+  }
+  return nativeAttachShadowMethod;
+}
+
+export function safeAttachShadow(
+  element: Element,
+  init: ShadowRootInit,
+): ShadowRoot | null {
+  try {
+    const nativeFn = getNativeAttachShadowMethod();
+    if (nativeFn && !Object.hasOwn(element, 'attachShadow')) {
+      return safeApply(nativeFn, element, [init]) as ShadowRoot;
+    }
+    const fn = getUnshadowedMethod(element, 'attachShadow');
+    if (fn) {
+      return safeApply(fn, element, [init]) as ShadowRoot;
+    }
+    if (typeof element.attachShadow === 'function') {
+      return element.attachShadow(init);
+    }
+  } catch {
+    // Suppress attachShadow errors
+  }
+  return null;
+}
+
 let nativeShadowRootGetter: ((this: unknown) => unknown) | null | undefined;
 function getNativeShadowRootGetter(): ((this: unknown) => unknown) | null {
   if (nativeShadowRootGetter === undefined) {

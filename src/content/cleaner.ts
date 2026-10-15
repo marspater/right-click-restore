@@ -15,6 +15,8 @@ import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
 export {
   getUnshadowedGetter,
   getUnshadowedMethod,
+  safeAppendChild,
+  safeAttachShadow,
   safeClosest,
   safeCreateElement,
   safeGetAttribute,

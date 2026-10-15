@@ -400,9 +400,9 @@ async function forceUnlockPage() {
 
     <div class="settings-divider" aria-hidden="true"></div>
 
-    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive}>
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={isSiteActive ? undefined : 'Protection is inactive on this page'}>
       <div class="flex items-center gap-2.5 min-w-0">
-        <div class={`w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
+        <div class={`setting-icon-badge w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
           isSiteActive && settings.unblurVideos
             ? 'bg-[var(--bg-badge-active)] text-[var(--accent-blue)]'
             : 'bg-[var(--bg-badge)] text-[var(--text-secondary)]'

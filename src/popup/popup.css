@@ -307,11 +307,11 @@ button:focus-visible {
   border-radius: 8px;
   cursor: pointer;
   user-select: none;
-  transition: background-color 0.12s ease, opacity 0.12s ease;
+  transition: background-color 0.12s ease, opacity 0.12s ease, transform 0.12s
+    cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.settings-row .setting-icon-badge,
-.settings-row .w-6 {
+.settings-row .setting-icon-badge {
   transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s
     cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -321,19 +321,17 @@ button:focus-visible {
 }
 
 .settings-row:hover:not(.is-disabled) .setting-icon-badge,
-.settings-row:hover:not(.is-disabled) .w-6,
-.settings-row:focus-within:not(.is-disabled) .setting-icon-badge,
-.settings-row:focus-within:not(.is-disabled) .w-6 {
+.settings-row:focus-within:not(.is-disabled) .setting-icon-badge {
   transform: scale(1.05);
 }
 
-.settings-row:active:not(.is-disabled) .setting-icon-badge,
-.settings-row:active:not(.is-disabled) .w-6 {
+.settings-row:active:not(.is-disabled) .setting-icon-badge {
   transform: scale(0.92);
 }
 
 .settings-row:active:not(.is-disabled) {
-  opacity: 0.85;
+  opacity: 0.88;
+  transform: scale(0.99);
 }
 
 .settings-row.is-disabled {
@@ -399,6 +397,11 @@ kbd {
   padding: 2px 4px;
   box-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.08);
   vertical-align: middle;
+  transition: transform 0.12s ease, background-color 0.12s ease;
+}
+
+kbd:hover {
+  transform: scale(1.05);
 }
 
 /* Micro-Animation Keyframes */

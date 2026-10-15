@@ -385,15 +385,17 @@ export function safeGetElementById(
   }
 }
 
+/* eslint-disable no-unused-vars */
 function getTargetQuerySelectorAll(
   root: ParentNode,
-): ((_selectors: string) => NodeListOf<Element>) | null {
+): ((selectors: string) => NodeListOf<Element>) | null {
   const nodeType = (root as Node).nodeType;
   if (nodeType === 1) return getNativeElementQuerySelectorAllMethod();
   if (nodeType === 9) return getNativeDocumentQuerySelectorAllMethod();
   if (nodeType === 11) return getNativeDocumentFragmentQuerySelectorAllMethod();
   return null;
 }
+/* eslint-enable no-unused-vars */
 
 function invokeCachedQuerySelectorAll(
   root: ParentNode,

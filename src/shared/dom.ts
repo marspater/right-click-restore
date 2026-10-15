@@ -84,7 +84,7 @@ export function getUnshadowedGetter(
 // Fast-paths execution for standard DOM nodes when the instance does not own a clobbered property,
 // bypassing Object.prototype checks, index property reads, and unshadowed prototype chain walks.
 
-type NativeDOMMethod<T extends (...args: never[]) => unknown> = T | null;
+type NativeDOMMethod<T extends (..._args: never[]) => unknown> = T | null;
 
 let nativeMatchesMethod:
   | NativeDOMMethod<typeof Element.prototype.matches>

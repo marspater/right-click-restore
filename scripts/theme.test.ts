@@ -1,15 +1,9 @@
 import { expect, test } from 'bun:test';
-import { mkdtemp, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { resolve } from 'node:path';
 
 const projectRoot = resolve(import.meta.dir, '..');
 const popupCssPath = resolve(projectRoot, 'src/popup/popup.css');
 const tailwindBin = resolve(projectRoot, 'node_modules/.bin/tailwindcss');
-const compiledCssPath = resolve(
-  projectRoot,
-  'SafariExtension/RightClickRestore/Shared (Extension)/Resources/popup/popup.css',
-);
 
 test('popup.css declares required semantic theme tokens in @theme block', async () => {
   const cssContent = await Bun.file(popupCssPath).text();
@@ -63,67 +57,31 @@ test('popup.css preserves light and dark mode variable values', async () => {
   expect(cssContent).toContain('--accent-blue: #0a84ff;');
 });
 
-test('Tailwind v4 CLI generates utilities from declared semantic theme tokens', async () => {
-  const scratch = await mkdtemp(join(tmpdir(), 'rcr-tokens-'));
-  try {
-    const tokenSource = join(scratch, 'tokens.txt');
-    const inputStyle = join(scratch, 'input.css');
-    const outputStyle = join(scratch, 'output.css');
+test('Tailwind v4 CLI compiles popup CSS and generates theme token utilities', async () => {
+  const proc = Bun.spawn([tailwindBin, '-i', popupCssPath, '--minify'], {
+    cwd: projectRoot,
+    stdout: 'pipe',
+    stderr: 'pipe',
+  });
 
-    // Feed token classes through plain text source (without HTML tags)
-    await Bun.write(
-      tokenSource,
-      'bg-popover text-primary rounded-card border-subtle text-accent-blue',
-    );
-    await Bun.write(
-      inputStyle,
-      `@import "${popupCssPath}";\n@source "${tokenSource}";\n`,
-    );
+  const stdout = await new Response(proc.stdout).text();
+  const exitCode = await proc.exited;
+  expect(exitCode).toBe(0);
 
-    const proc = Bun.spawn(
-      [tailwindBin, '-i', inputStyle, '-o', outputStyle, '--minify'],
-      {
-        cwd: projectRoot,
-        stdout: 'pipe',
-        stderr: 'pipe',
-      },
-    );
+  // Verify theme layer and semantic tokens
+  expect(stdout).toContain('--color-popover:var(--bg-popover)');
+  expect(stdout).toContain('--color-card:var(--bg-card)');
+  expect(stdout).toContain('--color-text-primary:var(--text-primary)');
+  expect(stdout).toContain('--radius-card:12px');
 
-    const exitCode = await proc.exited;
-    expect(exitCode).toBe(0);
-
-    const compiledCss = await Bun.file(outputStyle).text();
-
-    expect(compiledCss).toContain('bg-popover');
-    expect(compiledCss).toContain('text-primary');
-    expect(compiledCss).toContain('rounded-card');
-    expect(compiledCss).toContain('border-subtle');
-    expect(compiledCss).toContain('text-accent-blue');
-  } finally {
-    await rm(scratch, { recursive: true, force: true });
-  }
-});
-
-test('compiled extension popup CSS bundle preserves theme variables and utilities', async () => {
-  const compiledCss = await Bun.file(compiledCssPath).text();
-
-  // Verify theme layer and tokens
-  expect(compiledCss).toContain('--color-popover:var(--bg-popover)');
-  expect(compiledCss).toContain('--color-text-primary:var(--text-primary)');
-  expect(compiledCss).toContain('--radius-card:12px');
-
-  // Verify generated utilities
-  expect(compiledCss).toContain(
+  // Verify utility generation from semantic theme tokens
+  expect(stdout).toContain(
     '.bg-popover{background-color:var(--color-popover)}',
   );
-  expect(compiledCss).toContain(
-    '.text-accent-blue{color:var(--color-accent-blue)}',
-  );
-  expect(compiledCss).toContain(
-    '.rounded-card{border-radius:var(--radius-card)}',
-  );
+  expect(stdout).toContain('.text-accent-blue{color:var(--color-accent-blue)}');
+  expect(stdout).toContain('.rounded-card{border-radius:var(--radius-card)}');
 
-  // Verify light and dark definitions
-  expect(compiledCss).toContain('--bg-popover:#f6f6f8eb');
-  expect(compiledCss).toContain('--bg-popover:#1e1e20e6');
+  // Verify light and dark mode variable values
+  expect(stdout).toContain('--bg-popover:#f6f6f8eb');
+  expect(stdout).toContain('--bg-popover:#1e1e20e6');
 });

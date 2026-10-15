@@ -192,6 +192,84 @@ function getNativeGetElementByIdMethod(): NativeDOMMethod<
   return nativeGetElementByIdMethod;
 }
 
+/* eslint-disable @typescript-eslint/unbound-method */
+let nativeGetAttributeMethod: NativeDOMMethod<
+  typeof Element.prototype.getAttribute
+> = typeof Element !== 'undefined' ? Element.prototype.getAttribute : null;
+function getNativeGetAttributeMethod(): NativeDOMMethod<
+  typeof Element.prototype.getAttribute
+> {
+  if (!nativeGetAttributeMethod && typeof Element !== 'undefined') {
+    try {
+      nativeGetAttributeMethod = Element.prototype.getAttribute;
+    } catch {
+      nativeGetAttributeMethod = null;
+    }
+  }
+  return nativeGetAttributeMethod;
+}
+
+let nativeElementQuerySelectorAllMethod: NativeDOMMethod<
+  typeof Element.prototype.querySelectorAll
+> = typeof Element !== 'undefined' ? Element.prototype.querySelectorAll : null;
+function getNativeElementQuerySelectorAllMethod(): NativeDOMMethod<
+  typeof Element.prototype.querySelectorAll
+> {
+  if (!nativeElementQuerySelectorAllMethod && typeof Element !== 'undefined') {
+    try {
+      nativeElementQuerySelectorAllMethod = Element.prototype.querySelectorAll;
+    } catch {
+      nativeElementQuerySelectorAllMethod = null;
+    }
+  }
+  return nativeElementQuerySelectorAllMethod;
+}
+
+let nativeDocumentQuerySelectorAllMethod: NativeDOMMethod<
+  typeof Document.prototype.querySelectorAll
+> =
+  typeof Document !== 'undefined' ? Document.prototype.querySelectorAll : null;
+function getNativeDocumentQuerySelectorAllMethod(): NativeDOMMethod<
+  typeof Document.prototype.querySelectorAll
+> {
+  if (
+    !nativeDocumentQuerySelectorAllMethod &&
+    typeof Document !== 'undefined'
+  ) {
+    try {
+      nativeDocumentQuerySelectorAllMethod =
+        Document.prototype.querySelectorAll;
+    } catch {
+      nativeDocumentQuerySelectorAllMethod = null;
+    }
+  }
+  return nativeDocumentQuerySelectorAllMethod;
+}
+
+let nativeDocumentFragmentQuerySelectorAllMethod: NativeDOMMethod<
+  typeof DocumentFragment.prototype.querySelectorAll
+> =
+  typeof DocumentFragment !== 'undefined'
+    ? DocumentFragment.prototype.querySelectorAll
+    : null;
+function getNativeDocumentFragmentQuerySelectorAllMethod(): NativeDOMMethod<
+  typeof DocumentFragment.prototype.querySelectorAll
+> {
+  if (
+    !nativeDocumentFragmentQuerySelectorAllMethod &&
+    typeof DocumentFragment !== 'undefined'
+  ) {
+    try {
+      nativeDocumentFragmentQuerySelectorAllMethod =
+        DocumentFragment.prototype.querySelectorAll;
+    } catch {
+      nativeDocumentFragmentQuerySelectorAllMethod = null;
+    }
+  }
+  return nativeDocumentFragmentQuerySelectorAllMethod;
+}
+/* eslint-enable @typescript-eslint/unbound-method */
+
 export function safeMatches(element: Element, selector: string): boolean {
   try {
     const nativeFn = getNativeMatchesMethod();
@@ -307,11 +385,43 @@ export function safeGetElementById(
   }
 }
 
+/* eslint-disable no-unused-vars */
+function getTargetQuerySelectorAll(
+  root: ParentNode,
+): ((selectors: string) => NodeListOf<Element>) | null {
+  const nodeType = (root as Node).nodeType;
+  if (nodeType === 1) return getNativeElementQuerySelectorAllMethod();
+  if (nodeType === 9) return getNativeDocumentQuerySelectorAllMethod();
+  if (nodeType === 11) return getNativeDocumentFragmentQuerySelectorAllMethod();
+  return null;
+}
+/* eslint-enable no-unused-vars */
+
+function invokeCachedQuerySelectorAll(
+  root: ParentNode,
+  selector: string,
+): Element[] | null {
+  if (Object.hasOwn(root, 'querySelectorAll')) {
+    return null;
+  }
+  const nativeFn = getTargetQuerySelectorAll(root);
+  if (nativeFn) {
+    return Array.from(safeApply(nativeFn, root, [selector]));
+  }
+  return null;
+}
+
 export function safeQuerySelectorAll(
   root: ParentNode,
   selector: string,
 ): Element[] {
   try {
+    // Performance optimization: Fast-path native prototype execution for unshadowed querySelectorAll calls.
+    // Avoids getUnshadowedMethod lookup overhead and prototype walks on standard DOM subtrees during frequent scans.
+    const cached = invokeCachedQuerySelectorAll(root, selector);
+    if (cached) {
+      return cached;
+    }
     const fn = getUnshadowedMethod(root, 'querySelectorAll');
     if (fn) {
       return Array.from(safeApply(fn, root, [selector]) as NodeListOf<Element>);
@@ -323,11 +433,33 @@ export function safeQuerySelectorAll(
   }
 }
 
+function tryCachedGetAttribute(
+  element: Element,
+  attr: string,
+): string | null | undefined {
+  const nativeFn = getNativeGetAttributeMethod();
+  if (
+    nativeFn &&
+    typeof Element !== 'undefined' &&
+    element instanceof Element &&
+    !Object.hasOwn(element, 'getAttribute')
+  ) {
+    return safeApply(nativeFn, element, [attr]) ?? null;
+  }
+  return undefined;
+}
+
 export function safeGetAttribute(
   element: Element,
   attr: string,
 ): string | null {
   try {
+    // Performance optimization: Fast-path native prototype execution for unshadowed getAttribute calls.
+    // Bypasses getUnshadowedMethod prototype searches during high-frequency attribute checks.
+    const cached = tryCachedGetAttribute(element, attr);
+    if (cached !== undefined) {
+      return cached;
+    }
     const fn = getUnshadowedMethod(element, 'getAttribute');
     if (fn) {
       return (safeApply(fn, element, [attr]) as string | null) ?? null;

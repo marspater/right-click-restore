@@ -387,7 +387,7 @@ export function safeGetElementById(
 
 function getTargetQuerySelectorAll(
   root: ParentNode,
-): ((selectors: string) => NodeListOf<Element>) | null {
+): ((_selectors: string) => NodeListOf<Element>) | null {
   const nodeType = (root as Node).nodeType;
   if (nodeType === 1) return getNativeElementQuerySelectorAllMethod();
   if (nodeType === 9) return getNativeDocumentQuerySelectorAllMethod();

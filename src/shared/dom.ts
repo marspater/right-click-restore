@@ -396,7 +396,7 @@ export function safeRemoveElement(element: Element): void {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/unbound-method
+/* eslint-disable @typescript-eslint/unbound-method */
 let nativeAppendChildMethod: NativeDOMMethod<
   typeof Node.prototype.appendChild
 > = typeof Node !== 'undefined' ? Node.prototype.appendChild : null;
@@ -405,7 +405,6 @@ function getNativeAppendChildMethod(): NativeDOMMethod<
 > {
   if (!nativeAppendChildMethod && typeof Node !== 'undefined') {
     try {
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       nativeAppendChildMethod = Node.prototype.appendChild;
     } catch {
       nativeAppendChildMethod = null;
@@ -413,6 +412,7 @@ function getNativeAppendChildMethod(): NativeDOMMethod<
   }
   return nativeAppendChildMethod;
 }
+/* eslint-enable @typescript-eslint/unbound-method */
 
 export function safeAppendChild<T extends Node>(
   parent: Node,
@@ -433,7 +433,7 @@ export function safeAppendChild<T extends Node>(
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/unbound-method
+/* eslint-disable @typescript-eslint/unbound-method */
 let nativeAttachShadowMethod: NativeDOMMethod<
   typeof Element.prototype.attachShadow
 > = typeof Element !== 'undefined' ? Element.prototype.attachShadow : null;
@@ -442,7 +442,6 @@ function getNativeAttachShadowMethod(): NativeDOMMethod<
 > {
   if (!nativeAttachShadowMethod && typeof Element !== 'undefined') {
     try {
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       nativeAttachShadowMethod = Element.prototype.attachShadow;
     } catch {
       nativeAttachShadowMethod = null;
@@ -450,6 +449,7 @@ function getNativeAttachShadowMethod(): NativeDOMMethod<
   }
   return nativeAttachShadowMethod;
 }
+/* eslint-enable @typescript-eslint/unbound-method */
 
 export function safeAttachShadow(
   element: Element,

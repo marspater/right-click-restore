@@ -277,11 +277,9 @@ export function handleContentMessage(
               user-select: auto !important;
             }
           `;
-          const doc = document as {
-            head?: HTMLHeadElement | null;
-            documentElement?: HTMLElement | null;
-          };
-          const container = doc.head ?? doc.documentElement ?? null;
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+          const container = document.head || document.documentElement;
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           if (container) {
             safeAppendChild(container, styleEl);
           }

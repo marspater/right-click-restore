@@ -249,10 +249,11 @@ test('selection-style injection and unlock toast survive clobbered container met
       },
       storage: {
         local: {
-          get: (_keys: unknown, callback: (value: unknown) => void) =>
+          get: (_keys: unknown, callback: (value: unknown) => void) => {
             callback({
               rcr_settings: { enabled: true, restoreSelection: true },
-            }),
+            });
+          },
         },
         onChanged: { addListener: () => {} },
       },
@@ -273,20 +274,20 @@ test('selection-style injection and unlock toast survive clobbered container met
     window.eval(await result.outputs[0].text());
 
     // 1. Selection style injected successfully via safeAppendChild despite clobbered container
-    listener?.(
+    listener(
       {
         type: 'RCR_CONFIG_CHANGED',
         config: { enabled: true, restoreSelection: true },
       },
       { id: 'rcr-test' },
-      () => {},
+      () => undefined,
     );
 
     const styleEl = window.document.getElementById('__rcr_selection_style__');
     expect(styleEl).not.toBeNull();
 
     // 2. Unlock toast construction uses safe shadow attachment and safe appends
-    listener?.({ type: 'RCR_FORCE_UNLOCK' }, { id: 'rcr-test' }, () => {});
+    listener({ type: 'RCR_FORCE_UNLOCK' }, { id: 'rcr-test' }, () => undefined);
 
     const toastHost = window.document.getElementById('__rcr_toast_host__');
     expect(toastHost).not.toBeNull();

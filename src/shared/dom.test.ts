@@ -471,4 +471,143 @@ describe('shared DOM utilities', () => {
       expect(results[0]).toBe(target);
     });
   });
+
+  describe('cached native DOM prototype methods and safe fallbacks', () => {
+    test('cached native matches invokes correctly and falls back when shadowed or throwing', () => {
+      const el = document.createElement('div');
+      el.className = 'active-test';
+
+      // 1. Invokes cached native method
+      expect(safeMatches(el, '.active-test')).toBe(true);
+      expect(safeMatches(el, '.other-class')).toBe(false);
+
+      // 2. Falls back when shadowed on instance
+      Object.defineProperty(el, 'matches', {
+        value: 'hijacked-matches',
+        configurable: true,
+      });
+      expect(safeMatches(el, '.active-test')).toBe(true);
+
+      // 3. Falls back safely when matching throws
+      const throwingEl = {
+        matches: () => {
+          throw new Error('invalid selector');
+        },
+      } as unknown as Element;
+      expect(safeMatches(throwingEl, ':invalid-pseudo')).toBe(false);
+    });
+
+    test('cached native closest invokes correctly and falls back when shadowed or throwing', () => {
+      const parent = document.createElement('section');
+      parent.className = 'container-section';
+      const child = document.createElement('span');
+      parent.appendChild(child);
+
+      // 1. Invokes cached native method
+      expect(safeClosest(child, '.container-section')).toBe(parent);
+      expect(safeClosest(child, '.missing-section')).toBeNull();
+
+      // 2. Falls back when shadowed on instance
+      Object.defineProperty(child, 'closest', {
+        value: 'hijacked-closest',
+        configurable: true,
+      });
+      expect(safeClosest(child, '.container-section')).toBe(parent);
+
+      // 3. Falls back safely when throws
+      const throwingChild = {
+        closest: () => {
+          throw new Error('traversal error');
+        },
+      } as unknown as Element;
+      expect(safeClosest(throwingChild, 'div')).toBeNull();
+    });
+
+    test('cached native hasAttribute and removeAttribute invoke correctly and fall back when shadowed', () => {
+      const form = document.createElement('form');
+      form.setAttribute('data-target', 'original-val');
+
+      // 1. Invokes cached native methods
+      expect(safeHasAttribute(form, 'data-target')).toBe(true);
+      expect(safeHasAttribute(form, 'data-missing')).toBe(false);
+
+      // 2. Falls back safely when hasAttribute is shadowed
+      const inputHasAttr = document.createElement('input');
+      inputHasAttr.setAttribute('name', 'hasAttribute');
+      form.appendChild(inputHasAttr);
+      Object.defineProperty(form, 'hasAttribute', {
+        value: inputHasAttr,
+        configurable: true,
+      });
+      expect(safeHasAttribute(form, 'data-target')).toBe(true);
+
+      // 3. Falls back safely when removeAttribute is shadowed
+      const inputRemoveAttr = document.createElement('input');
+      inputRemoveAttr.setAttribute('name', 'removeAttribute');
+      form.appendChild(inputRemoveAttr);
+      Object.defineProperty(form, 'removeAttribute', {
+        value: inputRemoveAttr,
+        configurable: true,
+      });
+      safeRemoveAttribute(form, 'data-target');
+      expect(safeHasAttribute(form, 'data-target')).toBe(false);
+
+      // 4. Safe removal on plain object/mock falling back to unshadowed method
+      let removedMockAttr = '';
+      const mockEl = {
+        hasAttribute: (name: string) => name === 'data-mock',
+        removeAttribute: (name: string) => {
+          removedMockAttr = name;
+        },
+      } as unknown as Element;
+      safeRemoveAttribute(mockEl, 'data-mock');
+      expect(removedMockAttr).toBe('data-mock');
+    });
+
+    test('cached native hasAttributes invokes correctly and falls back when shadowed or throwing', () => {
+      const div = document.createElement('div');
+      expect(safeHasAttributes(div)).toBe(false);
+      div.setAttribute('id', 'test-has-attributes');
+      expect(safeHasAttributes(div)).toBe(true);
+
+      // Falls back when shadowed on instance
+      Object.defineProperty(div, 'hasAttributes', {
+        value: null,
+        configurable: true,
+      });
+      expect(safeHasAttributes(div)).toBe(true);
+
+      // Fails safe (assumes attributes exist) when throws
+      const throwingEl = {
+        hasAttributes: () => {
+          throw new Error('access error');
+        },
+      } as unknown as Element;
+      expect(safeHasAttributes(throwingEl)).toBe(true);
+    });
+
+    test('cached native getElementById invokes correctly and falls back when shadowed or on mock document', () => {
+      const el = document.createElement('div');
+      el.id = 'cached-test-id';
+      document.body.appendChild(el);
+
+      // 1. Invokes cached native method
+      expect(safeGetElementById(document, 'cached-test-id')).toBe(el);
+      expect(safeGetElementById(document, 'non-existent-id')).toBeNull();
+
+      // 2. Falls back when shadowed on document instance
+      Object.defineProperty(document, 'getElementById', {
+        value: el,
+        configurable: true,
+      });
+      expect(safeGetElementById(document, 'cached-test-id')).toBe(el);
+
+      // 3. Falls back safely when doc is mock plain object
+      const mockDoc = {
+        getElementById: (id: string) => (id === 'mock-id' ? el : null),
+      } as unknown as Document;
+      expect(safeGetElementById(mockDoc, 'mock-id')).toBe(el);
+      expect(safeGetElementById(mockDoc, 'unknown')).toBeNull();
+    });
+  });
 });

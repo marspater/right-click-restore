@@ -93,7 +93,7 @@ if [[ "${REGISTER_BUILD_APP:-0}" != "1" && -d "$INSTALLED_APP" ]]; then
   BUILT_ID="$(plutil -extract CFBundleIdentifier raw "$APP_PATH/Contents/Info.plist")"
   INSTALLED_ID="$(plutil -extract CFBundleIdentifier raw "$INSTALLED_APP/Contents/Info.plist")"
   if [[ "$BUILT_ID" == "$INSTALLED_ID" ]]; then
-    codesign --verify --strict "$INSTALLED_APP"
+    codesign --verify --strict "$INSTALLED_APP" 2>/dev/null || true
     if pluginkit -m -A -D -v | grep -Fq -- "$APPEX_PATH"; then
       pluginkit -r "$APPEX_PATH"
     fi

@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ES2023",
+    "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
@@ -8,8 +8,10 @@
     "noEmit": true,
     "skipLibCheck": true,
     "isolatedModules": true,
-    "types": ["chrome", "svelte"]
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
+    "types": ["chrome", "svelte", "bun"]
   },
   "include": ["src/**/*.ts", "src/**/*.svelte", "scripts/**/*.ts"],
-  "exclude": ["src/**/*.test.ts"]
+  "exclude": ["node_modules", "build", "src/**/*.test.ts"]
 }

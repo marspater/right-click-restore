@@ -1,7 +1,7 @@
 {
   "name": "right-click-restore",
   "version": "1.0.1",
-  "description": "Safari Web Extension & macOS App to restore right-click, selection, and copy operations with Apple HIG liquid glass UI.",
+  "description": "Safari Web Extension & macOS/iOS companion app to restore right-click, selection, copy, and video playback with DOM clobbering defenses and Apple HIG liquid glass UI.",
   "author": "Mars Pater",
   "license": "MIT",
   "homepage": "https://github.com/marspater/right-click-restore#readme",
@@ -17,10 +17,15 @@
     "safari-extension",
     "webextension",
     "macos",
+    "ios",
     "macos-27",
     "right-click",
     "context-menu",
-    "svelte5"
+    "anti-shield",
+    "unblur-video",
+    "dom-clobbering-defense",
+    "svelte5",
+    "tailwind4"
   ],
   "private": true,
   "type": "module",

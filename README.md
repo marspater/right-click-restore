@@ -6,7 +6,7 @@
 [![Platform: macOS](https://img.shields.io/badge/Platform-macOS%2012%2B%20%7C%20macOS%2027-purple.svg)](README.md#compatibility--system-requirements)
 [![Safari: MV3](https://img.shields.io/badge/Safari-MV3-blue.svg)](README.md)
 
-A high-performance Safari Web Extension and native companion application for macOS that restores context menus, text selection, copy, cut, and drag operations on websites that deliberately disable them.
+A high-performance Safari Web Extension and native companion application for macOS and iOS that restores context menus, text selection, copy, cut, drag operations, and video playback on websites that deliberately disable them.
 
 ---
 
@@ -15,6 +15,7 @@ A high-performance Safari Web Extension and native companion application for mac
 | Platform | Minimum Version | Tested & Verified | Design & HIG Target |
 | :--- | :--- | :--- | :--- |
 | **macOS** | macOS 12.0 (Monterey) | macOS 15 (Sequoia) | **macOS 27 Liquid Glass HIG** (Continuous Sheen & Vibrancy) |
+| **iOS / iPadOS** | iOS 15.0+ | iOS 17, iOS 18 | Native Mobile Safari Web Extension Support |
 | **Architecture** | Universal | Apple Silicon (`arm64`), Intel (`x86_64`) | Optimized for Apple M-series chips |
 | **Safari** | Safari 15.0+ | Safari 17, Safari 18, Technology Preview | Manifest V3 (Main World & Isolated World) |
 
@@ -26,6 +27,7 @@ RightClickRestore adopts the forward-looking **macOS 27** Apple Human Interface 
 - **Liquid Glass UI**: Ultra-refined backdrop blur, specular top glass highlight, and ambient fluid mesh gradient lighting.
 - **Continuous Curvature Squircles**: Icons and panels rendered with mathematical squircles and transparent corners.
 - **Native System Vibrancy**: Adapts seamlessly to macOS Light and Dark appearance with automatic contrast balancing.
+- **Tactile Micro-Interactions**: Active press feedback, keycap hover scaling, and real-time domain status beacons.
 - **Zero Idle Overhead**: Pure event-driven DOM unmasking with no continuous polling or CPU spikes.
 
 ---
@@ -33,12 +35,15 @@ RightClickRestore adopts the forward-looking **macOS 27** Apple Human Interface 
 ## What it does
 
 - **Restores Right-Click**: Eliminates `oncontextmenu="return false;"` and JavaScript `preventDefault()` / `stopPropagation()` cancellations in both capture and bubble phases.
-- **Restores Selection & Copy**: Unblocks `user-select: none`, `onselectstart`, `oncopy`, `oncut`, and `onbeforecopy`.
-- **Anti-Shield Protection**: Dynamically disables invisible transparent overlays swallowing mouse clicks above images and videos without breaking web layouts.
-- **Editor & Video Protection**: Intelligently safeguards interactive elements (`input`, `textarea`, `button`, Monaco Editor, ProseMirror, and HTML5 / YouTube video players).
-- **Global & Per-Domain Controls**: Disable restoration per site or toggle features individually via the Svelte 5 popup.
-- **Unblur Videos (opt-in)**: Removes CSS `blur()` filters on videos and their ancestors, including filters reapplied through class or inline-style changes. Enable **Unblur Videos** in the popup; disabling it or the extension restores the affected styles. Other filter effects and playback controls are preserved. This cannot recover blur baked into a video, remove separate blur overlays, or bypass DRM/FairPlay screen-capture protection.
-- **Force Unlock**: One-click nuclear unlock button for extreme obfuscation cases.
+- **Restores Selection & Copy**: Unblocks `user-select: none`, `onselectstart`, `oncopy`, `oncut`, and `onbeforecopy` with clipboard data protection.
+- **Anti-Shield Protection**: Dynamically pierces invisible transparent overlays swallowing mouse clicks above images and videos without breaking web layouts.
+- **Unblur Videos (opt-in)**: Removes CSS `blur()` filters on videos and their ancestors, including filters reapplied through class or inline-style changes. Enable **Unblur Videos** in the popup; disabling it or the extension restores the affected styles.
+- **Absolute Force Mode (opt-in)**: Overrides aggressive capture-phase event traps and page-level listener cancellations for heavily obfuscated web applications.
+- **Modifier Key Bypass**: Hold <kbd>⇧ Shift</kbd> or <kbd>⌥ Option</kbd> while right-clicking to summon the native Safari context menu directly without extension intervention.
+- **Per-Domain Controls (Allowlist / Denylist)**: Toggle protection globally or per domain with real-time status beacons in the Svelte 5 popup (`Active on Domain` vs `Disabled on Domain`).
+- **Force Unlock & Isolated Toast**: One-click unlock button scrubs inline cancellation handlers, injects selection styles, pierces shields, and presents an animated self-dismissing notification rendered in closed-mode Shadow DOM.
+- **Editor & Video Player Safeguards**: Intelligently safeguards interactive elements (`input`, `textarea`, `select`, `button`, Monaco Editor, ProseMirror, and HTML5 / YouTube video players).
+- **DOM Clobbering & Prototype Hardening**: Defends against prototype pollution and form input shadowing using early module-evaluation prototype caching (`appendChild`, `attachShadow`, `getAttribute`, `querySelectorAll`) and unshadowed prototype chain traversal.
 - **Bounded DOM Observer**: Batched mutation processing prevents memory leaks on high-churn single-page applications.
 
 ---

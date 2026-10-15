@@ -85,7 +85,7 @@ export function getUnshadowedGetter(
 // bypassing Object.prototype checks, index property reads, and unshadowed prototype chain walks.
 
 // biome-ignore lint/suspicious/noExplicitAny: cached prototype DOM methods require loose argument typing
-type NativeDOMMethod = ((this: any, ...args: any[]) => any) | null;
+type NativeDOMMethod = ((this: unknown, ...args: any[]) => any) | null;
 
 let nativeMatchesMethod: NativeDOMMethod | undefined;
 function getNativeMatchesMethod(): NativeDOMMethod {

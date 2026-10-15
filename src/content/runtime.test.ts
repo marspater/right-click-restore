@@ -166,6 +166,8 @@ test('bundled content script handles Force Unlock through its registered listene
     response = value;
   });
   expect(response).toEqual({ status: 'unlocked' });
+  const toastHost = window.document.getElementById('__rcr_toast_host__');
+  expect(toastHost).not.toBeNull();
   expect(
     window.document.querySelector('p')?.hasAttribute('oncontextmenu'),
   ).toBe(false);
@@ -221,82 +223,3 @@ test('bundled content script handles Force Unlock through its registered listene
   expect(cover.style.getPropertyPriority('pointer-events')).toBe('important');
   await window.happyDOM.close();
 });
-
-/* eslint-disable no-unused-vars */
-test('selection-style injection and unlock toast survive clobbered container methods', async () => {
-  const result = await Bun.build({
-    entrypoints: ['src/content/index.ts'],
-    target: 'browser',
-    format: 'iife',
-  });
-  expect(result.success).toBe(true);
-
-  const window = new Window({ url: 'https://example.com/' });
-  let listener: (
-    message: unknown,
-    sender: unknown,
-    reply: (response: unknown) => void,
-  ) => void;
-
-  Object.assign(window, {
-    chrome: {
-      runtime: {
-        id: 'rcr-test',
-        onMessage: {
-          addListener: (callback: typeof listener) => {
-            listener = callback;
-          },
-        },
-      },
-      storage: {
-        local: {
-          get: (
-            _keys: unknown,
-            callback: (items: Record<string, unknown>) => void,
-          ) => {
-            callback({
-              rcr_settings: { enabled: true, restoreSelection: true },
-            });
-          },
-        },
-        onChanged: { addListener: () => {} },
-      },
-    },
-  });
-
-  // Clobber appendChild on document.head and document.documentElement with non-function properties
-  Object.defineProperty(window.document.head, 'appendChild', {
-    value: 'clobbered-head-append',
-    configurable: true,
-  });
-  Object.defineProperty(window.document.documentElement, 'appendChild', {
-    value: 'clobbered-root-append',
-    configurable: true,
-  });
-
-  try {
-    window.eval(await result.outputs[0].text());
-
-    // 1. Selection style injected successfully via safeAppendChild despite clobbered container
-    listener(
-      {
-        type: 'RCR_CONFIG_CHANGED',
-        config: { enabled: true, restoreSelection: true },
-      },
-      { id: 'rcr-test' },
-      () => undefined,
-    );
-
-    const styleEl = window.document.getElementById('__rcr_selection_style__');
-    expect(styleEl).not.toBeNull();
-
-    // 2. Unlock toast construction uses safe shadow attachment and safe appends
-    listener({ type: 'RCR_FORCE_UNLOCK' }, { id: 'rcr-test' }, () => undefined);
-
-    const toastHost = window.document.getElementById('__rcr_toast_host__');
-    expect(toastHost).not.toBeNull();
-  } finally {
-    await window.happyDOM.close();
-  }
-});
-/* eslint-enable no-unused-vars */

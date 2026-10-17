@@ -129,13 +129,19 @@ export function isMediaContextEvent(event: Event): boolean {
     Array.isArray(path) &&
     path.some(
       (node) =>
-        node instanceof Element && /^(VIDEO|AUDIO|IMG)$/.test(node.tagName),
+        node instanceof Element &&
+        (node.tagName === 'VIDEO' ||
+          node.tagName === 'AUDIO' ||
+          node.tagName === 'IMG'),
     )
   );
 }
 
 export function findUnderlyingMedia(elements: Element[]): Element | undefined {
-  return elements.find((el) => /^(VIDEO|AUDIO|IMG)$/.test(el.tagName));
+  return elements.find(
+    (el) =>
+      el.tagName === 'VIDEO' || el.tagName === 'AUDIO' || el.tagName === 'IMG',
+  );
 }
 
 const unmaskTimers = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>();

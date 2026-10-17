@@ -32,3 +32,7 @@
 ## 2025-05-23 - Strict interface validation for cached native DOM prototype method fast-paths
 **Learning:** Native DOM prototype methods (such as `Element.prototype.getAttribute` or `Element.prototype.querySelectorAll`) throw an "Illegal invocation" TypeError if invoked on non-DOM objects. Fast-paths MUST check `instanceof Element` / `Document` / `DocumentFragment` and verify non-null target before attempting `safeApply` with native prototype references.
 **Action:** Always verify `instanceof` DOM interface constraints alongside `!Object.hasOwn` when invoking lazy-cached native prototype functions on target objects.
+
+## 2025-05-24 - Redundant attribute checks and regex tag matching fast-pathing
+**Learning:** Calling `safeHasAttribute(node, 'style')` prior to `safeGetAttribute(node, 'style')` is redundant because `getAttribute` natively returns `null` when an attribute is missing, doubling DOM lookup overhead on styled nodes. Furthermore, replacing `/^(VIDEO|AUDIO|IMG)$/.test(node.tagName)` with direct string comparisons (`node.tagName === 'VIDEO' || ...`) in event handlers and DOM sweepers eliminates RegExp allocation and execution overhead. Reusing shadowRoot references across `cleanNode` and `hasScrubbableTarget` also avoids duplicate DOM getter calls.
+**Action:** Directly read attributes with `safeGetAttribute` without pre-checking `safeHasAttribute`, use string equality for fixed set tag comparisons, and reuse DOM property/getter lookups in tree routines.

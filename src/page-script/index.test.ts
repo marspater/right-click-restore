@@ -327,6 +327,39 @@ describe('page-script helpers', () => {
       expect(updated).toBe(false);
       expect(unlocked).toBe(false);
     });
+
+    test('resists TOCTOU getter re-evaluation attack in handlePageScriptMessage', () => {
+      let nonceReads = 0;
+      let typeReads = 0;
+
+      const maliciousDetail = {
+        get nonce() {
+          nonceReads++;
+          if (nonceReads === 1) return 'valid-nonce-123';
+          return 'ATTACKER_NONCE';
+        },
+        get type() {
+          typeReads++;
+          if (typeReads === 1) return 'UPDATE';
+          return 'MALICIOUS_TYPE';
+        },
+        config: { enabled: true },
+      };
+
+      let newConfig: Settings | null = null;
+      const accepted = handlePageScriptMessage(
+        maliciousDetail,
+        'valid-nonce-123',
+        (config) => {
+          newConfig = config;
+        },
+      );
+
+      expect(accepted).toBe(true);
+      expect(newConfig).not.toBeNull();
+      expect(nonceReads).toBe(1);
+      expect(typeReads).toBe(1);
+    });
   });
 });
 

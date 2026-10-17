@@ -48,3 +48,7 @@
 - Added `setting-icon-badge` class and `title={isSiteActive ? undefined : 'Protection is inactive on this page'}` tooltip attribute to the "Unblur Videos" row in `App.svelte`, restoring full visual and interaction consistency across all 6 setting rows.
 - Replaced fragile `.settings-row .w-6` CSS rules with targeted `.settings-row .setting-icon-badge` selectors in `popup.css`.
 - Added physical tactile press response (`transform: scale(0.99)`) to `.settings-row:active:not(.is-disabled)` and subtle hover scale transitions to keycap badges (`<kbd>`).
+
+11. **Context-Aware Disabled Tooltips & Pointer Affordances (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+- Replaced generic "Protection is inactive on this page" tooltip text across setting rows with a derived, context-aware `disabledRowTooltip` variable that explicitly states why controls are disabled (`Extension is paused globally`, `Protection is unavailable on system pages`, or `Protection is disabled on this domain`).
+- Refined `.dimmed` state CSS in `popup.css` by removing `pointer-events: none` and setting `cursor: not-allowed`, allowing desktop browser tooltips to trigger reliably on hover and giving immediate cursor feedback on disabled cards/rows.

@@ -153,11 +153,11 @@ body {
     0.2s ease, box-shadow 0.2s ease;
 }
 
-.domain-card:hover:not(.dimmed) .relative > .rounded-full {
+label.domain-card:hover:not(.dimmed) .relative > .rounded-full {
   transform: scale(1.2);
 }
 
-.domain-card:active:not(.dimmed) {
+label.domain-card:active:not(.dimmed) {
   opacity: 0.88;
   transform: scale(0.99);
 }
@@ -376,7 +376,6 @@ button:focus-visible {
 .dimmed {
   opacity: 0.42;
   filter: grayscale(0.65);
-  pointer-events: none;
   transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s
     cubic-bezier(0.16, 1, 0.3, 1);
 }

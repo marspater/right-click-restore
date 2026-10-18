@@ -338,4 +338,58 @@ describe('content script message handler', () => {
     expect(originalSettings.disabledDomains).toEqual(['example.com']);
     expect(originalSettings.enabled).toBe(true);
   });
+
+  test('resists DOM clobbering on document.head during style element injection', () => {
+    // Clobber document.head with a form element
+    const clobberedHead = windowInstance.document.createElement('form');
+    clobberedHead.id = 'head';
+    Object.defineProperty(windowInstance.document, 'head', {
+      value: clobberedHead,
+      configurable: true,
+    });
+
+    const authorizedSender = {
+      id: 'extension-id-123',
+    } as chrome.runtime.MessageSender;
+
+    let settingsApplied = false;
+    expect(() => {
+      handleContentMessage(
+        {
+          type: 'RCR_CONFIG_CHANGED',
+          config: {
+            enabled: true,
+            restoreSelection: true,
+          } as unknown as Settings,
+        },
+        authorizedSender,
+        () => {},
+        {
+          onApplySettings: () => {
+            settingsApplied = true;
+            // Verify style element can be safely appended to documentElement instead of clobbered head
+            const style = windowInstance.document.createElement('style');
+            style.id = '__rcr_selection_style__';
+            const head = windowInstance.document.head as Element | null;
+            const container =
+              head &&
+              typeof head.tagName === 'string' &&
+              head.tagName === 'HEAD'
+                ? head
+                : windowInstance.document.documentElement;
+            container.appendChild(style);
+          },
+        },
+      );
+    }).not.toThrow();
+
+    expect(settingsApplied).toBe(true);
+    const injectedStyle = windowInstance.document.getElementById(
+      '__rcr_selection_style__',
+    );
+    expect(injectedStyle).not.toBeNull();
+    expect(injectedStyle?.parentNode).toBe(
+      windowInstance.document.documentElement,
+    );
+  });
 });

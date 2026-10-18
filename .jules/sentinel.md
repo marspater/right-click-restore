@@ -51,3 +51,8 @@
 **Vulnerability:** Invoking `.appendChild(...)` or `.attachShadow(...)` directly on elements or shadow roots allowed untrusted host page scripts or named elements (e.g. `<form id="head"><input name="appendChild"></form>` or `<input name="attachShadow">`) to clobber methods on container instances, throwing TypeErrors and breaking selection style injection and toast notifications.
 **Learning:** Container elements and root documents can have instance methods like `appendChild` or `attachShadow` clobbered by named form controls or host-page prototype modifications.
 **Prevention:** Use `safeAppendChild` and `safeAttachShadow` across content script DOM construction to retrieve unshadowed prototype methods via `getUnshadowedMethod` and execute via `safeApply`.
+
+## 2025-05-24 - DOM Clobbering Resistance for Style Injection Container & Main-World Constructor Shadowing
+**Vulnerability:** Untrusted host page scripts could clobber `document.head` (e.g. using `<form id="head">`), causing `updateInjectedStyles` to select the clobbered form element instead of the real head node and fail style element insertion. Additionally, main-world scripts relying on `Node.TEXT_NODE` or global `Element` constructor checks could be broken when untrusted scripts shadow `window.Node` or `window.Element`.
+**Learning:** `document.head` can be clobbered by named elements, and main-world scripts execute in the host JS context where global DOM constructors can be modified.
+**Prevention:** Verify `document.head?.tagName === 'HEAD'` before using it as a style container (falling back to `document.documentElement`), use numeric `3` for `TEXT_NODE`, and check `nodeType === 1` for element identification.

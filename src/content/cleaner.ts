@@ -249,9 +249,13 @@ export function cleanAddedNode(
   settings: Settings = DEFAULT_SETTINGS,
 ) {
   if (typeof Element === 'undefined' || !(node instanceof Element)) return;
-  cleanNode(node, settings);
+  // Performance optimization: Fast-path return if restoration settings are disabled.
+  // Checking getScrubSelector before cleanNode avoids unnecessary attribute checks
+  // and subtree DOM scans when both restoreRightClick and restoreSelection are false.
   const selector = getScrubSelector(settings);
   if (!selector) return;
+
+  cleanNode(node, settings);
   try {
     for (const child of safeQuerySelectorAll(node, selector)) {
       cleanNode(child, settings);

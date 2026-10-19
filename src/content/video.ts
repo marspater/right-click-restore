@@ -1,4 +1,8 @@
-import { safeGetStyle, safeQuerySelectorAll } from '../shared/dom';
+import {
+  safeGetStyle,
+  safeGetTagName,
+  safeQuerySelectorAll,
+} from '../shared/dom';
 
 interface FilterOverride {
   value: string;
@@ -34,7 +38,7 @@ export class VideoUnblur {
     for (const element of this.overrides.keys()) {
       if (
         !element.isConnected ||
-        (element.tagName !== 'VIDEO' &&
+        (safeGetTagName(element) !== 'VIDEO' &&
           safeQuerySelectorAll(element, 'video').length === 0)
       ) {
         this.restore(element);
@@ -42,7 +46,7 @@ export class VideoUnblur {
     }
 
     const videos = safeQuerySelectorAll(root, 'video');
-    if (root instanceof HTMLElement && root.tagName === 'VIDEO') {
+    if (root instanceof HTMLElement && safeGetTagName(root) === 'VIDEO') {
       videos.push(root);
     }
     const visited = new Set<Element>();

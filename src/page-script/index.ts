@@ -8,6 +8,7 @@ import {
   safeApply,
   safeClosest,
   safeElementsFromPoint,
+  safeGetTagName,
   safeHasAttributes,
   safeMatches,
   safeRemoveElement,
@@ -39,7 +40,7 @@ const FAST_INTERACTIVE_TAGS = new Set([
 // avoiding selector matching on attribute-less DOM nodes while guaranteeing exact selector accuracy.
 export function isInteractiveElement(item: Element): boolean {
   try {
-    const tag = typeof item.tagName === 'string' ? item.tagName : '';
+    const tag = safeGetTagName(item);
     if (FAST_INTERACTIVE_TAGS.has(tag)) {
       return true;
     }
@@ -129,13 +130,14 @@ export function isMediaContextEvent(event: Event): boolean {
     Array.isArray(path) &&
     path.some(
       (node) =>
-        node instanceof Element && /^(VIDEO|AUDIO|IMG)$/.test(node.tagName),
+        node instanceof Element &&
+        /^(VIDEO|AUDIO|IMG)$/.test(safeGetTagName(node)),
     )
   );
 }
 
 export function findUnderlyingMedia(elements: Element[]): Element | undefined {
-  return elements.find((el) => /^(VIDEO|AUDIO|IMG)$/.test(el.tagName));
+  return elements.find((el) => /^(VIDEO|AUDIO|IMG)$/.test(safeGetTagName(el)));
 }
 
 const unmaskTimers = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>();
@@ -500,7 +502,7 @@ if (typeof window !== 'undefined') {
           elements.find(
             (el, index) =>
               index > 0 &&
-              (/^(CANVAS|PICTURE|SVG)$/.test(el.tagName) ||
+              (/^(CANVAS|PICTURE|SVG)$/.test(safeGetTagName(el)) ||
                 (el instanceof HTMLElement &&
                   (el.innerText || el.textContent || '').trim().length > 0)),
           );

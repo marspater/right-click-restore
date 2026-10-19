@@ -4,6 +4,7 @@ import {
   safeGetAttribute,
   safeGetShadowRoot,
   safeGetStyle,
+  safeGetTagName,
   safeHasAttribute,
   safeHasAttributes,
   safeQuerySelectorAll,
@@ -23,6 +24,7 @@ export {
   safeGetElementById,
   safeGetShadowRoot,
   safeGetStyle,
+  safeGetTagName,
   safeHasAttribute,
   safeHasAttributes,
   safeMatches,
@@ -178,10 +180,8 @@ function hasScrubbableTarget(node: Element, settings: Settings): boolean {
 }
 
 function isInteractiveOrDescendant(node: Element): boolean {
-  if (
-    typeof node.tagName === 'string' &&
-    FAST_INTERACTIVE_TAGS.has(node.tagName)
-  ) {
+  const tag = safeGetTagName(node);
+  if (tag && FAST_INTERACTIVE_TAGS.has(tag)) {
     return true;
   }
   try {
@@ -224,7 +224,7 @@ export function cleanNode(
   if (isInteractiveOrDescendant(node)) {
     if (
       settings.restoreRightClick &&
-      /^(VIDEO|AUDIO|IMG)$/.test(node.tagName)
+      /^(VIDEO|AUDIO|IMG)$/.test(safeGetTagName(node))
     ) {
       safeRemoveAttribute(node, 'oncontextmenu');
     }

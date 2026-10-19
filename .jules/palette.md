@@ -44,7 +44,13 @@
    - Enhanced Force Unlock button tooltips and footer tip messages on non-supported pages to clearly announce "Protection is unavailable on system pages".
 
 10. **Unblur Videos Setting Row Consistency & Tactile Press Micro-Interactions (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+   - Added `setting-icon-badge` class and `title={isSiteActive ? undefined : 'Protection is inactive on this page'}` tooltip attribute to the "Unblur Videos" row in `App.svelte`, restoring full visual and interaction consistency across all 6 setting rows.
+   - Replaced fragile `.settings-row .w-6` CSS rules with targeted `.settings-row .setting-icon-badge` selectors in `popup.css`.
+   - Added physical tactile press response (`transform: scale(0.99)`) to `.settings-row:active:not(.is-disabled)` and subtle hover scale transitions to keycap badges (`<kbd>`).
 
-- Added `setting-icon-badge` class and `title={isSiteActive ? undefined : 'Protection is inactive on this page'}` tooltip attribute to the "Unblur Videos" row in `App.svelte`, restoring full visual and interaction consistency across all 6 setting rows.
-- Replaced fragile `.settings-row .w-6` CSS rules with targeted `.settings-row .setting-icon-badge` selectors in `popup.css`.
-- Added physical tactile press response (`transform: scale(0.99)`) to `.settings-row:active:not(.is-disabled)` and subtle hover scale transitions to keycap badges (`<kbd>`).
+11. **Keyboard Focus Retention, Header Visual Feedback & Restricted Badge Tooltips (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+   - Switched Force Unlock button during unlocking state from HTML `disabled` to `aria-disabled`, ensuring keyboard focus isn't involuntarily dropped during unlocking.
+   - Added `if (!activeTabId || !isSiteActive || unlockStatus !== 'idle') return;` check in `forceUnlockPage` to prevent redundant triggers while unlocking or when protection is inactive.
+   - Added smooth grayscale transition (`grayscale opacity-60`) to the header extension logo icon when global protection is disabled.
+   - Added explanatory `title="Per-site toggling is unavailable for system and local pages"` tooltip to the "Global Protection" badge on system and local pages.
+   - Updated button icon micro-interaction hover CSS selectors to exclude `[aria-disabled="true"]`.

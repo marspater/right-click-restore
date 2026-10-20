@@ -120,7 +120,11 @@ export const SELECTION_EVENTS = new Set([
   'beforecopy',
 ]);
 
+const MEDIA_TAGS = new Set(['VIDEO', 'AUDIO', 'IMG']);
+const OVERLAY_TAGS = new Set(['CANVAS', 'PICTURE', 'SVG']);
+
 // Player wrappers must not exempt the media itself from native-menu restoration.
+// Performance optimization: Use O(1) Set lookup instead of regex execution
 export function isMediaContextEvent(event: Event): boolean {
   if (event.type !== 'contextmenu') return false;
   const method = getUnshadowedMethod(event, 'composedPath');
@@ -129,13 +133,20 @@ export function isMediaContextEvent(event: Event): boolean {
     Array.isArray(path) &&
     path.some(
       (node) =>
-        node instanceof Element && /^(VIDEO|AUDIO|IMG)$/.test(node.tagName),
+        Boolean(node) &&
+        typeof (node as Element).tagName === 'string' &&
+        MEDIA_TAGS.has((node as Element).tagName),
     )
   );
 }
 
 export function findUnderlyingMedia(elements: Element[]): Element | undefined {
-  return elements.find((el) => /^(VIDEO|AUDIO|IMG)$/.test(el.tagName));
+  return elements.find(
+    (el) =>
+      Boolean(el) &&
+      typeof el.tagName === 'string' &&
+      MEDIA_TAGS.has(el.tagName),
+  );
 }
 
 const unmaskTimers = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>();
@@ -495,14 +506,18 @@ if (typeof window !== 'undefined') {
         const elements = safeElementsFromPoint(document, e.clientX, e.clientY);
         if (!elements || elements.length <= 1) return;
 
+        // Performance optimization: Use el.textContent instead of el.innerText to avoid
+        // forced synchronous layout reflows on high-frequency mousemove events.
+        // Also use constant Set lookups (OVERLAY_TAGS, MEDIA_TAGS) instead of regex tests
+        // for faster tag matching in element loops.
         const target =
           findUnderlyingMedia(elements) ??
           elements.find(
             (el, index) =>
               index > 0 &&
-              (/^(CANVAS|PICTURE|SVG)$/.test(el.tagName) ||
+              (OVERLAY_TAGS.has(el.tagName) ||
                 (el instanceof HTMLElement &&
-                  (el.innerText || el.textContent || '').trim().length > 0)),
+                  (el.textContent || '').trim().length > 0)),
           );
         if (target && elements[0] !== target) {
           for (const el of elements) {

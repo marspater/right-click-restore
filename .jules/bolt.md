@@ -32,3 +32,7 @@
 ## 2025-05-23 - Strict interface validation for cached native DOM prototype method fast-paths
 **Learning:** Native DOM prototype methods (such as `Element.prototype.getAttribute` or `Element.prototype.querySelectorAll`) throw an "Illegal invocation" TypeError if invoked on non-DOM objects. Fast-paths MUST check `instanceof Element` / `Document` / `DocumentFragment` and verify non-null target before attempting `safeApply` with native prototype references.
 **Action:** Always verify `instanceof` DOM interface constraints alongside `!Object.hasOwn` when invoking lazy-cached native prototype functions on target objects.
+
+## 2025-05-24 - Eliminating forced synchronous reflows in high-frequency event handlers
+**Learning:** Accessing `HTMLElement.prototype.innerText` forces the browser engine to perform a synchronous layout recalculation (reflow) to determine element visibility and text formatting. In high-frequency event handlers like `mousemove`, replacing `innerText` with `textContent` reads raw node text without forcing browser layout recalculation. Additionally, replacing regex tests (`/^(VIDEO|AUDIO|IMG)$/`) with module-level `Set.prototype.has` lookups speeds up element tag checks in loops.
+**Action:** Never read `innerText` in event listeners (especially `mousemove`, `scroll`, or `resize`); use `textContent` to inspect text content without layout thrashing. Use module-level `Set`s for $O(1)$ tag name checks instead of regular expressions.

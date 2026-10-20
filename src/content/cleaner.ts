@@ -40,6 +40,8 @@ const FAST_INTERACTIVE_TAGS = new Set([
   'YTD-APP',
 ]);
 
+const MEDIA_TAGS = new Set(['VIDEO', 'AUDIO', 'IMG']);
+
 export const SCRUB_ATTRS = [
   'oncontextmenu',
   'onselectstart',
@@ -222,9 +224,11 @@ export function cleanNode(
   }
 
   if (isInteractiveOrDescendant(node)) {
+    // Performance optimization: Use O(1) Set lookup instead of regex execution
     if (
       settings.restoreRightClick &&
-      /^(VIDEO|AUDIO|IMG)$/.test(node.tagName)
+      typeof node.tagName === 'string' &&
+      MEDIA_TAGS.has(node.tagName)
     ) {
       safeRemoveAttribute(node, 'oncontextmenu');
     }

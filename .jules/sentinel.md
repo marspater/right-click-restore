@@ -51,3 +51,8 @@
 **Vulnerability:** Invoking `.appendChild(...)` or `.attachShadow(...)` directly on elements or shadow roots allowed untrusted host page scripts or named elements (e.g. `<form id="head"><input name="appendChild"></form>` or `<input name="attachShadow">`) to clobber methods on container instances, throwing TypeErrors and breaking selection style injection and toast notifications.
 **Learning:** Container elements and root documents can have instance methods like `appendChild` or `attachShadow` clobbered by named form controls or host-page prototype modifications.
 **Prevention:** Use `safeAppendChild` and `safeAttachShadow` across content script DOM construction to retrieve unshadowed prototype methods via `getUnshadowedMethod` and execute via `safeApply`.
+
+## 2025-05-24 - Global `Event` Constructor Shadowing Resistance in Page Script Traps
+**Vulnerability:** Evaluating `this instanceof Event` inside event interception traps in `page-script/index.ts` allowed untrusted host page scripts to shadow `window.Event` (e.g., `window.Event = function(){}`) or override `Event[Symbol.hasInstance]`, causing `this instanceof Event` to evaluate to `false` and bypassing event trap checks for `preventDefault`, `stopPropagation`, and `returnValue`.
+**Learning:** Checking global constructors with `instanceof` in page scripts assumes host scripts have not shadowed global constructors in the page JS execution realm.
+**Prevention:** Snapshot native DOM constructors at module evaluation time (`const NativeEvent = typeof Event !== 'undefined' ? Event : null;`) and validate event instances using snapshotted constructor checks combined with `Object.prototype.toString` tag checks (`isEventInstance`).

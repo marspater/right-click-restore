@@ -25,6 +25,22 @@ export {
   safeMatches,
 } from '../shared/dom';
 
+const NativeEvent = typeof Event !== 'undefined' ? Event : null;
+const objectToString = Object.prototype.toString;
+
+export function isEventInstance(obj: unknown): obj is Event {
+  if (!obj || typeof obj !== 'object') return false;
+  if (NativeEvent && obj instanceof NativeEvent) return true;
+  try {
+    return (
+      objectToString.call(obj) === '[object Event]' ||
+      ('type' in obj && 'target' in obj && 'preventDefault' in obj)
+    );
+  } catch {
+    return false;
+  }
+}
+
 const FAST_INTERACTIVE_TAGS = new Set([
   'INPUT',
   'TEXTAREA',
@@ -183,7 +199,7 @@ function setupEventInterception(shouldBlockEvent: (event: Event) => boolean) {
   const origSIP = Event.prototype.stopImmediatePropagation;
 
   Event.prototype.preventDefault = function (this: Event): void {
-    if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
+    if (!this || !isEventInstance(this) || shouldBlockEvent(this)) return;
     try {
       safeApply(origPD, this, []);
     } catch {
@@ -199,7 +215,7 @@ function setupEventInterception(shouldBlockEvent: (event: Event) => boolean) {
     if (origDescriptor?.configurable !== false) {
       Object.defineProperty(Event.prototype, 'returnValue', {
         get() {
-          if (this && this instanceof Event && shouldBlockEvent(this))
+          if (this && isEventInstance(this) && shouldBlockEvent(this))
             return true;
           try {
             if (origDescriptor?.get)
@@ -210,7 +226,7 @@ function setupEventInterception(shouldBlockEvent: (event: Event) => boolean) {
           return true;
         },
         set(val) {
-          if (this && this instanceof Event && shouldBlockEvent(this)) return;
+          if (this && isEventInstance(this) && shouldBlockEvent(this)) return;
           try {
             if (origDescriptor?.set) safeApply(origDescriptor.set, this, [val]);
           } catch {
@@ -226,7 +242,7 @@ function setupEventInterception(shouldBlockEvent: (event: Event) => boolean) {
   }
 
   Event.prototype.stopPropagation = function (this: Event): void {
-    if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
+    if (!this || !isEventInstance(this) || shouldBlockEvent(this)) return;
     try {
       safeApply(origSP, this, []);
     } catch {
@@ -235,7 +251,7 @@ function setupEventInterception(shouldBlockEvent: (event: Event) => boolean) {
   };
 
   Event.prototype.stopImmediatePropagation = function (this: Event): void {
-    if (!this || !(this instanceof Event) || shouldBlockEvent(this)) return;
+    if (!this || !isEventInstance(this) || shouldBlockEvent(this)) return;
     try {
       safeApply(origSIP, this, []);
     } catch {

@@ -4,6 +4,7 @@ import type { Settings } from '../shared/settings';
 import {
   findUnderlyingMedia,
   handlePageScriptMessage,
+  isEventInstance,
   isInteractiveElement,
   isInteractiveEvent,
   isInteractiveNode,
@@ -212,6 +213,47 @@ describe('page-script helpers', () => {
       } as unknown as Event;
 
       expect(isInteractiveEvent(event)).toBe(true);
+    });
+  });
+
+  describe('isEventInstance', () => {
+    test('returns true for native Event objects', () => {
+      const event = new window.Event('contextmenu');
+      expect(isEventInstance(event)).toBe(true);
+    });
+
+    test('returns false for non-object or null values', () => {
+      expect(isEventInstance(null)).toBe(false);
+      expect(isEventInstance(undefined)).toBe(false);
+      expect(isEventInstance('event')).toBe(false);
+      expect(isEventInstance(123)).toBe(false);
+    });
+
+    test('returns true for event objects even when global window.Event is shadowed', () => {
+      const nativeEvt = new window.Event('click');
+      // Host page shadows window.Event with a fake constructor
+      const OriginalEvent = window.Event;
+      function FakeEvent() {}
+      window.Event = FakeEvent as unknown as typeof Event;
+
+      expect(
+        nativeEvt instanceof
+          (window.Event as unknown as new (
+            ...args: unknown[]
+          ) => unknown),
+      ).toBe(false);
+      expect(isEventInstance(nativeEvt)).toBe(true);
+
+      window.Event = OriginalEvent;
+    });
+
+    test('returns true for duck-typed event objects passing property checks', () => {
+      const customEventObj = {
+        type: 'contextmenu',
+        target: document,
+        preventDefault: () => {},
+      };
+      expect(isEventInstance(customEventObj)).toBe(true);
     });
   });
 

@@ -1,4 +1,8 @@
-import { safeGetStyle, safeQuerySelectorAll } from '../shared/dom';
+import {
+  safeGetStyle,
+  safeQuerySelector,
+  safeQuerySelectorAll,
+} from '../shared/dom';
 
 interface FilterOverride {
   value: string;
@@ -30,21 +34,29 @@ export class VideoUnblur {
   }
 
   scan(root: ParentNode): void {
+    const videos = safeQuerySelectorAll(root, 'video');
+    if (root instanceof HTMLElement && root.tagName === 'VIDEO') {
+      videos.push(root);
+    }
+
+    // Performance optimization: Fast-path early exit if no overrides are currently active and no video elements exist in root subtree.
+    if (this.overrides.size === 0 && videos.length === 0) {
+      return;
+    }
+
     // Release detached players and ancestors that no longer contain any video.
+    // Performance optimization: Use safeQuerySelector to stop search on the first matched video, avoiding full subtree array allocations.
     for (const element of this.overrides.keys()) {
       if (
         !element.isConnected ||
-        (element.tagName !== 'VIDEO' &&
-          safeQuerySelectorAll(element, 'video').length === 0)
+        (element.tagName !== 'VIDEO' && !safeQuerySelector(element, 'video'))
       ) {
         this.restore(element);
       }
     }
 
-    const videos = safeQuerySelectorAll(root, 'video');
-    if (root instanceof HTMLElement && root.tagName === 'VIDEO') {
-      videos.push(root);
-    }
+    if (videos.length === 0) return;
+
     const visited = new Set<Element>();
     for (const video of videos) {
       for (

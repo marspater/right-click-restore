@@ -32,3 +32,7 @@
 ## 2025-05-23 - Strict interface validation for cached native DOM prototype method fast-paths
 **Learning:** Native DOM prototype methods (such as `Element.prototype.getAttribute` or `Element.prototype.querySelectorAll`) throw an "Illegal invocation" TypeError if invoked on non-DOM objects. Fast-paths MUST check `instanceof Element` / `Document` / `DocumentFragment` and verify non-null target before attempting `safeApply` with native prototype references.
 **Action:** Always verify `instanceof` DOM interface constraints alongside `!Object.hasOwn` when invoking lazy-cached native prototype functions on target objects.
+
+## 2025-05-24 - Short-circuiting video container queries using querySelector
+**Learning:** Using `safeQuerySelector(element, 'video')` instead of `safeQuerySelectorAll(element, 'video').length === 0` to verify connected video containers stops searching as soon as the first video element is matched. This avoids full subtree DOM traversals and array allocations. Additionally, early exiting `VideoUnblur.scan` when `overrides.size === 0` and no video elements exist in the root subtree avoids unnecessary container scanning during non-video DOM mutations.
+**Action:** Use single-element `querySelector` short-circuiting instead of `querySelectorAll().length` when checking for element existence in subtrees.

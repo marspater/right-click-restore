@@ -48,3 +48,8 @@
 - Added `setting-icon-badge` class and `title={isSiteActive ? undefined : 'Protection is inactive on this page'}` tooltip attribute to the "Unblur Videos" row in `App.svelte`, restoring full visual and interaction consistency across all 6 setting rows.
 - Replaced fragile `.settings-row .w-6` CSS rules with targeted `.settings-row .setting-icon-badge` selectors in `popup.css`.
 - Added physical tactile press response (`transform: scale(0.99)`) to `.settings-row:active:not(.is-disabled)` and subtle hover scale transitions to keycap badges (`<kbd>`).
+
+11. **Apple Inset Divider Alignment & Setting Icon Micro-Interactions (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+- Adjusted `.settings-divider` margin from `0 8px` to `0 8px 0 42.5px`, aligning setting list dividers with the title text column in accordance with Apple Inset Grouped List design guidelines and eliminating visual clutter across the icon column.
+- Added SVG icon hover/focus micro-interactions (`.settings-row:hover:not(.is-disabled) .setting-icon-badge svg`) for refined tactile feedback on setting rows.
+- Added `id="desc-domain-status"` and `aria-describedby="desc-domain-status"` to the domain status stack and domain checkbox switch input in `App.svelte` for enhanced screen reader accessibility.

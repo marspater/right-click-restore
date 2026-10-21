@@ -51,3 +51,8 @@
 **Vulnerability:** Invoking `.appendChild(...)` or `.attachShadow(...)` directly on elements or shadow roots allowed untrusted host page scripts or named elements (e.g. `<form id="head"><input name="appendChild"></form>` or `<input name="attachShadow">`) to clobber methods on container instances, throwing TypeErrors and breaking selection style injection and toast notifications.
 **Learning:** Container elements and root documents can have instance methods like `appendChild` or `attachShadow` clobbered by named form controls or host-page prototype modifications.
 **Prevention:** Use `safeAppendChild` and `safeAttachShadow` across content script DOM construction to retrieve unshadowed prototype methods via `getUnshadowedMethod` and execute via `safeApply`.
+
+## 2025-05-24 - DOM Clobbering Resistance for Parent Element Traversal
+**Vulnerability:** Direct property access to `element.parentElement` allowed untrusted web pages to clobber `parentElement` using named child inputs (e.g. `<form><input name="parentElement"></form>`), returning input elements or spoofed non-Element objects that caused DOM traversal errors and bypassed interactive element checks or video unblur scanning.
+**Learning:** Accessing `.parentElement` directly assumes the property is unshadowed by child form controls or named getters.
+**Prevention:** Use `safeGetParentElement` across all DOM parent element traversals to retrieve native getters via `getNativeParentElementGetter`/`getUnshadowedGetter` and verify node interface prototype inheritance.

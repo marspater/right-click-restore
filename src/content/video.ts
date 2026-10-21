@@ -1,4 +1,8 @@
-import { safeGetStyle, safeQuerySelectorAll } from '../shared/dom';
+import {
+  safeGetParentElement,
+  safeGetStyle,
+  safeQuerySelectorAll,
+} from '../shared/dom';
 
 interface FilterOverride {
   value: string;
@@ -50,7 +54,7 @@ export class VideoUnblur {
       for (
         let element: Element | null = video;
         element;
-        element = element.parentElement
+        element = safeGetParentElement(element)
       ) {
         if (visited.has(element)) break;
         visited.add(element);

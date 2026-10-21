@@ -11,6 +11,7 @@ import {
   safeElementsFromPoint,
   safeGetAttribute,
   safeGetElementById,
+  safeGetParentElement,
   safeGetShadowRoot,
   safeGetStyle,
   safeHasAttribute,
@@ -300,6 +301,42 @@ describe('shared DOM utilities', () => {
 
       const shadow = safeGetShadowRoot(form);
       expect(shadow).toBeNull();
+    });
+  });
+
+  describe('safeGetParentElement', () => {
+    test('returns parent element of child node', () => {
+      const parent = document.createElement('div');
+      const child = document.createElement('span');
+      parent.appendChild(child);
+
+      expect(safeGetParentElement(child)).toBe(parent);
+    });
+
+    test('resists DOM clobbering when parentElement is overridden on form or input', () => {
+      const form = document.createElement('form');
+      const input = document.createElement('input');
+      input.setAttribute('name', 'parentElement');
+      form.appendChild(input);
+
+      Object.defineProperty(form, 'parentElement', {
+        value: input,
+        configurable: true,
+      });
+
+      expect(safeGetParentElement(input)).toBe(form);
+      expect(safeGetParentElement(form)).toBeNull();
+    });
+
+    test('rejects plain object interface spoofing or non-element objects', () => {
+      const fakeNode = {
+        parentElement: {
+          nodeType: 1,
+          tagName: 'DIV',
+        },
+      } as unknown as Node;
+
+      expect(safeGetParentElement(fakeNode)).toBeNull();
     });
   });
 

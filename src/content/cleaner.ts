@@ -224,7 +224,9 @@ export function cleanNode(
   if (isInteractiveOrDescendant(node)) {
     if (
       settings.restoreRightClick &&
-      /^(VIDEO|AUDIO|IMG)$/.test(node.tagName)
+      (node.tagName === 'VIDEO' ||
+        node.tagName === 'AUDIO' ||
+        node.tagName === 'IMG')
     ) {
       safeRemoveAttribute(node, 'oncontextmenu');
     }

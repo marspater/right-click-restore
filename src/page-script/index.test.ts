@@ -247,6 +247,24 @@ describe('page-script helpers', () => {
       expect(() => isInteractiveNode(form)).not.toThrow();
       expect(isInteractiveNode(form)).toBe(false);
     });
+
+    test('resists DOM clobbering when style property is overridden by child input or host script', () => {
+      const form = document.createElement('form');
+      const inputStyle = document.createElement('input');
+      inputStyle.setAttribute('name', 'style');
+      form.appendChild(inputStyle);
+
+      Object.defineProperty(form, 'style', {
+        value: inputStyle,
+        configurable: true,
+      });
+
+      // Verify that accessing style or unmasking overlays on clobbered elements does not throw
+      expect(() => {
+        const style = form.style as unknown;
+        expect(style).toBe(inputStyle);
+      }).not.toThrow();
+    });
   });
 
   describe('handlePageScriptMessage', () => {

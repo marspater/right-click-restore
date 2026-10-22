@@ -226,7 +226,7 @@ async function forceUnlockPage() {
   <!-- Apple-Style Header -->
   <header class="flex items-center justify-between pb-3 select-none">
     <div class="flex items-center gap-2.5">
-      <img src="../icons/icon-64.png" class="w-7 h-7" alt="" />
+      <img src="../icons/icon-64.png" class="w-7 h-7 rounded-[6px] shadow-[0_1px_3px_rgba(0,0,0,0.12)] transition-transform duration-200 hover:scale-105" alt="" />
       <div>
         <h1 class="text-[13.5px] font-semibold tracking-[-0.01em] text-[var(--text-primary)] leading-tight">
           RightClickRestore
@@ -251,6 +251,7 @@ async function forceUnlockPage() {
         settings.enabled ? 'cursor-pointer hover:bg-[var(--bg-card-hover)]' : 'dimmed cursor-not-allowed'
       }`}
       aria-disabled={!settings.enabled}
+      title={settings.enabled ? (isSiteDisabled ? `Enable protection on ${currentHostname}` : `Disable protection on ${currentHostname}`) : 'Extension is paused globally'}
     >
       <div class="flex items-center gap-2.5 min-w-0 pr-2">
         <!-- Status Beacon -->
@@ -364,7 +365,7 @@ async function forceUnlockPage() {
         </div>
         <div class="min-w-0">
           <div class="text-[12px] font-medium text-[var(--text-primary)] leading-tight">Allow Selection & Copy</div>
-          <div id="desc-restore-selection" class="text-[10px] text-[var(--text-secondary)] leading-tight">Enables text highlight and ⌘C</div>
+          <div id="desc-restore-selection" class="text-[10px] text-[var(--text-secondary)] leading-tight">Enables text highlight and <kbd class="kbd-subtext">⌘C</kbd></div>
         </div>
       </div>
       <span class="apple-switch apple-switch-sm">
@@ -465,7 +466,7 @@ async function forceUnlockPage() {
         </div>
         <div class="min-w-0">
           <div class="text-[12px] font-medium text-[var(--text-primary)] leading-tight">Modifier Key Bypass</div>
-          <div id="desc-bypass-modifier-key" class="text-[10px] text-[var(--text-secondary)] leading-tight">Bypass with ⇧ Shift or ⌥ Option</div>
+          <div id="desc-bypass-modifier-key" class="text-[10px] text-[var(--text-secondary)] leading-tight">Bypass with <kbd class="kbd-subtext">⇧ Shift</kbd> or <kbd class="kbd-subtext">⌥ Option</kbd></div>
         </div>
       </div>
       <span class="apple-switch apple-switch-sm">

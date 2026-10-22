@@ -48,3 +48,9 @@
 - Added `setting-icon-badge` class and `title={isSiteActive ? undefined : 'Protection is inactive on this page'}` tooltip attribute to the "Unblur Videos" row in `App.svelte`, restoring full visual and interaction consistency across all 6 setting rows.
 - Replaced fragile `.settings-row .w-6` CSS rules with targeted `.settings-row .setting-icon-badge` selectors in `popup.css`.
 - Added physical tactile press response (`transform: scale(0.99)`) to `.settings-row:active:not(.is-disabled)` and subtle hover scale transitions to keycap badges (`<kbd>`).
+
+11. **Subtext Inline Keycap Badges, App Icon Polish & Domain Tooltip Context (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+- Added inline keycap badges (`<kbd class="kbd-subtext">`) to shortcut key mentions (`⌘C`, `⇧ Shift`, `⌥ Option`) in setting row subtexts for "Allow Selection & Copy" and "Modifier Key Bypass", creating consistent keycap typography across the popup UI.
+- Styled `.kbd-subtext` in `popup.css` for compact 9px inline scaling with soft drop shadows and clean baseline alignment.
+- Enhanced header extension app icon with `rounded-[6px]`, subtle drop shadow (`shadow-[0_1px_3px_rgba(0,0,0,0.12)]`), and a smooth hover scale micro-interaction (`hover:scale-105`).
+- Added contextual `title` hover tooltips to the domain card when extension protection is paused globally.

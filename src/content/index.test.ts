@@ -45,6 +45,34 @@ describe('content script message handler', () => {
     expect(response).toEqual({ status: 'unauthorized' });
   });
 
+  test('rejects messages from a different extension ID origin', () => {
+    (globalThis as unknown as Record<string, unknown>).chrome = {
+      runtime: {
+        id: 'extension-id-123',
+        getURL: (path: string) => `chrome-extension://extension-id-123/${path}`,
+      },
+    };
+
+    let response: unknown;
+    const sendResponse = (res?: unknown) => {
+      response = res;
+    };
+
+    const otherExtensionSender = {
+      id: 'extension-id-123',
+      origin: 'chrome-extension://other-extension-id',
+      url: 'chrome-extension://other-extension-id/popup.html',
+    } as chrome.runtime.MessageSender;
+
+    handleContentMessage(
+      { type: 'RCR_FORCE_UNLOCK' },
+      otherExtensionSender,
+      sendResponse,
+    );
+
+    expect(response).toEqual({ status: 'unauthorized' });
+  });
+
   test('rejects messages when sender origin or url is non-extension', () => {
     (globalThis as unknown as Record<string, unknown>).chrome = {
       runtime: {

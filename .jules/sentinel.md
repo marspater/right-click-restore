@@ -52,6 +52,11 @@
 **Learning:** Container elements and root documents can have instance methods like `appendChild` or `attachShadow` clobbered by named form controls or host-page prototype modifications.
 **Prevention:** Use `safeAppendChild` and `safeAttachShadow` across content script DOM construction to retrieve unshadowed prototype methods via `getUnshadowedMethod` and execute via `safeApply`.
 
+## 2025-05-24 - Cross-Extension Sender Origin Validation Hardening
+**Vulnerability:** Checking whether `sender.origin` or `sender.url` matched generic extension schemes allowed malicious third-party browser extensions installed in the user's browser session to satisfy content script message sender origin checks.
+**Learning:** Generic extension scheme prefix checks (`uri.startsWith('chrome-extension://')`) accept any installed extension ID, compromising message origin authentication.
+**Prevention:** Always validate `sender.origin` and `sender.url` strictly against the current extension's unique base URI (`chrome.runtime.getURL('')`) when available.
+
 ## 2025-05-24 - Single-Evaluation Local Binding to Prevent Getter TOCTOU Re-evaluation
 **Vulnerability:** Evaluating properties multiple times (`detail.nonce`, `detail.channel`, `payload.type`) on untrusted `CustomEvent` detail objects allowed host page scripts to define mutating getter accessors. By returning valid tokens on validation checks and malicious tokens on state assignment, attackers could hijack bridge channel registration and bypass nonce checks.
 **Learning:** Untrusted objects passed in DOM `CustomEvent` details across execution contexts can contain dynamic property getters that re-evaluate code on every property access.

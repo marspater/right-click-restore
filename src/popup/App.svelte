@@ -186,7 +186,7 @@ $effect(() => {
 });
 
 async function forceUnlockPage() {
-  if (!activeTabId || unlockStatus === 'unlocking') return;
+  if (!activeTabId || !isSiteActive || unlockStatus !== 'idle') return;
   unlockStatus = 'unlocking';
   if (unlockTimeout) {
     clearTimeout(unlockTimeout);
@@ -236,7 +236,7 @@ async function forceUnlockPage() {
   <!-- Apple-Style Header -->
   <header class="flex items-center justify-between pb-3 select-none">
     <div class="flex items-center gap-2.5">
-      <img src="../icons/icon-64.png" class="w-7 h-7" alt="" />
+      <img src="../icons/icon-64.png" class={`w-7 h-7 transition-all duration-200 ${settings.enabled ? '' : 'grayscale opacity-60'}`} alt="" />
       <div>
         <h1 class="text-[13.5px] font-semibold tracking-[-0.01em] text-[var(--text-primary)] leading-tight">
           RightClickRestore
@@ -325,7 +325,7 @@ async function forceUnlockPage() {
         </div>
       </div>
 
-      <span class="text-[9.5px] font-medium text-[var(--text-tertiary)] bg-[var(--bg-badge)] px-2 py-0.5 rounded-full border border-[var(--border-subtle)] flex-shrink-0 select-none">
+      <span class="text-[9.5px] font-medium text-[var(--text-tertiary)] bg-[var(--bg-badge)] px-2 py-0.5 rounded-full border border-[var(--border-subtle)] flex-shrink-0 select-none" title="Per-site toggling is unavailable for system and local pages">
         Global Protection
       </span>
     </section>
@@ -490,7 +490,8 @@ async function forceUnlockPage() {
     <button
       type="button"
       onclick={forceUnlockPage}
-      disabled={unlockStatus !== 'idle' || !isSiteActive}
+      disabled={!isSiteActive}
+      aria-disabled={unlockStatus !== 'idle' || !isSiteActive}
       title={isSiteActive
         ? 'Force unlock context menu and selection on active page'
         : !settings.enabled

@@ -427,8 +427,9 @@ kbd:hover {
 }
 
 /* Force Unlock Button Icon Hover Micro-Interaction */
-button:hover:not(:disabled) .force-unlock-icon,
-button:focus-visible:not(:disabled) .force-unlock-icon {
+button:hover:not(:disabled):not([aria-disabled="true"]) .force-unlock-icon,
+button:focus-visible:not(:disabled):not([aria-disabled="true"])
+  .force-unlock-icon {
   transform: scale(1.15) rotate(-6deg);
 }
 

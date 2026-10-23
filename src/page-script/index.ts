@@ -159,23 +159,28 @@ export function handlePageScriptMessage(
     config?: unknown;
   };
 
+  // Single-evaluation local variable binding prevents getter TOCTOU bypasses
+  const nonce = payload.nonce;
+  const type = payload.type;
+  const config = payload.config;
+
   // Cryptographic nonce validation
   if (
     typeof expectedNonce !== 'string' ||
     expectedNonce.length === 0 ||
-    typeof payload.nonce !== 'string' ||
-    payload.nonce !== expectedNonce
+    typeof nonce !== 'string' ||
+    nonce !== expectedNonce
   ) {
     return false;
   }
 
-  if (payload.type === 'UPDATE' && payload.config) {
-    const validated = validateSettings(payload.config);
+  if (type === 'UPDATE' && config) {
+    const validated = validateSettings(config);
     onConfigUpdated?.(validated);
     return true;
   }
 
-  if (payload.type === 'UNLOCK') {
+  if (type === 'UNLOCK') {
     onUnlock?.();
     return true;
   }

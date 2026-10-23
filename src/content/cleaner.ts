@@ -40,6 +40,10 @@ const FAST_INTERACTIVE_TAGS = new Set([
   'YTD-APP',
 ]);
 
+// Performance optimization: Module-level Set for O(1) media element tag matching.
+// Bypasses RegExp object allocation and regex engine parsing during DOM cleaner traversals.
+const MEDIA_TAGS = new Set(['VIDEO', 'AUDIO', 'IMG']);
+
 export const SCRUB_ATTRS = [
   'oncontextmenu',
   'onselectstart',
@@ -222,10 +226,7 @@ export function cleanNode(
   }
 
   if (isInteractiveOrDescendant(node)) {
-    if (
-      settings.restoreRightClick &&
-      /^(VIDEO|AUDIO|IMG)$/.test(node.tagName)
-    ) {
+    if (settings.restoreRightClick && MEDIA_TAGS.has(node.tagName)) {
       safeRemoveAttribute(node, 'oncontextmenu');
     }
     return;

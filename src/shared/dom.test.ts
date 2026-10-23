@@ -13,6 +13,7 @@ import {
   safeGetElementById,
   safeGetShadowRoot,
   safeGetStyle,
+  safeGetTagName,
   safeHasAttribute,
   safeHasAttributes,
   safeMatches,
@@ -87,6 +88,37 @@ describe('shared DOM utilities', () => {
 
     test('returns null if property does not exist', () => {
       expect(getUnshadowedGetter({}, 'nonexistent')).toBeNull();
+    });
+  });
+
+  describe('safeGetTagName', () => {
+    test('retrieves uppercase tag name for standard elements', () => {
+      const div = document.createElement('div');
+      const span = document.createElement('span');
+      expect(safeGetTagName(div)).toBe('DIV');
+      expect(safeGetTagName(span)).toBe('SPAN');
+    });
+
+    test('resists DOM clobbering when tagName is overridden by named child input', () => {
+      const form = document.createElement('form');
+      const input = document.createElement('input');
+      input.setAttribute('name', 'tagName');
+      form.appendChild(input);
+
+      Object.defineProperty(form, 'tagName', {
+        value: input,
+        configurable: true,
+      });
+
+      expect(safeGetTagName(form)).toBe('FORM');
+    });
+
+    test('handles non-elements or faulty objects safely without throwing', () => {
+      expect(safeGetTagName(null as unknown as Element)).toBe('');
+      const faulty = {
+        tagName: 'invalid',
+      } as unknown as Element;
+      expect(safeGetTagName(faulty)).toBe('INVALID');
     });
   });
 

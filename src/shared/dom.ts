@@ -623,6 +623,46 @@ function getNativeStyleGetter(): ((this: unknown) => unknown) | null {
   return nativeStyleGetter;
 }
 
+let nativeTagNameGetter: ((this: unknown) => unknown) | null | undefined;
+function getNativeTagNameGetter(): ((this: unknown) => unknown) | null {
+  if (nativeTagNameGetter === undefined) {
+    try {
+      nativeTagNameGetter =
+        typeof Element !== 'undefined'
+          ? (Object.getOwnPropertyDescriptor(Element.prototype, 'tagName')
+              ?.get ?? null)
+          : null;
+    } catch {
+      nativeTagNameGetter = null;
+    }
+  }
+  return nativeTagNameGetter;
+}
+
+export function safeGetTagName(element: Element): string {
+  try {
+    let tag: unknown = null;
+    const nativeGetter = getNativeTagNameGetter();
+    if (
+      nativeGetter &&
+      typeof Element !== 'undefined' &&
+      element instanceof Element &&
+      !Object.hasOwn(element, 'tagName')
+    ) {
+      tag = safeApply(nativeGetter, element, []);
+    } else {
+      const getter = getUnshadowedGetter(element, 'tagName');
+      tag = getter ? safeApply(getter, element, []) : element.tagName;
+    }
+    if (typeof tag === 'string') {
+      return tag.toUpperCase();
+    }
+  } catch {
+    // Return empty string if accessing tagName throws on restricted elements
+  }
+  return '';
+}
+
 export function safeGetShadowRoot(element: Element): ShadowRoot | null {
   try {
     const nativeGetter = getNativeShadowRootGetter();

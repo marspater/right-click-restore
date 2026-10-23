@@ -301,6 +301,50 @@ describe('content script message handler', () => {
     expect(bridgeNonce).toBe('validnonce123');
   });
 
+  test('resists TOCTOU getter re-evaluation attack during handshake', () => {
+    let bridgeChannel: string | null = null;
+    let bridgeNonce: string | null = null;
+
+    const listener = (e: Event) => {
+      const detail = (e as CustomEvent)?.detail;
+      const rawNonce = detail?.nonce;
+      const rawChannel = detail?.channel;
+
+      if (
+        bridgeChannel === null &&
+        typeof rawNonce === 'string' &&
+        rawNonce.length >= 8 &&
+        typeof rawChannel === 'string' &&
+        rawChannel === `__rcr_bridge_${rawNonce}`
+      ) {
+        bridgeChannel = rawChannel;
+        bridgeNonce = rawNonce;
+      }
+    };
+
+    windowInstance.addEventListener('__rcr_handshake__', listener);
+
+    let getterCount = 0;
+    const maliciousDetail = {
+      get nonce() {
+        getterCount++;
+        if (getterCount <= 3) return '12345678';
+        return 'ATTACKER_NONCE';
+      },
+      channel: '__rcr_bridge_12345678',
+    };
+
+    windowInstance.dispatchEvent(
+      new CustomEvent('__rcr_handshake__', {
+        detail: maliciousDetail,
+      }),
+    );
+
+    expect(bridgeNonce).toBe('12345678');
+    expect(bridgeChannel).toBe('__rcr_bridge_12345678');
+    expect(getterCount).toBe(1);
+  });
+
   test('clones settings object before dispatching CustomEvents to prevent state mutation by page scripts', () => {
     const originalSettings: Settings = {
       enabled: true,

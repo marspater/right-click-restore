@@ -27,6 +27,16 @@ const isSiteActive = $derived(
   Boolean(settings.enabled && isToggleableDomain && !isSiteDisabled),
 );
 
+const disabledRowTooltip = $derived(
+  isSiteActive
+    ? undefined
+    : !settings.enabled
+      ? 'Extension is paused globally'
+      : !isToggleableDomain
+        ? 'Protection is unavailable on system pages'
+        : 'Protection is disabled on this domain',
+);
+
 // Load state and active tab on mount
 $effect(() => {
   try {
@@ -324,7 +334,7 @@ async function forceUnlockPage() {
   <!-- Settings List Group -->
   <section class={`glass-card p-1 mb-2 flex flex-col ${isSiteActive ? '' : 'dimmed'}`}>
     <!-- Feature 1: Restore Right Click -->
-    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={isSiteActive ? undefined : 'Protection is inactive on this page'}>
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={disabledRowTooltip}>
       <div class="flex items-center gap-2.5 min-w-0">
         <div class={`setting-icon-badge w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
           isSiteActive && settings.restoreRightClick
@@ -350,7 +360,7 @@ async function forceUnlockPage() {
     <div class="settings-divider" aria-hidden="true"></div>
 
     <!-- Feature 2: Allow Selection & Copy -->
-    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={isSiteActive ? undefined : 'Protection is inactive on this page'}>
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={disabledRowTooltip}>
       <div class="flex items-center gap-2.5 min-w-0">
         <div class={`setting-icon-badge w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
           isSiteActive && settings.restoreSelection
@@ -376,7 +386,7 @@ async function forceUnlockPage() {
     <div class="settings-divider" aria-hidden="true"></div>
 
     <!-- Feature 3: Anti-Shield Overlay -->
-    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={isSiteActive ? undefined : 'Protection is inactive on this page'}>
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={disabledRowTooltip}>
       <div class="flex items-center gap-2.5 min-w-0">
         <div class={`setting-icon-badge w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
           isSiteActive && settings.antiShield
@@ -400,7 +410,7 @@ async function forceUnlockPage() {
 
     <div class="settings-divider" aria-hidden="true"></div>
 
-    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={isSiteActive ? undefined : 'Protection is inactive on this page'}>
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={disabledRowTooltip}>
       <div class="flex items-center gap-2.5 min-w-0">
         <div class={`setting-icon-badge w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
           isSiteActive && settings.unblurVideos
@@ -426,7 +436,7 @@ async function forceUnlockPage() {
     <div class="settings-divider" aria-hidden="true"></div>
 
     <!-- Feature 4: Absolute Force Mode -->
-    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={isSiteActive ? undefined : 'Protection is inactive on this page'}>
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={disabledRowTooltip}>
       <div class="flex items-center gap-2.5 min-w-0">
         <div class={`setting-icon-badge w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
           isSiteActive && settings.absoluteForce
@@ -451,7 +461,7 @@ async function forceUnlockPage() {
     <div class="settings-divider" aria-hidden="true"></div>
 
     <!-- Feature 5: Modifier Key Bypass -->
-    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={isSiteActive ? undefined : 'Protection is inactive on this page'}>
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={disabledRowTooltip}>
       <div class="flex items-center gap-2.5 min-w-0">
         <div class={`setting-icon-badge w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
           isSiteActive && settings.bypassModifierKey

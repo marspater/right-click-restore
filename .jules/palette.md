@@ -67,3 +67,9 @@
 - Adjusted `.settings-divider` margin from `0 8px` to `0 8px 0 42.5px`, aligning setting list dividers with the title text column in accordance with Apple Inset Grouped List design guidelines and eliminating visual clutter across the icon column.
 - Added SVG icon hover/focus micro-interactions (`.settings-row:hover:not(.is-disabled) .setting-icon-badge svg`) for refined tactile feedback on setting rows.
 - Added `id="desc-domain-status"` and `aria-describedby="desc-domain-status"` to the domain status stack and domain checkbox switch input in `App.svelte` for enhanced screen reader accessibility.
+
+15. **Subtext Inline Keycap Badges, App Icon Polish & Domain Tooltip Context (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+- Added inline keycap badges (`<kbd class="kbd-subtext">`) to shortcut key mentions (`⌘C`, `⇧ Shift`, `⌥ Option`) in setting row subtexts for "Allow Selection & Copy" and "Modifier Key Bypass", creating consistent keycap typography across the popup UI.
+- Styled `.kbd-subtext` in `popup.css` for compact 9px inline scaling with soft drop shadows and clean baseline alignment.
+- Enhanced header extension app icon with `rounded-[6px]`, subtle drop shadow (`shadow-[0_1px_3px_rgba(0,0,0,0.12)]`), and a smooth hover scale micro-interaction (`hover:scale-105`).
+- Added contextual `title` hover tooltips to the domain card when extension protection is paused globally.

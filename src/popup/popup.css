@@ -416,6 +416,14 @@ kbd:hover {
   transform: scale(1.05);
 }
 
+kbd.kbd-subtext {
+  font-size: 9px;
+  padding: 1px 3.5px;
+  border-radius: 4px;
+  vertical-align: 0.5px;
+  box-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.06);
+}
+
 /* Micro-Animation Keyframes */
 @keyframes popIn {
   0% {

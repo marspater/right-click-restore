@@ -9,6 +9,7 @@ import {
   safeClosest,
   safeElementsFromPoint,
   safeGetParentElement,
+  safeGetStyle,
   safeGetTagName,
   safeHasAttributes,
   safeMatches,
@@ -506,23 +507,28 @@ if (typeof window !== 'undefined') {
       timers: WeakMap<HTMLElement, ReturnType<typeof setTimeout>>,
     ) {
       if (timers.has(el)) return;
-      const prevPointerEvents = el.style.pointerEvents;
-      const prevPriority = el.style.getPropertyPriority('pointer-events');
+      const style = safeGetStyle(el);
+      if (!style) return;
+      const prevPointerEvents = style.pointerEvents;
+      const prevPriority = style.getPropertyPriority('pointer-events');
 
       el.classList.add('rcr-unmasked-overlay');
-      el.style.setProperty('pointer-events', 'none', 'important');
+      style.setProperty('pointer-events', 'none', 'important');
 
       const timer = setTimeout(() => {
         try {
           el.classList.remove('rcr-unmasked-overlay');
-          if (prevPointerEvents) {
-            el.style.setProperty(
-              'pointer-events',
-              prevPointerEvents,
-              prevPriority,
-            );
-          } else {
-            el.style.removeProperty('pointer-events');
+          const currentStyle = safeGetStyle(el);
+          if (currentStyle) {
+            if (prevPointerEvents) {
+              currentStyle.setProperty(
+                'pointer-events',
+                prevPointerEvents,
+                prevPriority,
+              );
+            } else {
+              currentStyle.removeProperty('pointer-events');
+            }
           }
           timers.delete(el);
         } catch {

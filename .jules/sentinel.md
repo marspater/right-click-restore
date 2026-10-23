@@ -56,3 +56,8 @@
 **Vulnerability:** Evaluating properties multiple times (`detail.nonce`, `detail.channel`, `payload.type`) on untrusted `CustomEvent` detail objects allowed host page scripts to define mutating getter accessors. By returning valid tokens on validation checks and malicious tokens on state assignment, attackers could hijack bridge channel registration and bypass nonce checks.
 **Learning:** Untrusted objects passed in DOM `CustomEvent` details across execution contexts can contain dynamic property getters that re-evaluate code on every property access.
 **Prevention:** Always extract properties from untrusted event payloads into local primitive variables (`const rawNonce = detail?.nonce`) exactly once before performing validation or locking internal state.
+
+## 2025-05-24 - DOM Clobbering Resistance for Style Injection Container & Main-World Constructor Shadowing
+**Vulnerability:** Untrusted host page scripts could clobber `document.head` (e.g. using `<form id="head">`), causing `updateInjectedStyles` to select the clobbered form element instead of the real head node and fail style element insertion. Additionally, main-world scripts relying on `Node.TEXT_NODE` or global `Element` constructor checks could be broken when untrusted scripts shadow `window.Node` or `window.Element`.
+**Learning:** `document.head` can be clobbered by named elements, and main-world scripts execute in the host JS context where global DOM constructors can be modified.
+**Prevention:** Verify `document.head?.tagName === 'HEAD'` before using it as a style container (falling back to `document.documentElement`), use numeric `3` for `TEXT_NODE`, and check `nodeType === 1` for element identification.

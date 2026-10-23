@@ -52,6 +52,15 @@ export function isInteractiveElement(item: Element): boolean {
   }
 }
 
+function isElementNode(item: unknown): item is Element {
+  return Boolean(
+    item &&
+      typeof item === 'object' &&
+      'nodeType' in item &&
+      (item as Node).nodeType === 1,
+  );
+}
+
 // Performance optimization: Avoid redundant CSS selector matching on target element.
 // isInteractiveElement(curr) already evaluates whether curr matches ALL_INTERACTIVE_SELECTORS.
 // Calling safeClosest on curr.parentElement avoids re-evaluating the multi-selector CSS rule
@@ -60,16 +69,17 @@ export function isInteractiveNode(node: Node | null): boolean {
   if (!node) return false;
   try {
     let curr: Node | null = node;
-    if (curr.nodeType === Node.TEXT_NODE) {
+    if (curr.nodeType === 3) {
       curr = curr.parentElement;
     }
-    if (curr instanceof Element) {
-      if (isInteractiveElement(curr)) {
+    if (isElementNode(curr) || curr instanceof Element) {
+      const el = curr as Element;
+      if (isInteractiveElement(el)) {
         return true;
       }
       if (
-        curr.parentElement &&
-        safeClosest(curr.parentElement, ALL_INTERACTIVE_SELECTORS)
+        el.parentElement &&
+        safeClosest(el.parentElement, ALL_INTERACTIVE_SELECTORS)
       ) {
         return true;
       }
@@ -92,14 +102,21 @@ export function isInteractiveEvent(event: Event): boolean {
       const path = safeApply(composedPathFn, event, []) as unknown[];
       if (Array.isArray(path) && path.length > 0) {
         return path.some(
-          (item) => item instanceof Element && isInteractiveElement(item),
+          (item) =>
+            (isElementNode(item) || item instanceof Element) &&
+            isInteractiveElement(item as Element),
         );
       }
     }
   } catch {
     // Suppress errors checking composedPath
   }
-  return isInteractiveNode(event.target instanceof Node ? event.target : null);
+  return isInteractiveNode(
+    event.target &&
+      (isElementNode(event.target) || event.target instanceof Node)
+      ? (event.target as Node)
+      : null,
+  );
 }
 
 export function isModifierPressed(event: Event): boolean {

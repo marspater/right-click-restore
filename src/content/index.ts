@@ -284,7 +284,11 @@ export function handleContentMessage(
             }
           `;
           // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-          const container = document.head || document.documentElement;
+          const head = document.head as Element | null;
+          const container =
+            head && typeof head.tagName === 'string' && head.tagName === 'HEAD'
+              ? head
+              : document.documentElement;
           // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           if (container) {
             safeAppendChild(container, styleEl);

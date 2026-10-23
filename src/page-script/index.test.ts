@@ -247,6 +247,47 @@ describe('page-script helpers', () => {
       expect(() => isInteractiveNode(form)).not.toThrow();
       expect(isInteractiveNode(form)).toBe(false);
     });
+
+    test('resists main-world Node.TEXT_NODE and global Element constructor shadowing', () => {
+      // Shadow global Node.TEXT_NODE property
+      const originalTextNode = (
+        globalThis.Node as unknown as Record<string, unknown>
+      ).TEXT_NODE;
+      (globalThis.Node as unknown as Record<string, unknown>).TEXT_NODE =
+        undefined;
+
+      // Shadow global Element constructor on window
+      const originalElement = globalThis.Element;
+      Object.defineProperty(globalThis, 'Element', {
+        value: class FakeElement {},
+        configurable: true,
+      });
+
+      try {
+        const button = document.createElement('button');
+        const textNode = document.createTextNode('Click here');
+        button.appendChild(textNode);
+
+        expect(() => isInteractiveNode(textNode)).not.toThrow();
+        expect(isInteractiveNode(textNode)).toBe(true);
+
+        const input = document.createElement('input');
+        const event = {
+          composedPath: () => [input],
+          target: input,
+        } as unknown as Event;
+
+        expect(() => isInteractiveEvent(event)).not.toThrow();
+        expect(isInteractiveEvent(event)).toBe(true);
+      } finally {
+        (globalThis.Node as unknown as Record<string, unknown>).TEXT_NODE =
+          originalTextNode;
+        Object.defineProperty(globalThis, 'Element', {
+          value: originalElement,
+          configurable: true,
+        });
+      }
+    });
   });
 
   describe('handlePageScriptMessage', () => {

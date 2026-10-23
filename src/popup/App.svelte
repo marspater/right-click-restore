@@ -226,7 +226,7 @@ async function forceUnlockPage() {
   <!-- Apple-Style Header -->
   <header class="flex items-center justify-between pb-3 select-none">
     <div class="flex items-center gap-2.5">
-      <img src="../icons/icon-64.png" class="w-7 h-7" alt="" />
+      <img src="../icons/icon-64.png" class="w-7 h-7 transition-transform duration-200 hover:scale-105" alt="" />
       <div>
         <h1 class="text-[13.5px] font-semibold tracking-[-0.01em] text-[var(--text-primary)] leading-tight">
           RightClickRestore

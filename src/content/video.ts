@@ -1,4 +1,5 @@
 import {
+  safeGetParentElement,
   safeGetStyle,
   safeGetTagName,
   safeQuerySelector,
@@ -64,7 +65,7 @@ export class VideoUnblur {
       for (
         let element: Element | null = video;
         element;
-        element = element.parentElement
+        element = safeGetParentElement(element)
       ) {
         if (visited.has(element)) break;
         visited.add(element);

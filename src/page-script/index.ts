@@ -8,6 +8,7 @@ import {
   safeApply,
   safeClosest,
   safeElementsFromPoint,
+  safeGetParentElement,
   safeGetTagName,
   safeHasAttributes,
   safeMatches,
@@ -87,17 +88,15 @@ export function isInteractiveNode(node: Node | null): boolean {
   try {
     let curr: Node | null = node;
     if (curr.nodeType === 3) {
-      curr = curr.parentElement;
+      curr = safeGetParentElement(curr);
     }
     if (isElementNode(curr) || curr instanceof Element) {
       const el = curr as Element;
       if (isInteractiveElement(el)) {
         return true;
       }
-      if (
-        el.parentElement &&
-        safeClosest(el.parentElement, ALL_INTERACTIVE_SELECTORS)
-      ) {
+      const parent = safeGetParentElement(el);
+      if (parent && safeClosest(parent, ALL_INTERACTIVE_SELECTORS)) {
         return true;
       }
     }

@@ -66,3 +66,8 @@
 **Vulnerability:** Evaluating `this instanceof Event` inside event interception traps in `page-script/index.ts` allowed untrusted host page scripts to shadow `window.Event` (e.g., `window.Event = function(){}`) or override `Event[Symbol.hasInstance]`, causing `this instanceof Event` to evaluate to `false` and bypassing event trap checks for `preventDefault`, `stopPropagation`, and `returnValue`.
 **Learning:** Checking global constructors with `instanceof` in page scripts assumes host scripts have not shadowed global constructors in the page JS execution realm.
 **Prevention:** Snapshot native DOM constructors at module evaluation time (`const NativeEvent = typeof Event !== 'undefined' ? Event : null;`) and validate event instances using snapshotted constructor checks combined with `Object.prototype.toString` tag checks (`isEventInstance`).
+
+## 2025-05-24 - DOM Clobbering Resistance for Parent Element Traversal
+**Vulnerability:** Direct property access to `element.parentElement` allowed untrusted web pages to clobber `parentElement` using named child inputs (e.g. `<form><input name="parentElement"></form>`), returning input elements or spoofed non-Element objects that caused DOM traversal errors and bypassed interactive element checks or video unblur scanning.
+**Learning:** Accessing `.parentElement` directly assumes the property is unshadowed by child form controls or named getters.
+**Prevention:** Use `safeGetParentElement` across all DOM parent element traversals to retrieve native getters via `getNativeParentElementGetter`/`getUnshadowedGetter` and verify node interface prototype inheritance.

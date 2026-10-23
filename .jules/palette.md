@@ -48,9 +48,17 @@
    - Replaced fragile `.settings-row .w-6` CSS rules with targeted `.settings-row .setting-icon-badge` selectors in `popup.css`.
    - Added physical tactile press response (`transform: scale(0.99)`) to `.settings-row:active:not(.is-disabled)` and subtle hover scale transitions to keycap badges (`<kbd>`).
 
-11. **Keyboard Focus Retention, Header Visual Feedback & Restricted Badge Tooltips (`src/popup/App.svelte` & `src/popup/popup.css`)**:
-   - Switched Force Unlock button during unlocking state from HTML `disabled` to `aria-disabled`, ensuring keyboard focus isn't involuntarily dropped during unlocking.
-   - Added `if (!activeTabId || !isSiteActive || unlockStatus !== 'idle') return;` check in `forceUnlockPage` to prevent redundant triggers while unlocking or when protection is inactive.
-   - Added smooth grayscale transition (`grayscale opacity-60`) to the header extension logo icon when global protection is disabled.
-   - Added explanatory `title="Per-site toggling is unavailable for system and local pages"` tooltip to the "Global Protection" badge on system and local pages.
-   - Updated button icon micro-interaction hover CSS selectors to exclude `[aria-disabled="true"]`.
+11. **Context-Aware Disabled Tooltips & Pointer Affordances (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+- Replaced generic "Protection is inactive on this page" tooltip text across setting rows with a derived, context-aware `disabledRowTooltip` variable that explicitly states why controls are disabled (`Extension is paused globally`, `Protection is unavailable on system pages`, or `Protection is disabled on this domain`).
+- Refined `.dimmed` state CSS in `popup.css` by removing `pointer-events: none` and setting `cursor: not-allowed`, allowing desktop browser tooltips to trigger reliably on hover and giving immediate cursor feedback on disabled cards/rows.
+
+12. **Dimmed Row Tooltip Discoverability & Non-Interactive Card Scoping (`src/popup/popup.css`)**:
+- Scoped domain card hover (`scale(1.2)` on beacon) and click press (`scale(0.99)`) CSS selectors strictly to interactive cards (`label.domain-card`), preventing static system/restricted page header cards from triggering misleading press feedback.
+- Refined `.dimmed:not(.glass-card)` to scope `cursor: not-allowed` without blocking row tooltips.
+
+13. **Keyboard Focus Retention, Header Visual Feedback & Restricted Badge Tooltips (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+- Switched Force Unlock button during unlocking state from HTML `disabled` to `aria-disabled`, ensuring keyboard focus isn't involuntarily dropped during unlocking.
+- Added `if (!activeTabId || !isSiteActive || unlockStatus !== 'idle') return;` check in `forceUnlockPage` to prevent redundant triggers while unlocking or when protection is inactive.
+- Added smooth grayscale transition (`grayscale opacity-60`) to the header extension logo icon when global protection is disabled.
+- Added explanatory `title="Per-site toggling is unavailable for system and local pages"` tooltip to the "Global Protection" badge on system and local pages.
+- Updated button icon micro-interaction hover CSS selectors to exclude `[aria-disabled="true"]`.

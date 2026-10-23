@@ -52,6 +52,10 @@ export function isInteractiveElement(item: Element): boolean {
   }
 }
 
+// Performance optimization: Avoid redundant CSS selector matching on target element.
+// isInteractiveElement(curr) already evaluates whether curr matches ALL_INTERACTIVE_SELECTORS.
+// Calling safeClosest on curr.parentElement avoids re-evaluating the multi-selector CSS rule
+// against curr when isInteractiveElement returns false.
 export function isInteractiveNode(node: Node | null): boolean {
   if (!node) return false;
   try {
@@ -63,7 +67,12 @@ export function isInteractiveNode(node: Node | null): boolean {
       if (isInteractiveElement(curr)) {
         return true;
       }
-      if (safeClosest(curr, ALL_INTERACTIVE_SELECTORS)) return true;
+      if (
+        curr.parentElement &&
+        safeClosest(curr.parentElement, ALL_INTERACTIVE_SELECTORS)
+      ) {
+        return true;
+      }
     }
   } catch {
     // Suppress errors inspecting interactive node
@@ -129,13 +138,19 @@ export function isMediaContextEvent(event: Event): boolean {
     Array.isArray(path) &&
     path.some(
       (node) =>
-        node instanceof Element && /^(VIDEO|AUDIO|IMG)$/.test(node.tagName),
+        node instanceof Element &&
+        (node.tagName === 'VIDEO' ||
+          node.tagName === 'AUDIO' ||
+          node.tagName === 'IMG'),
     )
   );
 }
 
 export function findUnderlyingMedia(elements: Element[]): Element | undefined {
-  return elements.find((el) => /^(VIDEO|AUDIO|IMG)$/.test(el.tagName));
+  return elements.find(
+    (el) =>
+      el.tagName === 'VIDEO' || el.tagName === 'AUDIO' || el.tagName === 'IMG',
+  );
 }
 
 const unmaskTimers = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>();
@@ -153,23 +168,28 @@ export function handlePageScriptMessage(
     config?: unknown;
   };
 
+  // Single-evaluation local variable binding prevents getter TOCTOU bypasses
+  const nonce = payload.nonce;
+  const type = payload.type;
+  const config = payload.config;
+
   // Cryptographic nonce validation
   if (
     typeof expectedNonce !== 'string' ||
     expectedNonce.length === 0 ||
-    typeof payload.nonce !== 'string' ||
-    payload.nonce !== expectedNonce
+    typeof nonce !== 'string' ||
+    nonce !== expectedNonce
   ) {
     return false;
   }
 
-  if (payload.type === 'UPDATE' && payload.config) {
-    const validated = validateSettings(payload.config);
+  if (type === 'UPDATE' && config) {
+    const validated = validateSettings(config);
     onConfigUpdated?.(validated);
     return true;
   }
 
-  if (payload.type === 'UNLOCK') {
+  if (type === 'UNLOCK') {
     onUnlock?.();
     return true;
   }

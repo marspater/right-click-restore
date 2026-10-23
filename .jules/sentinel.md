@@ -51,3 +51,8 @@
 **Vulnerability:** Invoking `.appendChild(...)` or `.attachShadow(...)` directly on elements or shadow roots allowed untrusted host page scripts or named elements (e.g. `<form id="head"><input name="appendChild"></form>` or `<input name="attachShadow">`) to clobber methods on container instances, throwing TypeErrors and breaking selection style injection and toast notifications.
 **Learning:** Container elements and root documents can have instance methods like `appendChild` or `attachShadow` clobbered by named form controls or host-page prototype modifications.
 **Prevention:** Use `safeAppendChild` and `safeAttachShadow` across content script DOM construction to retrieve unshadowed prototype methods via `getUnshadowedMethod` and execute via `safeApply`.
+
+## 2025-05-24 - Single-Evaluation Local Binding to Prevent Getter TOCTOU Re-evaluation
+**Vulnerability:** Evaluating properties multiple times (`detail.nonce`, `detail.channel`, `payload.type`) on untrusted `CustomEvent` detail objects allowed host page scripts to define mutating getter accessors. By returning valid tokens on validation checks and malicious tokens on state assignment, attackers could hijack bridge channel registration and bypass nonce checks.
+**Learning:** Untrusted objects passed in DOM `CustomEvent` details across execution contexts can contain dynamic property getters that re-evaluate code on every property access.
+**Prevention:** Always extract properties from untrusted event payloads into local primitive variables (`const rawNonce = detail?.nonce`) exactly once before performing validation or locking internal state.

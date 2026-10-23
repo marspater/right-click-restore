@@ -40,3 +40,7 @@
 ## 2025-05-24 - Eliminating forced synchronous reflows in high-frequency event handlers
 **Learning:** Accessing `HTMLElement.prototype.innerText` forces the browser engine to perform a synchronous layout recalculation (reflow) to determine element visibility and text formatting. In high-frequency event handlers like `mousemove`, replacing `innerText` with `textContent` reads raw node text without forcing browser layout recalculation. Additionally, replacing regex tests (`/^(VIDEO|AUDIO|IMG)$/`) with module-level `Set.prototype.has` lookups speeds up element tag checks in loops.
 **Action:** Never read `innerText` in event listeners (especially `mousemove`, `scroll`, or `resize`); use `textContent` to inspect text content without layout thrashing. Use module-level `Set`s for $O(1)$ tag name checks instead of regular expressions.
+
+## 2025-05-24 - Short-circuiting video container queries using querySelector
+**Learning:** Using `safeQuerySelector(element, 'video')` instead of `safeQuerySelectorAll(element, 'video').length === 0` to verify connected video containers stops searching as soon as the first video element is matched. This avoids full subtree DOM traversals and array allocations. Additionally, early exiting `VideoUnblur.scan` when `overrides.size === 0` and no video elements exist in the root subtree avoids unnecessary container scanning during non-video DOM mutations.
+**Action:** Use single-element `querySelector` short-circuiting instead of `querySelectorAll().length` when checking for element existence in subtrees.

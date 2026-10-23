@@ -433,6 +433,22 @@ export function safeQuerySelectorAll(
   }
 }
 
+export function safeQuerySelector(
+  root: ParentNode,
+  selector: string,
+): Element | null {
+  try {
+    const fn = getUnshadowedMethod(root, 'querySelector');
+    if (fn) {
+      return (safeApply(fn, root, [selector]) as Element | null) ?? null;
+    }
+    return root.querySelector(selector);
+  } catch {
+    // Return null if querySelector throws on invalid selectors or detached nodes
+    return null;
+  }
+}
+
 function tryCachedGetAttribute(
   element: Element,
   attr: string,

@@ -17,6 +17,7 @@ import {
   safeHasAttribute,
   safeHasAttributes,
   safeMatches,
+  safeQuerySelector,
   safeQuerySelectorAll,
   safeRemoveAttribute,
   safeRemoveElement,
@@ -511,8 +512,8 @@ describe('shared DOM utilities', () => {
     });
   });
 
-  describe('safeQuerySelectorAll', () => {
-    test('returns array of matching elements', () => {
+  describe('safeQuerySelectorAll & safeQuerySelector', () => {
+    test('returns array of matching elements or single first match', () => {
       const container = document.createElement('div');
       const item1 = document.createElement('span');
       item1.className = 'item';
@@ -525,9 +526,12 @@ describe('shared DOM utilities', () => {
       expect(items).toHaveLength(2);
       expect(items[0]).toBe(item1);
       expect(items[1]).toBe(item2);
+
+      expect(safeQuerySelector(container, '.item')).toBe(item1);
+      expect(safeQuerySelector(container, '.missing')).toBeNull();
     });
 
-    test('resists DOM clobbering when querySelectorAll is overridden', () => {
+    test('resists DOM clobbering when querySelectorAll or querySelector is overridden', () => {
       const container = document.createElement('form');
       const input = document.createElement('input');
       input.setAttribute('name', 'querySelectorAll');
@@ -546,6 +550,14 @@ describe('shared DOM utilities', () => {
       const results = safeQuerySelectorAll(container, '.target');
       expect(results).toHaveLength(1);
       expect(results[0]).toBe(target);
+
+      // Clobber querySelector property on container
+      Object.defineProperty(container, 'querySelector', {
+        value: input,
+        configurable: true,
+      });
+
+      expect(safeQuerySelector(container, '.target')).toBe(target);
     });
   });
 

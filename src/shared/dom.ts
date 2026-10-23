@@ -209,6 +209,61 @@ function getNativeGetAttributeMethod(): NativeDOMMethod<
   return nativeGetAttributeMethod;
 }
 
+let nativeElementQuerySelectorMethod: NativeDOMMethod<
+  typeof Element.prototype.querySelector
+> = typeof Element !== 'undefined' ? Element.prototype.querySelector : null;
+function getNativeElementQuerySelectorMethod(): NativeDOMMethod<
+  typeof Element.prototype.querySelector
+> {
+  if (!nativeElementQuerySelectorMethod && typeof Element !== 'undefined') {
+    try {
+      nativeElementQuerySelectorMethod = Element.prototype.querySelector;
+    } catch {
+      nativeElementQuerySelectorMethod = null;
+    }
+  }
+  return nativeElementQuerySelectorMethod;
+}
+
+let nativeDocumentQuerySelectorMethod: NativeDOMMethod<
+  typeof Document.prototype.querySelector
+> = typeof Document !== 'undefined' ? Document.prototype.querySelector : null;
+function getNativeDocumentQuerySelectorMethod(): NativeDOMMethod<
+  typeof Document.prototype.querySelector
+> {
+  if (!nativeDocumentQuerySelectorMethod && typeof Document !== 'undefined') {
+    try {
+      nativeDocumentQuerySelectorMethod = Document.prototype.querySelector;
+    } catch {
+      nativeDocumentQuerySelectorMethod = null;
+    }
+  }
+  return nativeDocumentQuerySelectorMethod;
+}
+
+let nativeDocumentFragmentQuerySelectorMethod: NativeDOMMethod<
+  typeof DocumentFragment.prototype.querySelector
+> =
+  typeof DocumentFragment !== 'undefined'
+    ? DocumentFragment.prototype.querySelector
+    : null;
+function getNativeDocumentFragmentQuerySelectorMethod(): NativeDOMMethod<
+  typeof DocumentFragment.prototype.querySelector
+> {
+  if (
+    !nativeDocumentFragmentQuerySelectorMethod &&
+    typeof DocumentFragment !== 'undefined'
+  ) {
+    try {
+      nativeDocumentFragmentQuerySelectorMethod =
+        DocumentFragment.prototype.querySelector;
+    } catch {
+      nativeDocumentFragmentQuerySelectorMethod = null;
+    }
+  }
+  return nativeDocumentFragmentQuerySelectorMethod;
+}
+
 let nativeElementQuerySelectorAllMethod: NativeDOMMethod<
   typeof Element.prototype.querySelectorAll
 > = typeof Element !== 'undefined' ? Element.prototype.querySelectorAll : null;
@@ -386,6 +441,16 @@ export function safeGetElementById(
 }
 
 /* eslint-disable no-unused-vars */
+function getTargetQuerySelector(
+  root: ParentNode,
+): ((selectors: string) => Element | null) | null {
+  const nodeType = (root as Node).nodeType;
+  if (nodeType === 1) return getNativeElementQuerySelectorMethod();
+  if (nodeType === 9) return getNativeDocumentQuerySelectorMethod();
+  if (nodeType === 11) return getNativeDocumentFragmentQuerySelectorMethod();
+  return null;
+}
+
 function getTargetQuerySelectorAll(
   root: ParentNode,
 ): ((selectors: string) => NodeListOf<Element>) | null {
@@ -397,6 +462,44 @@ function getTargetQuerySelectorAll(
 }
 /* eslint-enable no-unused-vars */
 
+function invokeCachedQuerySelector(
+  root: ParentNode,
+  selector: string,
+): Element | null | undefined {
+  if (Object.hasOwn(root, 'querySelector')) {
+    return undefined;
+  }
+  const nativeFn = getTargetQuerySelector(root);
+  if (nativeFn) {
+    try {
+      return (safeApply(nativeFn, root, [selector]) as Element | null) ?? null;
+    } catch {
+      return undefined;
+    }
+  }
+  return undefined;
+}
+
+export function safeQuerySelector(
+  root: ParentNode,
+  selector: string,
+): Element | null {
+  try {
+    const cached = invokeCachedQuerySelector(root, selector);
+    if (cached !== undefined) {
+      return cached;
+    }
+    const fn = getUnshadowedMethod(root, 'querySelector');
+    if (fn) {
+      return (safeApply(fn, root, [selector]) as Element | null) ?? null;
+    }
+    return root.querySelector(selector) ?? null;
+  } catch {
+    // Return null if querySelector throws on invalid selectors or detached nodes
+    return null;
+  }
+}
+
 function invokeCachedQuerySelectorAll(
   root: ParentNode,
   selector: string,
@@ -406,7 +509,11 @@ function invokeCachedQuerySelectorAll(
   }
   const nativeFn = getTargetQuerySelectorAll(root);
   if (nativeFn) {
-    return Array.from(safeApply(nativeFn, root, [selector]));
+    try {
+      return Array.from(safeApply(nativeFn, root, [selector]));
+    } catch {
+      return null;
+    }
   }
   return null;
 }
@@ -430,22 +537,6 @@ export function safeQuerySelectorAll(
   } catch {
     // Return empty array if querySelectorAll throws on invalid selectors or detached nodes
     return [];
-  }
-}
-
-export function safeQuerySelector(
-  root: ParentNode,
-  selector: string,
-): Element | null {
-  try {
-    const fn = getUnshadowedMethod(root, 'querySelector');
-    if (fn) {
-      return (safeApply(fn, root, [selector]) as Element | null) ?? null;
-    }
-    return root.querySelector(selector);
-  } catch {
-    // Return null if querySelector throws on invalid selectors or detached nodes
-    return null;
   }
 }
 

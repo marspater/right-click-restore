@@ -799,6 +799,41 @@ describe('shared DOM utilities', () => {
       expect(safeQuerySelectorAll(mockRoot, '.test')).toEqual([child1]);
     });
 
+    test('cached native querySelector invokes correctly on Element, Document, DocumentFragment, and falls back when shadowed', () => {
+      const container = document.createElement('div');
+      const child = document.createElement('span');
+      child.className = 'qs-item';
+      container.appendChild(child);
+
+      // 1. Invokes cached native method on Element
+      expect(safeQuerySelector(container, '.qs-item')).toBe(child);
+      expect(safeQuerySelector(container, '.missing-qs')).toBeNull();
+
+      // 2. Invokes cached native method on Document
+      document.body.appendChild(container);
+      expect(safeQuerySelector(document, '.qs-item')).toBe(child);
+
+      // 3. Invokes cached native method on DocumentFragment
+      const fragment = document.createDocumentFragment();
+      const fragChild = document.createElement('div');
+      fragChild.className = 'frag-qs';
+      fragment.appendChild(fragChild);
+      expect(safeQuerySelector(fragment, '.frag-qs')).toBe(fragChild);
+
+      // 4. Falls back when querySelector is shadowed on instance
+      Object.defineProperty(container, 'querySelector', {
+        value: 'hijacked-qs',
+        configurable: true,
+      });
+      expect(safeQuerySelector(container, '.qs-item')).toBe(child);
+
+      // 5. Falls back safely on mock plain object
+      const mockRoot = {
+        querySelector: (sel: string) => (sel === '.test' ? child : null),
+      } as unknown as ParentNode;
+      expect(safeQuerySelector(mockRoot, '.test')).toBe(child);
+    });
+
     test('cached native method accessors safely handle unavailable DOM globals and null inputs', () => {
       expect(safeGetAttribute(null as unknown as Element, 'id')).toBeNull();
       expect(

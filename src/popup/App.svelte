@@ -281,7 +281,7 @@ async function forceUnlockPage() {
 
         <!-- Domain Labels Stack -->
         <div class="min-w-0 flex flex-col justify-center">
-          <span class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
+          <span id="desc-domain-status" class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
             {!settings.enabled ? 'Extension Paused' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
           </span>
           <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-0.5" title={currentHostname}>
@@ -291,7 +291,7 @@ async function forceUnlockPage() {
       </div>
 
       <span class="apple-switch apple-switch-sm" title={isSiteDisabled ? `Enable protection on ${currentHostname}` : `Disable protection on ${currentHostname}`}>
-        <input type="checkbox" role="switch" checked={!isSiteDisabled} aria-checked={!isSiteDisabled} disabled={!settings.enabled} onchange={toggleCurrentSite} aria-label={`Protection on ${currentHostname}`} />
+        <input type="checkbox" role="switch" checked={!isSiteDisabled} aria-checked={!isSiteDisabled} aria-describedby="desc-domain-status" disabled={!settings.enabled} onchange={toggleCurrentSite} aria-label={`Protection on ${currentHostname}`} />
         <span class="apple-slider"></span>
       </span>
     </label>

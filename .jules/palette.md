@@ -62,3 +62,8 @@
 - Added smooth grayscale transition (`grayscale opacity-60`) to the header extension logo icon when global protection is disabled.
 - Added explanatory `title="Per-site toggling is unavailable for system and local pages"` tooltip to the "Global Protection" badge on system and local pages.
 - Updated button icon micro-interaction hover CSS selectors to exclude `[aria-disabled="true"]`.
+
+14. **Apple Inset Divider Alignment & Setting Icon Micro-Interactions (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+- Adjusted `.settings-divider` margin from `0 8px` to `0 8px 0 42.5px`, aligning setting list dividers with the title text column in accordance with Apple Inset Grouped List design guidelines and eliminating visual clutter across the icon column.
+- Added SVG icon hover/focus micro-interactions (`.settings-row:hover:not(.is-disabled) .setting-icon-badge svg`) for refined tactile feedback on setting rows.
+- Added `id="desc-domain-status"` and `aria-describedby="desc-domain-status"` to the domain status stack and domain checkbox switch input in `App.svelte` for enhanced screen reader accessibility.

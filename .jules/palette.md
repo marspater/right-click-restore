@@ -52,3 +52,7 @@
 11. **Context-Aware Disabled Tooltips & Pointer Affordances (`src/popup/App.svelte` & `src/popup/popup.css`)**:
 - Replaced generic "Protection is inactive on this page" tooltip text across setting rows with a derived, context-aware `disabledRowTooltip` variable that explicitly states why controls are disabled (`Extension is paused globally`, `Protection is unavailable on system pages`, or `Protection is disabled on this domain`).
 - Refined `.dimmed` state CSS in `popup.css` by removing `pointer-events: none` and setting `cursor: not-allowed`, allowing desktop browser tooltips to trigger reliably on hover and giving immediate cursor feedback on disabled cards/rows.
+
+12. **Dimmed Row Tooltip Discoverability & Non-Interactive Card Scoping (`src/popup/popup.css`)**:
+- Scoped domain card hover (`scale(1.2)` on beacon) and click press (`scale(0.99)`) CSS selectors strictly to interactive cards (`label.domain-card`), preventing static system/restricted page header cards from triggering misleading press feedback.
+- Refined `.dimmed:not(.glass-card)` to scope `cursor: not-allowed` without blocking row tooltips.

@@ -34,10 +34,6 @@ const FAST_INTERACTIVE_TAGS = new Set([
   'YTD-APP',
 ]);
 
-// Performance optimization: Module-level Set for O(1) media tag lookup.
-// Bypasses regex compilation/matching in event composed path traversals.
-const MEDIA_TAGS = new Set(['VIDEO', 'AUDIO', 'IMG']);
-
 // Performance optimization: Fast-path interactive element check during event composed path traversals.
 // Bypasses expensive safeMatches CSS selector evaluation when an element has no attributes,
 // avoiding selector matching on attribute-less DOM nodes while guaranteeing exact selector accuracy.
@@ -131,12 +127,21 @@ export function isMediaContextEvent(event: Event): boolean {
   const path = method ? safeApply(method, event, []) : [];
   return (
     Array.isArray(path) &&
-    path.some((node) => node instanceof Element && MEDIA_TAGS.has(node.tagName))
+    path.some(
+      (node) =>
+        node instanceof Element &&
+        (node.tagName === 'VIDEO' ||
+          node.tagName === 'AUDIO' ||
+          node.tagName === 'IMG'),
+    )
   );
 }
 
 export function findUnderlyingMedia(elements: Element[]): Element | undefined {
-  return elements.find((el) => MEDIA_TAGS.has(el.tagName));
+  return elements.find(
+    (el) =>
+      el.tagName === 'VIDEO' || el.tagName === 'AUDIO' || el.tagName === 'IMG',
+  );
 }
 
 const unmaskTimers = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>();

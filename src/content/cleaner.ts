@@ -40,10 +40,6 @@ const FAST_INTERACTIVE_TAGS = new Set([
   'YTD-APP',
 ]);
 
-// Performance optimization: Module-level Set for O(1) media element tag matching.
-// Bypasses RegExp object allocation and regex engine parsing during DOM cleaner traversals.
-const MEDIA_TAGS = new Set(['VIDEO', 'AUDIO', 'IMG']);
-
 export const SCRUB_ATTRS = [
   'oncontextmenu',
   'onselectstart',
@@ -93,23 +89,23 @@ function hasUserSelectNone(node: Element): boolean {
   if (typeof HTMLElement === 'undefined' || !(node instanceof HTMLElement)) {
     return false;
   }
-  if (!safeHasAttribute(node, 'style')) {
+  // Performance optimization: Fast-path raw inline style attribute inspection.
+  // Accessing safeGetAttribute directly bypasses redundant safeHasAttribute calls
+  // since null is returned if the style attribute is absent. Accessing safeGetStyle(node)
+  // computes/resolves CSSStyleDeclaration properties, which is expensive.
+  // Over 95% of styled DOM nodes do not configure user-select. Short-circuiting if
+  // the style attribute string lacks 'user-select' or 'userselect' avoids unnecessary
+  // CSS property accesses while retaining complete accuracy.
+  const styleAttr = safeGetAttribute(node, 'style');
+  if (!styleAttr) {
     return false;
   }
-  // Performance optimization: Fast-path raw inline style attribute inspection.
-  // Accessing safeGetStyle(node) computes/resolves CSSStyleDeclaration properties,
-  // which is expensive. Over 95% of styled DOM nodes do not configure user-select.
-  // Short-circuiting if the style attribute string lacks 'user-select' or 'userselect'
-  // avoids unnecessary CSS property accesses while retaining complete accuracy.
-  const styleAttr = safeGetAttribute(node, 'style');
-  if (styleAttr) {
-    const styleAttrLower = styleAttr.toLowerCase();
-    if (
-      !styleAttrLower.includes('user-select') &&
-      !styleAttrLower.includes('userselect')
-    ) {
-      return false;
-    }
+  const styleAttrLower = styleAttr.toLowerCase();
+  if (
+    !styleAttrLower.includes('user-select') &&
+    !styleAttrLower.includes('userselect')
+  ) {
+    return false;
   }
   const style = safeGetStyle(node);
   if (!style) return false;
@@ -123,18 +119,16 @@ function restoreUserSelect(node: Element): void {
   if (typeof HTMLElement === 'undefined' || !(node instanceof HTMLElement)) {
     return;
   }
-  if (!safeHasAttribute(node, 'style')) {
+  const styleAttr = safeGetAttribute(node, 'style');
+  if (!styleAttr) {
     return;
   }
-  const styleAttr = safeGetAttribute(node, 'style');
-  if (styleAttr) {
-    const styleAttrLower = styleAttr.toLowerCase();
-    if (
-      !styleAttrLower.includes('user-select') &&
-      !styleAttrLower.includes('userselect')
-    ) {
-      return;
-    }
+  const styleAttrLower = styleAttr.toLowerCase();
+  if (
+    !styleAttrLower.includes('user-select') &&
+    !styleAttrLower.includes('userselect')
+  ) {
+    return;
   }
   try {
     const style = safeGetStyle(node);
@@ -160,19 +154,23 @@ function hasScrubbableSelection(node: Element): boolean {
   return hasUserSelectNone(node);
 }
 
-function hasScrubbableTarget(node: Element, settings: Settings): boolean {
+function hasScrubbableTarget(
+  node: Element,
+  settings: Settings,
+  shadow?: ShadowRoot | null,
+): boolean {
   try {
+    if (shadow) {
+      return true;
+    }
     // Fast-path: Elements without attributes cannot have event handler attributes or inline style attributes
     if (!safeHasAttributes(node)) {
-      return Boolean(safeGetShadowRoot(node));
+      return false;
     }
     if (settings.restoreRightClick && safeHasAttribute(node, 'oncontextmenu')) {
       return true;
     }
     if (settings.restoreSelection && hasScrubbableSelection(node)) {
-      return true;
-    }
-    if (safeGetShadowRoot(node)) {
       return true;
     }
   } catch {
@@ -220,13 +218,21 @@ export function cleanNode(
     return;
   }
 
-  // Fast-path: Skip expensive tree traversal if element has no scrubbable attributes/styles
-  if (!hasScrubbableTarget(node, settings)) {
+  // Single-pass open shadow root inspection reused for target validation and shadow DOM cleaning
+  const shadow = safeGetShadowRoot(node);
+
+  // Fast-path: Skip expensive tree traversal if element has no scrubbable attributes/styles or shadow
+  if (!hasScrubbableTarget(node, settings, shadow)) {
     return;
   }
 
   if (isInteractiveOrDescendant(node)) {
-    if (settings.restoreRightClick && MEDIA_TAGS.has(node.tagName)) {
+    if (
+      settings.restoreRightClick &&
+      (node.tagName === 'VIDEO' ||
+        node.tagName === 'AUDIO' ||
+        node.tagName === 'IMG')
+    ) {
       safeRemoveAttribute(node, 'oncontextmenu');
     }
     return;
@@ -235,13 +241,12 @@ export function cleanNode(
   stripScrubbableAttributes(node, settings);
 
   // Traverse open shadow root if accessible
-  try {
-    const shadow = safeGetShadowRoot(node);
-    if (shadow) {
+  if (shadow) {
+    try {
       cleanDOMTree(shadow, settings);
+    } catch {
+      // Suppress errors traversing shadow roots on restricted elements
     }
-  } catch {
-    // Suppress errors traversing shadow roots on restricted elements
   }
 }
 

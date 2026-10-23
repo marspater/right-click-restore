@@ -32,3 +32,19 @@
 ## 2025-05-23 - Strict interface validation for cached native DOM prototype method fast-paths
 **Learning:** Native DOM prototype methods (such as `Element.prototype.getAttribute` or `Element.prototype.querySelectorAll`) throw an "Illegal invocation" TypeError if invoked on non-DOM objects. Fast-paths MUST check `instanceof Element` / `Document` / `DocumentFragment` and verify non-null target before attempting `safeApply` with native prototype references.
 **Action:** Always verify `instanceof` DOM interface constraints alongside `!Object.hasOwn` when invoking lazy-cached native prototype functions on target objects.
+
+## 2025-05-24 - Fast-pathing tag name checks with string equality over RegExp.test
+**Learning:** Replacing RegExp pattern matching (e.g. `/^(VIDEO|AUDIO|IMG)$/.test(node.tagName)`) with primitive string strict equality (`tag === 'VIDEO' || tag === 'AUDIO' || tag === 'IMG'`) on hot DOM traversal paths avoids RegExp engine execution overhead, object instantiation, and string parsing during frequent event path inspections and element sweeps.
+**Action:** Prefer direct string equality comparisons (`===`) over RegExp `.test()` when testing element `tagName` against a small, static set of tag names on hot paths.
+
+## 2025-05-24 - Redundant attribute checks and regex tag matching fast-pathing
+**Learning:** Calling `safeHasAttribute(node, 'style')` prior to `safeGetAttribute(node, 'style')` is redundant because `getAttribute` natively returns `null` when an attribute is missing, doubling DOM lookup overhead on styled nodes. Furthermore, replacing `/^(VIDEO|AUDIO|IMG)$/.test(node.tagName)` with direct string comparisons (`node.tagName === 'VIDEO' || ...`) in event handlers and DOM sweepers eliminates RegExp allocation and execution overhead. Reusing shadowRoot references across `cleanNode` and `hasScrubbableTarget` also avoids duplicate DOM getter calls.
+**Action:** Directly read attributes with `safeGetAttribute` without pre-checking `safeHasAttribute`, use string equality for fixed set tag comparisons, and reuse DOM property/getter lookups in tree routines.
+
+## 2025-05-24 - Eliminating forced synchronous reflows in high-frequency event handlers
+**Learning:** Accessing `HTMLElement.prototype.innerText` forces the browser engine to perform a synchronous layout recalculation (reflow) to determine element visibility and text formatting. In high-frequency event handlers like `mousemove`, replacing `innerText` with `textContent` reads raw node text without forcing browser layout recalculation. Additionally, replacing regex tests (`/^(VIDEO|AUDIO|IMG)$/`) with module-level `Set.prototype.has` lookups speeds up element tag checks in loops.
+**Action:** Never read `innerText` in event listeners (especially `mousemove`, `scroll`, or `resize`); use `textContent` to inspect text content without layout thrashing. Use module-level `Set`s for $O(1)$ tag name checks instead of regular expressions.
+
+## 2025-05-24 - Short-circuiting video container queries using querySelector
+**Learning:** Using `safeQuerySelector(element, 'video')` instead of `safeQuerySelectorAll(element, 'video').length === 0` to verify connected video containers stops searching as soon as the first video element is matched. This avoids full subtree DOM traversals and array allocations. Additionally, early exiting `VideoUnblur.scan` when `overrides.size === 0` and no video elements exist in the root subtree avoids unnecessary container scanning during non-video DOM mutations.
+**Action:** Use single-element `querySelector` short-circuiting instead of `querySelectorAll().length` when checking for element existence in subtrees.

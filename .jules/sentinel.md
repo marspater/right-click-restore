@@ -56,3 +56,23 @@
 **Vulnerability:** Checking whether `sender.origin` or `sender.url` matched generic extension schemes allowed malicious third-party browser extensions installed in the user's browser session to satisfy content script message sender origin checks.
 **Learning:** Generic extension scheme prefix checks (`uri.startsWith('chrome-extension://')`) accept any installed extension ID, compromising message origin authentication.
 **Prevention:** Always validate `sender.origin` and `sender.url` strictly against the current extension's unique base URI (`chrome.runtime.getURL('')`) when available.
+
+## 2025-05-24 - Single-Evaluation Local Binding to Prevent Getter TOCTOU Re-evaluation
+**Vulnerability:** Evaluating properties multiple times (`detail.nonce`, `detail.channel`, `payload.type`) on untrusted `CustomEvent` detail objects allowed host page scripts to define mutating getter accessors. By returning valid tokens on validation checks and malicious tokens on state assignment, attackers could hijack bridge channel registration and bypass nonce checks.
+**Learning:** Untrusted objects passed in DOM `CustomEvent` details across execution contexts can contain dynamic property getters that re-evaluate code on every property access.
+**Prevention:** Always extract properties from untrusted event payloads into local primitive variables (`const rawNonce = detail?.nonce`) exactly once before performing validation or locking internal state.
+
+## 2025-05-24 - DOM Clobbering Resistance for Style Injection Container & Main-World Constructor Shadowing
+**Vulnerability:** Untrusted host page scripts could clobber `document.head` (e.g. using `<form id="head">`), causing `updateInjectedStyles` to select the clobbered form element instead of the real head node and fail style element insertion. Additionally, main-world scripts relying on `Node.TEXT_NODE` or global `Element` constructor checks could be broken when untrusted scripts shadow `window.Node` or `window.Element`.
+**Learning:** `document.head` can be clobbered by named elements, and main-world scripts execute in the host JS context where global DOM constructors can be modified.
+**Prevention:** Verify `document.head?.tagName === 'HEAD'` before using it as a style container (falling back to `document.documentElement`), use numeric `3` for `TEXT_NODE`, and check `nodeType === 1` for element identification.
+
+## 2025-05-24 - Global `Event` Constructor Shadowing Resistance in Page Script Traps
+**Vulnerability:** Evaluating `this instanceof Event` inside event interception traps in `page-script/index.ts` allowed untrusted host page scripts to shadow `window.Event` (e.g., `window.Event = function(){}`) or override `Event[Symbol.hasInstance]`, causing `this instanceof Event` to evaluate to `false` and bypassing event trap checks for `preventDefault`, `stopPropagation`, and `returnValue`.
+**Learning:** Checking global constructors with `instanceof` in page scripts assumes host scripts have not shadowed global constructors in the page JS execution realm.
+**Prevention:** Snapshot native DOM constructors at module evaluation time (`const NativeEvent = typeof Event !== 'undefined' ? Event : null;`) and validate event instances using snapshotted constructor checks combined with `Object.prototype.toString` tag checks (`isEventInstance`).
+
+## 2025-05-24 - DOM Clobbering Resistance for Parent Element Traversal
+**Vulnerability:** Direct property access to `element.parentElement` allowed untrusted web pages to clobber `parentElement` using named child inputs (e.g. `<form><input name="parentElement"></form>`), returning input elements or spoofed non-Element objects that caused DOM traversal errors and bypassed interactive element checks or video unblur scanning.
+**Learning:** Accessing `.parentElement` directly assumes the property is unshadowed by child form controls or named getters.
+**Prevention:** Use `safeGetParentElement` across all DOM parent element traversals to retrieve native getters via `getNativeParentElementGetter`/`getUnshadowedGetter` and verify node interface prototype inheritance.

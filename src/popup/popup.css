@@ -153,11 +153,11 @@ body {
     0.2s ease, box-shadow 0.2s ease;
 }
 
-.domain-card:hover:not(.dimmed) .relative > .rounded-full {
+label.domain-card:hover:not(.dimmed) .relative > .rounded-full {
   transform: scale(1.2);
 }
 
-.domain-card:active:not(.dimmed) {
+label.domain-card:active:not(.dimmed) {
   opacity: 0.88;
   transform: scale(0.99);
 }
@@ -316,6 +316,10 @@ button:focus-visible {
     cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.settings-row .setting-icon-badge svg {
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 .settings-row:hover:not(.is-disabled) {
   background-color: var(--bg-row-hover);
 }
@@ -323,6 +327,11 @@ button:focus-visible {
 .settings-row:hover:not(.is-disabled) .setting-icon-badge,
 .settings-row:focus-within:not(.is-disabled) .setting-icon-badge {
   transform: scale(1.05);
+}
+
+.settings-row:hover:not(.is-disabled) .setting-icon-badge svg,
+.settings-row:focus-within:not(.is-disabled) .setting-icon-badge svg {
+  transform: scale(1.08);
 }
 
 .settings-row:active:not(.is-disabled) .setting-icon-badge {
@@ -369,16 +378,19 @@ button:focus-visible {
 .settings-divider {
   height: 0.5px;
   background-color: var(--border-divider);
-  margin: 0 8px;
+  margin: 0 8px 0 42.5px;
 }
 
 /* Dimmed Inactive State */
 .dimmed {
   opacity: 0.42;
   filter: grayscale(0.65);
-  pointer-events: none;
   transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s
     cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dimmed:not(.glass-card) {
+  cursor: not-allowed;
 }
 
 /* Styled Keycap Badge */
@@ -432,8 +444,9 @@ kbd.kbd-subtext {
 }
 
 /* Force Unlock Button Icon Hover Micro-Interaction */
-button:hover:not(:disabled) .force-unlock-icon,
-button:focus-visible:not(:disabled) .force-unlock-icon {
+button:hover:not(:disabled):not([aria-disabled="true"]) .force-unlock-icon,
+button:focus-visible:not(:disabled):not([aria-disabled="true"])
+  .force-unlock-icon {
   transform: scale(1.15) rotate(-6deg);
 }
 

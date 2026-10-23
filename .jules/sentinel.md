@@ -52,6 +52,16 @@
 **Learning:** Container elements and root documents can have instance methods like `appendChild` or `attachShadow` clobbered by named form controls or host-page prototype modifications.
 **Prevention:** Use `safeAppendChild` and `safeAttachShadow` across content script DOM construction to retrieve unshadowed prototype methods via `getUnshadowedMethod` and execute via `safeApply`.
 
+## 2025-05-24 - Single-Evaluation Local Binding to Prevent Getter TOCTOU Re-evaluation
+**Vulnerability:** Evaluating properties multiple times (`detail.nonce`, `detail.channel`, `payload.type`) on untrusted `CustomEvent` detail objects allowed host page scripts to define mutating getter accessors. By returning valid tokens on validation checks and malicious tokens on state assignment, attackers could hijack bridge channel registration and bypass nonce checks.
+**Learning:** Untrusted objects passed in DOM `CustomEvent` details across execution contexts can contain dynamic property getters that re-evaluate code on every property access.
+**Prevention:** Always extract properties from untrusted event payloads into local primitive variables (`const rawNonce = detail?.nonce`) exactly once before performing validation or locking internal state.
+
+## 2025-05-24 - DOM Clobbering Resistance for Style Injection Container & Main-World Constructor Shadowing
+**Vulnerability:** Untrusted host page scripts could clobber `document.head` (e.g. using `<form id="head">`), causing `updateInjectedStyles` to select the clobbered form element instead of the real head node and fail style element insertion. Additionally, main-world scripts relying on `Node.TEXT_NODE` or global `Element` constructor checks could be broken when untrusted scripts shadow `window.Node` or `window.Element`.
+**Learning:** `document.head` can be clobbered by named elements, and main-world scripts execute in the host JS context where global DOM constructors can be modified.
+**Prevention:** Verify `document.head?.tagName === 'HEAD'` before using it as a style container (falling back to `document.documentElement`), use numeric `3` for `TEXT_NODE`, and check `nodeType === 1` for element identification.
+
 ## 2025-05-24 - Global `Event` Constructor Shadowing Resistance in Page Script Traps
 **Vulnerability:** Evaluating `this instanceof Event` inside event interception traps in `page-script/index.ts` allowed untrusted host page scripts to shadow `window.Event` (e.g., `window.Event = function(){}`) or override `Event[Symbol.hasInstance]`, causing `this instanceof Event` to evaluate to `false` and bypassing event trap checks for `preventDefault`, `stopPropagation`, and `returnValue`.
 **Learning:** Checking global constructors with `instanceof` in page scripts assumes host scripts have not shadowed global constructors in the page JS execution realm.

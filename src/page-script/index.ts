@@ -8,6 +8,7 @@ import {
   safeApply,
   safeClosest,
   safeElementsFromPoint,
+  safeGetTagName,
   safeHasAttributes,
   safeMatches,
   safeRemoveElement,
@@ -55,7 +56,7 @@ const FAST_INTERACTIVE_TAGS = new Set([
 // avoiding selector matching on attribute-less DOM nodes while guaranteeing exact selector accuracy.
 export function isInteractiveElement(item: Element): boolean {
   try {
-    const tag = typeof item.tagName === 'string' ? item.tagName : '';
+    const tag = safeGetTagName(item);
     if (FAST_INTERACTIVE_TAGS.has(tag)) {
       return true;
     }
@@ -68,18 +69,37 @@ export function isInteractiveElement(item: Element): boolean {
   }
 }
 
+function isElementNode(item: unknown): item is Element {
+  return Boolean(
+    item &&
+      typeof item === 'object' &&
+      'nodeType' in item &&
+      (item as Node).nodeType === 1,
+  );
+}
+
+// Performance optimization: Avoid redundant CSS selector matching on target element.
+// isInteractiveElement(curr) already evaluates whether curr matches ALL_INTERACTIVE_SELECTORS.
+// Calling safeClosest on curr.parentElement avoids re-evaluating the multi-selector CSS rule
+// against curr when isInteractiveElement returns false.
 export function isInteractiveNode(node: Node | null): boolean {
   if (!node) return false;
   try {
     let curr: Node | null = node;
-    if (curr.nodeType === Node.TEXT_NODE) {
+    if (curr.nodeType === 3) {
       curr = curr.parentElement;
     }
-    if (curr instanceof Element) {
-      if (isInteractiveElement(curr)) {
+    if (isElementNode(curr) || curr instanceof Element) {
+      const el = curr as Element;
+      if (isInteractiveElement(el)) {
         return true;
       }
-      if (safeClosest(curr, ALL_INTERACTIVE_SELECTORS)) return true;
+      if (
+        el.parentElement &&
+        safeClosest(el.parentElement, ALL_INTERACTIVE_SELECTORS)
+      ) {
+        return true;
+      }
     }
   } catch {
     // Suppress errors inspecting interactive node
@@ -99,14 +119,21 @@ export function isInteractiveEvent(event: Event): boolean {
       const path = safeApply(composedPathFn, event, []) as unknown[];
       if (Array.isArray(path) && path.length > 0) {
         return path.some(
-          (item) => item instanceof Element && isInteractiveElement(item),
+          (item) =>
+            (isElementNode(item) || item instanceof Element) &&
+            isInteractiveElement(item as Element),
         );
       }
     }
   } catch {
     // Suppress errors checking composedPath
   }
-  return isInteractiveNode(event.target instanceof Node ? event.target : null);
+  return isInteractiveNode(
+    event.target &&
+      (isElementNode(event.target) || event.target instanceof Node)
+      ? (event.target as Node)
+      : null,
+  );
 }
 
 export function isModifierPressed(event: Event): boolean {
@@ -143,15 +170,19 @@ export function isMediaContextEvent(event: Event): boolean {
   const path = method ? safeApply(method, event, []) : [];
   return (
     Array.isArray(path) &&
-    path.some(
-      (node) =>
-        node instanceof Element && /^(VIDEO|AUDIO|IMG)$/.test(node.tagName),
-    )
+    path.some((node) => {
+      if (!(node instanceof Element)) return false;
+      const tag = safeGetTagName(node);
+      return tag === 'VIDEO' || tag === 'AUDIO' || tag === 'IMG';
+    })
   );
 }
 
 export function findUnderlyingMedia(elements: Element[]): Element | undefined {
-  return elements.find((el) => /^(VIDEO|AUDIO|IMG)$/.test(el.tagName));
+  return elements.find((el) => {
+    const tag = safeGetTagName(el);
+    return tag === 'VIDEO' || tag === 'AUDIO' || tag === 'IMG';
+  });
 }
 
 const unmaskTimers = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>();
@@ -169,23 +200,28 @@ export function handlePageScriptMessage(
     config?: unknown;
   };
 
+  // Single-evaluation local variable binding prevents getter TOCTOU bypasses
+  const nonce = payload.nonce;
+  const type = payload.type;
+  const config = payload.config;
+
   // Cryptographic nonce validation
   if (
     typeof expectedNonce !== 'string' ||
     expectedNonce.length === 0 ||
-    typeof payload.nonce !== 'string' ||
-    payload.nonce !== expectedNonce
+    typeof nonce !== 'string' ||
+    nonce !== expectedNonce
   ) {
     return false;
   }
 
-  if (payload.type === 'UPDATE' && payload.config) {
-    const validated = validateSettings(payload.config);
+  if (type === 'UPDATE' && config) {
+    const validated = validateSettings(config);
     onConfigUpdated?.(validated);
     return true;
   }
 
-  if (payload.type === 'UNLOCK') {
+  if (type === 'UNLOCK') {
     onUnlock?.();
     return true;
   }
@@ -516,7 +552,7 @@ if (typeof window !== 'undefined') {
           elements.find(
             (el, index) =>
               index > 0 &&
-              (/^(CANVAS|PICTURE|SVG)$/.test(el.tagName) ||
+              (/^(CANVAS|PICTURE|SVG)$/.test(safeGetTagName(el)) ||
                 (el instanceof HTMLElement &&
                   (el.innerText || el.textContent || '').trim().length > 0)),
           );

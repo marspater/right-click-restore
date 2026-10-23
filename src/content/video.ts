@@ -1,5 +1,7 @@
 import {
+  safeGetParentElement,
   safeGetStyle,
+  safeGetTagName,
   safeQuerySelector,
   safeQuerySelectorAll,
 } from '../shared/dom';
@@ -34,36 +36,51 @@ export class VideoUnblur {
   }
 
   scan(root: ParentNode): void {
+    const videos = safeQuerySelectorAll(root, 'video');
+    if (root instanceof HTMLElement && safeGetTagName(root) === 'VIDEO') {
+      videos.push(root);
+    }
+
+    // Performance optimization: Fast-path early exit if no overrides are currently active and no video elements exist in root subtree.
+    if (this.overrides.size === 0 && videos.length === 0) {
+      return;
+    }
+
     // Release detached players and ancestors that no longer contain any video.
-    // Performance optimization: Use safeQuerySelector to short-circuit upon finding the first video element,
-    // avoiding expensive full-subtree DOM sweeps and NodeList/Array allocations caused by safeQuerySelectorAll.
+    // Performance optimization: Use safeQuerySelector to stop search on the first matched video, avoiding full subtree array allocations.
     for (const element of this.overrides.keys()) {
       if (
         !element.isConnected ||
-        (element.tagName !== 'VIDEO' &&
-          safeQuerySelector(element, 'video') === null)
+        (safeGetTagName(element) !== 'VIDEO' &&
+          !safeQuerySelector(element, 'video'))
       ) {
         this.restore(element);
       }
     }
 
-    const videos = safeQuerySelectorAll(root, 'video');
-    if (root instanceof HTMLElement && root.tagName === 'VIDEO') {
-      videos.push(root);
-    }
+    if (videos.length === 0) return;
+
     const visited = new Set<Element>();
     for (const video of videos) {
       for (
         let element: Element | null = video;
         element;
-        element = element.parentElement
+        element = safeGetParentElement(element)
       ) {
         if (visited.has(element)) break;
         visited.add(element);
         if (!(element instanceof HTMLElement) || !element.isConnected) continue;
         const style = safeGetStyle(element);
-        const view = element.ownerDocument.defaultView;
-        if (!style || !view) continue;
+        const ownerDoc =
+          typeof Document !== 'undefined' &&
+          element.ownerDocument instanceof Document
+            ? element.ownerDocument
+            : typeof document !== 'undefined'
+              ? document
+              : null;
+        const view = ownerDoc?.defaultView;
+        if (!style || !view || typeof view.getComputedStyle !== 'function')
+          continue;
         const filter = view.getComputedStyle(element).filter;
         if (!filter || !/\bblur\(/i.test(filter)) continue;
         // Computed blur lengths are resolved; preserve brightness, contrast, etc.

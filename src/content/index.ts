@@ -48,14 +48,17 @@ function isAuthorizedSender(
     typeof chrome.runtime.getURL === 'function'
       ? chrome.runtime.getURL('')
       : '';
-  const isExtensionUri = (uri?: string) =>
-    Boolean(
-      uri &&
-        (uri.startsWith('chrome-extension://') ||
-          uri.startsWith('safari-web-extension://') ||
-          uri.startsWith('moz-extension://') ||
-          (extPrefix && uri.startsWith(extPrefix))),
+  const isExtensionUri = (uri?: string) => {
+    if (!uri) return false;
+    if (extPrefix) {
+      return uri.startsWith(extPrefix);
+    }
+    return (
+      uri.startsWith('chrome-extension://') ||
+      uri.startsWith('safari-web-extension://') ||
+      uri.startsWith('moz-extension://')
     );
+  };
 
   if (sender.origin && !isExtensionUri(sender.origin)) {
     return false;
@@ -102,15 +105,18 @@ export function handleContentMessage(
     return;
   }
 
-  if (message.type === 'RCR_FORCE_UNLOCK') {
+  const msgType = message.type;
+  const msgConfig = message.config;
+
+  if (msgType === 'RCR_FORCE_UNLOCK') {
     executeForceUnlock(handlers);
     sendResponse({ status: 'unlocked' });
     return;
   }
 
-  if (message.type === 'RCR_CONFIG_CHANGED' && message.config) {
+  if (msgType === 'RCR_CONFIG_CHANGED' && msgConfig) {
     try {
-      handlers.onApplySettings?.(message.config);
+      handlers.onApplySettings?.(msgConfig);
       sendResponse({ status: 'ok' });
     } catch {
       // Send error response if applying settings fails
@@ -223,18 +229,21 @@ export function handleContentMessage(
       window.addEventListener('__rcr_handshake__', (e: Event) => {
         try {
           const detail = (e as CustomEvent)?.detail;
+          // Single-evaluation local variable binding prevents getter TOCTOU bypasses from untrusted page scripts
+          const rawNonce = detail?.nonce;
+          const rawChannel = detail?.channel;
+
           // Security hardening: Lock channel & nonce once established to prevent hijacking from untrusted page scripts.
           // Validate that nonce is a non-empty string of sufficient length and channel strictly matches `__rcr_bridge_${nonce}`.
           if (
             bridgeChannel === null &&
-            detail &&
-            typeof detail.nonce === 'string' &&
-            detail.nonce.length >= 8 &&
-            typeof detail.channel === 'string' &&
-            detail.channel === `__rcr_bridge_${detail.nonce}`
+            typeof rawNonce === 'string' &&
+            rawNonce.length >= 8 &&
+            typeof rawChannel === 'string' &&
+            rawChannel === `__rcr_bridge_${rawNonce}`
           ) {
-            bridgeChannel = detail.channel;
-            bridgeNonce = detail.nonce;
+            bridgeChannel = rawChannel;
+            bridgeNonce = rawNonce;
             notifyPageScript('UPDATE', currentSettings);
           }
         } catch {
@@ -278,7 +287,11 @@ export function handleContentMessage(
             }
           `;
           // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-          const container = document.head || document.documentElement;
+          const head = document.head as Element | null;
+          const container =
+            head && typeof head.tagName === 'string' && head.tagName === 'HEAD'
+              ? head
+              : document.documentElement;
           // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           if (container) {
             safeAppendChild(container, styleEl);

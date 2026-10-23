@@ -44,7 +44,32 @@
    - Enhanced Force Unlock button tooltips and footer tip messages on non-supported pages to clearly announce "Protection is unavailable on system pages".
 
 10. **Unblur Videos Setting Row Consistency & Tactile Press Micro-Interactions (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+   - Added `setting-icon-badge` class and `title={isSiteActive ? undefined : 'Protection is inactive on this page'}` tooltip attribute to the "Unblur Videos" row in `App.svelte`, restoring full visual and interaction consistency across all 6 setting rows.
+   - Replaced fragile `.settings-row .w-6` CSS rules with targeted `.settings-row .setting-icon-badge` selectors in `popup.css`.
+   - Added physical tactile press response (`transform: scale(0.99)`) to `.settings-row:active:not(.is-disabled)` and subtle hover scale transitions to keycap badges (`<kbd>`).
 
-- Added `setting-icon-badge` class and `title={isSiteActive ? undefined : 'Protection is inactive on this page'}` tooltip attribute to the "Unblur Videos" row in `App.svelte`, restoring full visual and interaction consistency across all 6 setting rows.
-- Replaced fragile `.settings-row .w-6` CSS rules with targeted `.settings-row .setting-icon-badge` selectors in `popup.css`.
-- Added physical tactile press response (`transform: scale(0.99)`) to `.settings-row:active:not(.is-disabled)` and subtle hover scale transitions to keycap badges (`<kbd>`).
+11. **Context-Aware Disabled Tooltips & Pointer Affordances (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+- Replaced generic "Protection is inactive on this page" tooltip text across setting rows with a derived, context-aware `disabledRowTooltip` variable that explicitly states why controls are disabled (`Extension is paused globally`, `Protection is unavailable on system pages`, or `Protection is disabled on this domain`).
+- Refined `.dimmed` state CSS in `popup.css` by removing `pointer-events: none` and setting `cursor: not-allowed`, allowing desktop browser tooltips to trigger reliably on hover and giving immediate cursor feedback on disabled cards/rows.
+
+12. **Dimmed Row Tooltip Discoverability & Non-Interactive Card Scoping (`src/popup/popup.css`)**:
+- Scoped domain card hover (`scale(1.2)` on beacon) and click press (`scale(0.99)`) CSS selectors strictly to interactive cards (`label.domain-card`), preventing static system/restricted page header cards from triggering misleading press feedback.
+- Refined `.dimmed:not(.glass-card)` to scope `cursor: not-allowed` without blocking row tooltips.
+
+13. **Keyboard Focus Retention, Header Visual Feedback & Restricted Badge Tooltips (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+- Switched Force Unlock button during unlocking state from HTML `disabled` to `aria-disabled`, ensuring keyboard focus isn't involuntarily dropped during unlocking.
+- Added `if (!activeTabId || !isSiteActive || unlockStatus !== 'idle') return;` check in `forceUnlockPage` to prevent redundant triggers while unlocking or when protection is inactive.
+- Added smooth grayscale transition (`grayscale opacity-60`) to the header extension logo icon when global protection is disabled.
+- Added explanatory `title="Per-site toggling is unavailable for system and local pages"` tooltip to the "Global Protection" badge on system and local pages.
+- Updated button icon micro-interaction hover CSS selectors to exclude `[aria-disabled="true"]`.
+
+14. **Apple Inset Divider Alignment & Setting Icon Micro-Interactions (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+- Adjusted `.settings-divider` margin from `0 8px` to `0 8px 0 42.5px`, aligning setting list dividers with the title text column in accordance with Apple Inset Grouped List design guidelines and eliminating visual clutter across the icon column.
+- Added SVG icon hover/focus micro-interactions (`.settings-row:hover:not(.is-disabled) .setting-icon-badge svg`) for refined tactile feedback on setting rows.
+- Added `id="desc-domain-status"` and `aria-describedby="desc-domain-status"` to the domain status stack and domain checkbox switch input in `App.svelte` for enhanced screen reader accessibility.
+
+15. **Subtext Inline Keycap Badges, App Icon Polish & Domain Tooltip Context (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+- Added inline keycap badges (`<kbd class="kbd-subtext">`) to shortcut key mentions (`⌘C`, `⇧ Shift`, `⌥ Option`) in setting row subtexts for "Allow Selection & Copy" and "Modifier Key Bypass", creating consistent keycap typography across the popup UI.
+- Styled `.kbd-subtext` in `popup.css` for compact 9px inline scaling with soft drop shadows and clean baseline alignment.
+- Enhanced header extension app icon with `rounded-[6px]`, subtle drop shadow (`shadow-[0_1px_3px_rgba(0,0,0,0.12)]`), and a smooth hover scale micro-interaction (`hover:scale-105`).
+- Added contextual `title` hover tooltips to the domain card when extension protection is paused globally.

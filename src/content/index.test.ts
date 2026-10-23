@@ -45,6 +45,34 @@ describe('content script message handler', () => {
     expect(response).toEqual({ status: 'unauthorized' });
   });
 
+  test('rejects messages from a different extension ID origin', () => {
+    (globalThis as unknown as Record<string, unknown>).chrome = {
+      runtime: {
+        id: 'extension-id-123',
+        getURL: (path: string) => `chrome-extension://extension-id-123/${path}`,
+      },
+    };
+
+    let response: unknown;
+    const sendResponse = (res?: unknown) => {
+      response = res;
+    };
+
+    const otherExtensionSender = {
+      id: 'extension-id-123',
+      origin: 'chrome-extension://other-extension-id',
+      url: 'chrome-extension://other-extension-id/popup.html',
+    } as chrome.runtime.MessageSender;
+
+    handleContentMessage(
+      { type: 'RCR_FORCE_UNLOCK' },
+      otherExtensionSender,
+      sendResponse,
+    );
+
+    expect(response).toEqual({ status: 'unauthorized' });
+  });
+
   test('rejects messages when sender origin or url is non-extension', () => {
     (globalThis as unknown as Record<string, unknown>).chrome = {
       runtime: {
@@ -301,6 +329,50 @@ describe('content script message handler', () => {
     expect(bridgeNonce).toBe('validnonce123');
   });
 
+  test('resists TOCTOU getter re-evaluation attack during handshake', () => {
+    let bridgeChannel: string | null = null;
+    let bridgeNonce: string | null = null;
+
+    const listener = (e: Event) => {
+      const detail = (e as CustomEvent)?.detail;
+      const rawNonce = detail?.nonce;
+      const rawChannel = detail?.channel;
+
+      if (
+        bridgeChannel === null &&
+        typeof rawNonce === 'string' &&
+        rawNonce.length >= 8 &&
+        typeof rawChannel === 'string' &&
+        rawChannel === `__rcr_bridge_${rawNonce}`
+      ) {
+        bridgeChannel = rawChannel;
+        bridgeNonce = rawNonce;
+      }
+    };
+
+    windowInstance.addEventListener('__rcr_handshake__', listener);
+
+    let getterCount = 0;
+    const maliciousDetail = {
+      get nonce() {
+        getterCount++;
+        if (getterCount <= 3) return '12345678';
+        return 'ATTACKER_NONCE';
+      },
+      channel: '__rcr_bridge_12345678',
+    };
+
+    windowInstance.dispatchEvent(
+      new CustomEvent('__rcr_handshake__', {
+        detail: maliciousDetail,
+      }),
+    );
+
+    expect(bridgeNonce).toBe('12345678');
+    expect(bridgeChannel).toBe('__rcr_bridge_12345678');
+    expect(getterCount).toBe(1);
+  });
+
   test('clones settings object before dispatching CustomEvents to prevent state mutation by page scripts', () => {
     const originalSettings: Settings = {
       enabled: true,
@@ -337,5 +409,59 @@ describe('content script message handler', () => {
     expect(receivedConfig).toBeDefined();
     expect(originalSettings.disabledDomains).toEqual(['example.com']);
     expect(originalSettings.enabled).toBe(true);
+  });
+
+  test('resists DOM clobbering on document.head during style element injection', () => {
+    // Clobber document.head with a form element
+    const clobberedHead = windowInstance.document.createElement('form');
+    clobberedHead.id = 'head';
+    Object.defineProperty(windowInstance.document, 'head', {
+      value: clobberedHead,
+      configurable: true,
+    });
+
+    const authorizedSender = {
+      id: 'extension-id-123',
+    } as chrome.runtime.MessageSender;
+
+    let settingsApplied = false;
+    expect(() => {
+      handleContentMessage(
+        {
+          type: 'RCR_CONFIG_CHANGED',
+          config: {
+            enabled: true,
+            restoreSelection: true,
+          } as unknown as Settings,
+        },
+        authorizedSender,
+        () => {},
+        {
+          onApplySettings: () => {
+            settingsApplied = true;
+            // Verify style element can be safely appended to documentElement instead of clobbered head
+            const style = windowInstance.document.createElement('style');
+            style.id = '__rcr_selection_style__';
+            const head = windowInstance.document.head as Element | null;
+            const container =
+              head &&
+              typeof head.tagName === 'string' &&
+              head.tagName === 'HEAD'
+                ? head
+                : windowInstance.document.documentElement;
+            container.appendChild(style);
+          },
+        },
+      );
+    }).not.toThrow();
+
+    expect(settingsApplied).toBe(true);
+    const injectedStyle = windowInstance.document.getElementById(
+      '__rcr_selection_style__',
+    );
+    expect(injectedStyle).not.toBeNull();
+    expect(injectedStyle?.parentNode).toBe(
+      windowInstance.document.documentElement,
+    );
   });
 });

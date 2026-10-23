@@ -714,6 +714,65 @@ function getNativeStyleGetter(): ((this: unknown) => unknown) | null {
   return nativeStyleGetter;
 }
 
+let nativeParentElementGetter: ((this: unknown) => unknown) | null | undefined;
+function getNativeParentElementGetter(): ((this: unknown) => unknown) | null {
+  if (nativeParentElementGetter === undefined) {
+    try {
+      nativeParentElementGetter =
+        typeof Node !== 'undefined'
+          ? (Object.getOwnPropertyDescriptor(Node.prototype, 'parentElement')
+              ?.get ??
+            Object.getOwnPropertyDescriptor(Element.prototype, 'parentElement')
+              ?.get ??
+            null)
+          : null;
+    } catch {
+      nativeParentElementGetter = null;
+    }
+  }
+  return nativeParentElementGetter;
+}
+
+let nativeTagNameGetter: ((this: unknown) => unknown) | null | undefined;
+function getNativeTagNameGetter(): ((this: unknown) => unknown) | null {
+  if (nativeTagNameGetter === undefined) {
+    try {
+      nativeTagNameGetter =
+        typeof Element !== 'undefined'
+          ? (Object.getOwnPropertyDescriptor(Element.prototype, 'tagName')
+              ?.get ?? null)
+          : null;
+    } catch {
+      nativeTagNameGetter = null;
+    }
+  }
+  return nativeTagNameGetter;
+}
+
+export function safeGetTagName(element: Element): string {
+  try {
+    let tag: unknown = null;
+    const nativeGetter = getNativeTagNameGetter();
+    if (
+      nativeGetter &&
+      typeof Element !== 'undefined' &&
+      element instanceof Element &&
+      !Object.hasOwn(element, 'tagName')
+    ) {
+      tag = safeApply(nativeGetter, element, []);
+    } else {
+      const getter = getUnshadowedGetter(element, 'tagName');
+      tag = getter ? safeApply(getter, element, []) : element.tagName;
+    }
+    if (typeof tag === 'string') {
+      return tag.toUpperCase();
+    }
+  } catch {
+    // Return empty string if accessing tagName throws on restricted elements
+  }
+  return '';
+}
+
 export function safeGetShadowRoot(element: Element): ShadowRoot | null {
   try {
     const nativeGetter = getNativeShadowRootGetter();
@@ -736,6 +795,39 @@ export function safeGetShadowRoot(element: Element): ShadowRoot | null {
     }
   } catch {
     // Return null if accessing shadowRoot throws on restricted elements
+  }
+  return null;
+}
+
+export function safeGetParentElement(element: Node): Element | null {
+  try {
+    let parent: unknown = null;
+    const nativeGetter = getNativeParentElementGetter();
+    if (
+      nativeGetter &&
+      typeof Node !== 'undefined' &&
+      element instanceof Node
+    ) {
+      parent = safeApply(nativeGetter, element, []);
+    } else {
+      const getter = getUnshadowedGetter(element, 'parentElement');
+      parent = getter
+        ? safeApply(getter, element, [])
+        : (element as Element).parentElement;
+    }
+    if (parent && typeof parent === 'object') {
+      const proto = Object.getPrototypeOf(parent);
+      if (
+        proto !== null &&
+        proto !== Object.prototype &&
+        'nodeType' in parent &&
+        (parent as Node).nodeType === 1
+      ) {
+        return parent as Element;
+      }
+    }
+  } catch {
+    // Return null if accessing parentElement throws on restricted elements
   }
   return null;
 }

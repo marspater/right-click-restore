@@ -27,6 +27,16 @@ const isSiteActive = $derived(
   Boolean(settings.enabled && isToggleableDomain && !isSiteDisabled),
 );
 
+const disabledRowTooltip = $derived(
+  isSiteActive
+    ? undefined
+    : !settings.enabled
+      ? 'Extension is paused globally'
+      : !isToggleableDomain
+        ? 'Protection is unavailable on system pages'
+        : 'Protection is disabled on this domain',
+);
+
 // Load state and active tab on mount
 $effect(() => {
   try {
@@ -176,7 +186,7 @@ $effect(() => {
 });
 
 async function forceUnlockPage() {
-  if (!activeTabId || unlockStatus === 'unlocking') return;
+  if (!activeTabId || !isSiteActive || unlockStatus !== 'idle') return;
   unlockStatus = 'unlocking';
   if (unlockTimeout) {
     clearTimeout(unlockTimeout);
@@ -226,7 +236,7 @@ async function forceUnlockPage() {
   <!-- Apple-Style Header -->
   <header class="flex items-center justify-between pb-3 select-none">
     <div class="flex items-center gap-2.5">
-      <img src="../icons/icon-64.png" class="w-7 h-7" alt="" />
+      <img src="../icons/icon-64.png" class={`w-7 h-7 rounded-[6px] shadow-[0_1px_3px_rgba(0,0,0,0.12)] transition-all duration-200 hover:scale-105 ${settings.enabled ? '' : 'grayscale opacity-60'}`} alt="" />
       <div>
         <h1 class="text-[13.5px] font-semibold tracking-[-0.01em] text-[var(--text-primary)] leading-tight">
           RightClickRestore
@@ -251,6 +261,7 @@ async function forceUnlockPage() {
         settings.enabled ? 'cursor-pointer hover:bg-[var(--bg-card-hover)]' : 'dimmed cursor-not-allowed'
       }`}
       aria-disabled={!settings.enabled}
+      title={settings.enabled ? (isSiteDisabled ? `Enable protection on ${currentHostname}` : `Disable protection on ${currentHostname}`) : 'Extension is paused globally'}
     >
       <div class="flex items-center gap-2.5 min-w-0 pr-2">
         <!-- Status Beacon -->
@@ -271,7 +282,7 @@ async function forceUnlockPage() {
 
         <!-- Domain Labels Stack -->
         <div class="min-w-0 flex flex-col justify-center">
-          <span class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
+          <span id="desc-domain-status" class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
             {!settings.enabled ? 'Extension Paused' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
           </span>
           <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-0.5" title={currentHostname}>
@@ -281,7 +292,7 @@ async function forceUnlockPage() {
       </div>
 
       <span class="apple-switch apple-switch-sm" title={isSiteDisabled ? `Enable protection on ${currentHostname}` : `Disable protection on ${currentHostname}`}>
-        <input type="checkbox" role="switch" checked={!isSiteDisabled} aria-checked={!isSiteDisabled} disabled={!settings.enabled} onchange={toggleCurrentSite} aria-label={`Protection on ${currentHostname}`} />
+        <input type="checkbox" role="switch" checked={!isSiteDisabled} aria-checked={!isSiteDisabled} aria-describedby="desc-domain-status" disabled={!settings.enabled} onchange={toggleCurrentSite} aria-label={`Protection on ${currentHostname}`} />
         <span class="apple-slider"></span>
       </span>
     </label>
@@ -315,7 +326,7 @@ async function forceUnlockPage() {
         </div>
       </div>
 
-      <span class="text-[9.5px] font-medium text-[var(--text-tertiary)] bg-[var(--bg-badge)] px-2 py-0.5 rounded-full border border-[var(--border-subtle)] flex-shrink-0 select-none">
+      <span class="text-[9.5px] font-medium text-[var(--text-tertiary)] bg-[var(--bg-badge)] px-2 py-0.5 rounded-full border border-[var(--border-subtle)] flex-shrink-0 select-none" title="Per-site toggling is unavailable for system and local pages">
         Global Protection
       </span>
     </section>
@@ -324,7 +335,7 @@ async function forceUnlockPage() {
   <!-- Settings List Group -->
   <section class={`glass-card p-1 mb-2 flex flex-col ${isSiteActive ? '' : 'dimmed'}`}>
     <!-- Feature 1: Restore Right Click -->
-    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={isSiteActive ? undefined : 'Protection is inactive on this page'}>
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={disabledRowTooltip}>
       <div class="flex items-center gap-2.5 min-w-0">
         <div class={`setting-icon-badge w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
           isSiteActive && settings.restoreRightClick
@@ -350,7 +361,7 @@ async function forceUnlockPage() {
     <div class="settings-divider" aria-hidden="true"></div>
 
     <!-- Feature 2: Allow Selection & Copy -->
-    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={isSiteActive ? undefined : 'Protection is inactive on this page'}>
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={disabledRowTooltip}>
       <div class="flex items-center gap-2.5 min-w-0">
         <div class={`setting-icon-badge w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
           isSiteActive && settings.restoreSelection
@@ -364,7 +375,7 @@ async function forceUnlockPage() {
         </div>
         <div class="min-w-0">
           <div class="text-[12px] font-medium text-[var(--text-primary)] leading-tight">Allow Selection & Copy</div>
-          <div id="desc-restore-selection" class="text-[10px] text-[var(--text-secondary)] leading-tight">Enables text highlight and ⌘C</div>
+          <div id="desc-restore-selection" class="text-[10px] text-[var(--text-secondary)] leading-tight">Enables text highlight and <kbd class="kbd-subtext">⌘C</kbd></div>
         </div>
       </div>
       <span class="apple-switch apple-switch-sm">
@@ -376,7 +387,7 @@ async function forceUnlockPage() {
     <div class="settings-divider" aria-hidden="true"></div>
 
     <!-- Feature 3: Anti-Shield Overlay -->
-    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={isSiteActive ? undefined : 'Protection is inactive on this page'}>
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={disabledRowTooltip}>
       <div class="flex items-center gap-2.5 min-w-0">
         <div class={`setting-icon-badge w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
           isSiteActive && settings.antiShield
@@ -400,7 +411,7 @@ async function forceUnlockPage() {
 
     <div class="settings-divider" aria-hidden="true"></div>
 
-    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={isSiteActive ? undefined : 'Protection is inactive on this page'}>
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={disabledRowTooltip}>
       <div class="flex items-center gap-2.5 min-w-0">
         <div class={`setting-icon-badge w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
           isSiteActive && settings.unblurVideos
@@ -426,7 +437,7 @@ async function forceUnlockPage() {
     <div class="settings-divider" aria-hidden="true"></div>
 
     <!-- Feature 4: Absolute Force Mode -->
-    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={isSiteActive ? undefined : 'Protection is inactive on this page'}>
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={disabledRowTooltip}>
       <div class="flex items-center gap-2.5 min-w-0">
         <div class={`setting-icon-badge w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
           isSiteActive && settings.absoluteForce
@@ -451,7 +462,7 @@ async function forceUnlockPage() {
     <div class="settings-divider" aria-hidden="true"></div>
 
     <!-- Feature 5: Modifier Key Bypass -->
-    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={isSiteActive ? undefined : 'Protection is inactive on this page'}>
+    <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={disabledRowTooltip}>
       <div class="flex items-center gap-2.5 min-w-0">
         <div class={`setting-icon-badge w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0 transition-colors ${
           isSiteActive && settings.bypassModifierKey
@@ -465,7 +476,7 @@ async function forceUnlockPage() {
         </div>
         <div class="min-w-0">
           <div class="text-[12px] font-medium text-[var(--text-primary)] leading-tight">Modifier Key Bypass</div>
-          <div id="desc-bypass-modifier-key" class="text-[10px] text-[var(--text-secondary)] leading-tight">Bypass with ⇧ Shift or ⌥ Option</div>
+          <div id="desc-bypass-modifier-key" class="text-[10px] text-[var(--text-secondary)] leading-tight">Bypass with <kbd class="kbd-subtext">⇧ Shift</kbd> or <kbd class="kbd-subtext">⌥ Option</kbd></div>
         </div>
       </div>
       <span class="apple-switch apple-switch-sm">
@@ -480,7 +491,8 @@ async function forceUnlockPage() {
     <button
       type="button"
       onclick={forceUnlockPage}
-      disabled={unlockStatus !== 'idle' || !isSiteActive}
+      disabled={!isSiteActive}
+      aria-disabled={unlockStatus !== 'idle' || !isSiteActive}
       title={isSiteActive
         ? 'Force unlock context menu and selection on active page'
         : !settings.enabled

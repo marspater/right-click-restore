@@ -52,6 +52,10 @@ export function isInteractiveElement(item: Element): boolean {
   }
 }
 
+// Performance optimization: Avoid redundant CSS selector matching on target element.
+// isInteractiveElement(curr) already evaluates whether curr matches ALL_INTERACTIVE_SELECTORS.
+// Calling safeClosest on curr.parentElement avoids re-evaluating the multi-selector CSS rule
+// against curr when isInteractiveElement returns false.
 export function isInteractiveNode(node: Node | null): boolean {
   if (!node) return false;
   try {
@@ -63,7 +67,12 @@ export function isInteractiveNode(node: Node | null): boolean {
       if (isInteractiveElement(curr)) {
         return true;
       }
-      if (safeClosest(curr, ALL_INTERACTIVE_SELECTORS)) return true;
+      if (
+        curr.parentElement &&
+        safeClosest(curr.parentElement, ALL_INTERACTIVE_SELECTORS)
+      ) {
+        return true;
+      }
     }
   } catch {
     // Suppress errors inspecting interactive node

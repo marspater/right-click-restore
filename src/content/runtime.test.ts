@@ -95,6 +95,12 @@ test('video unblur follows site mutations and restores filters when disabled', a
     configure({ unblurVideos: true, disabledDomains: ['example.com'] });
     await window.happyDOM.whenAsyncComplete();
     expect(video.style.filter).toBe('contrast(1.5) blur(20px)');
+
+    // Verify DOM clobbering resistance on video ownerDocument property
+    const clobberedInput = window.document.createElement('input');
+    clobberedInput.name = 'ownerDocument';
+    video.appendChild(clobberedInput);
+    expect(video.ownerDocument).toBeDefined();
   } finally {
     await window.happyDOM.close();
   }

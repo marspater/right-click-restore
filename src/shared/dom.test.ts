@@ -14,9 +14,11 @@ import {
   safeGetParentElement,
   safeGetShadowRoot,
   safeGetStyle,
+  safeGetTagName,
   safeHasAttribute,
   safeHasAttributes,
   safeMatches,
+  safeQuerySelector,
   safeQuerySelectorAll,
   safeRemoveAttribute,
   safeRemoveElement,
@@ -87,6 +89,37 @@ describe('shared DOM utilities', () => {
 
     test('returns null if property does not exist', () => {
       expect(getUnshadowedGetter({}, 'nonexistent')).toBeNull();
+    });
+  });
+
+  describe('safeGetTagName', () => {
+    test('retrieves uppercase tag name for standard elements', () => {
+      const div = document.createElement('div');
+      const span = document.createElement('span');
+      expect(safeGetTagName(div)).toBe('DIV');
+      expect(safeGetTagName(span)).toBe('SPAN');
+    });
+
+    test('resists DOM clobbering when tagName is overridden by named child input', () => {
+      const form = document.createElement('form');
+      const input = document.createElement('input');
+      input.setAttribute('name', 'tagName');
+      form.appendChild(input);
+
+      Object.defineProperty(form, 'tagName', {
+        value: input,
+        configurable: true,
+      });
+
+      expect(safeGetTagName(form)).toBe('FORM');
+    });
+
+    test('handles non-elements or faulty objects safely without throwing', () => {
+      expect(safeGetTagName(null as unknown as Element)).toBe('');
+      const faulty = {
+        tagName: 'invalid',
+      } as unknown as Element;
+      expect(safeGetTagName(faulty)).toBe('INVALID');
     });
   });
 
@@ -516,8 +549,8 @@ describe('shared DOM utilities', () => {
     });
   });
 
-  describe('safeQuerySelectorAll', () => {
-    test('returns array of matching elements', () => {
+  describe('safeQuerySelectorAll & safeQuerySelector', () => {
+    test('returns array of matching elements or single first match', () => {
       const container = document.createElement('div');
       const item1 = document.createElement('span');
       item1.className = 'item';
@@ -530,9 +563,12 @@ describe('shared DOM utilities', () => {
       expect(items).toHaveLength(2);
       expect(items[0]).toBe(item1);
       expect(items[1]).toBe(item2);
+
+      expect(safeQuerySelector(container, '.item')).toBe(item1);
+      expect(safeQuerySelector(container, '.missing')).toBeNull();
     });
 
-    test('resists DOM clobbering when querySelectorAll is overridden', () => {
+    test('resists DOM clobbering when querySelectorAll or querySelector is overridden', () => {
       const container = document.createElement('form');
       const input = document.createElement('input');
       input.setAttribute('name', 'querySelectorAll');
@@ -551,6 +587,14 @@ describe('shared DOM utilities', () => {
       const results = safeQuerySelectorAll(container, '.target');
       expect(results).toHaveLength(1);
       expect(results[0]).toBe(target);
+
+      // Clobber querySelector property on container
+      Object.defineProperty(container, 'querySelector', {
+        value: input,
+        configurable: true,
+      });
+
+      expect(safeQuerySelector(container, '.target')).toBe(target);
     });
   });
 

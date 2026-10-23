@@ -8,6 +8,7 @@ import {
   safeApply,
   safeClosest,
   safeElementsFromPoint,
+  safeGetTagName,
   safeHasAttributes,
   safeMatches,
   safeRemoveElement,
@@ -39,7 +40,7 @@ const FAST_INTERACTIVE_TAGS = new Set([
 // avoiding selector matching on attribute-less DOM nodes while guaranteeing exact selector accuracy.
 export function isInteractiveElement(item: Element): boolean {
   try {
-    const tag = typeof item.tagName === 'string' ? item.tagName : '';
+    const tag = safeGetTagName(item);
     if (FAST_INTERACTIVE_TAGS.has(tag)) {
       return true;
     }
@@ -153,21 +154,19 @@ export function isMediaContextEvent(event: Event): boolean {
   const path = method ? safeApply(method, event, []) : [];
   return (
     Array.isArray(path) &&
-    path.some(
-      (node) =>
-        node instanceof Element &&
-        (node.tagName === 'VIDEO' ||
-          node.tagName === 'AUDIO' ||
-          node.tagName === 'IMG'),
-    )
+    path.some((node) => {
+      if (!(node instanceof Element)) return false;
+      const tag = safeGetTagName(node);
+      return tag === 'VIDEO' || tag === 'AUDIO' || tag === 'IMG';
+    })
   );
 }
 
 export function findUnderlyingMedia(elements: Element[]): Element | undefined {
-  return elements.find(
-    (el) =>
-      el.tagName === 'VIDEO' || el.tagName === 'AUDIO' || el.tagName === 'IMG',
-  );
+  return elements.find((el) => {
+    const tag = safeGetTagName(el);
+    return tag === 'VIDEO' || tag === 'AUDIO' || tag === 'IMG';
+  });
 }
 
 const unmaskTimers = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>();
@@ -537,7 +536,7 @@ if (typeof window !== 'undefined') {
           elements.find(
             (el, index) =>
               index > 0 &&
-              (/^(CANVAS|PICTURE|SVG)$/.test(el.tagName) ||
+              (/^(CANVAS|PICTURE|SVG)$/.test(safeGetTagName(el)) ||
                 (el instanceof HTMLElement &&
                   (el.innerText || el.textContent || '').trim().length > 0)),
           );

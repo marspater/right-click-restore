@@ -51,3 +51,8 @@
 **Vulnerability:** Invoking `.appendChild(...)` or `.attachShadow(...)` directly on elements or shadow roots allowed untrusted host page scripts or named elements (e.g. `<form id="head"><input name="appendChild"></form>` or `<input name="attachShadow">`) to clobber methods on container instances, throwing TypeErrors and breaking selection style injection and toast notifications.
 **Learning:** Container elements and root documents can have instance methods like `appendChild` or `attachShadow` clobbered by named form controls or host-page prototype modifications.
 **Prevention:** Use `safeAppendChild` and `safeAttachShadow` across content script DOM construction to retrieve unshadowed prototype methods via `getUnshadowedMethod` and execute via `safeApply`.
+
+## 2025-05-24 - Cross-Extension Sender Origin Validation Hardening
+**Vulnerability:** Checking whether `sender.origin` or `sender.url` matched generic extension schemes allowed malicious third-party browser extensions installed in the user's browser session to satisfy content script message sender origin checks.
+**Learning:** Generic extension scheme prefix checks (`uri.startsWith('chrome-extension://')`) accept any installed extension ID, compromising message origin authentication.
+**Prevention:** Always validate `sender.origin` and `sender.url` strictly against the current extension's unique base URI (`chrome.runtime.getURL('')`) when available.

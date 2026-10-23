@@ -105,7 +105,5 @@ test('App.svelte declares setting-icon-badge and inactive tooltip on unblur vide
   const appPath = resolve(projectRoot, 'src/popup/App.svelte');
   const appContent = await Bun.file(appPath).text();
   expect(appContent).toContain('setting-icon-badge w-6 h-6');
-  expect(appContent).toContain(
-    "title={isSiteActive ? undefined : 'Protection is inactive on this page'}",
-  );
+  expect(appContent).toContain('title={disabledRowTooltip}');
 });

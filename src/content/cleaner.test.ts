@@ -211,6 +211,24 @@ describe('cleaner module', () => {
       const textNode = document.createTextNode('sample');
       expect(() => cleanAddedNode(textNode, DEFAULT_SETTINGS)).not.toThrow();
     });
+
+    test('returns early without inspecting attributes or child nodes when both settings are disabled', () => {
+      const root = document.createElement('div');
+      root.setAttribute('oncontextmenu', 'return false');
+
+      const child = document.createElement('span');
+      child.setAttribute('onselectstart', 'return false');
+      root.appendChild(child);
+
+      cleanAddedNode(root, {
+        ...DEFAULT_SETTINGS,
+        restoreRightClick: false,
+        restoreSelection: false,
+      });
+
+      expect(root.hasAttribute('oncontextmenu')).toBe(true);
+      expect(child.hasAttribute('onselectstart')).toBe(true);
+    });
   });
 
   describe('cleanDOMTree', () => {

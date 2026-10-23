@@ -1,4 +1,8 @@
-import { safeGetStyle, safeQuerySelectorAll } from '../shared/dom';
+import {
+  safeGetStyle,
+  safeQuerySelector,
+  safeQuerySelectorAll,
+} from '../shared/dom';
 
 interface FilterOverride {
   value: string;
@@ -31,11 +35,13 @@ export class VideoUnblur {
 
   scan(root: ParentNode): void {
     // Release detached players and ancestors that no longer contain any video.
+    // Performance optimization: Use safeQuerySelector to short-circuit upon finding the first video element,
+    // avoiding expensive full-subtree DOM sweeps and NodeList/Array allocations caused by safeQuerySelectorAll.
     for (const element of this.overrides.keys()) {
       if (
         !element.isConnected ||
         (element.tagName !== 'VIDEO' &&
-          safeQuerySelectorAll(element, 'video').length === 0)
+          safeQuerySelector(element, 'video') === null)
       ) {
         this.restore(element);
       }

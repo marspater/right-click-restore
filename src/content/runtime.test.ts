@@ -9,30 +9,46 @@ test('video unblur follows site mutations and restores filters when disabled', a
   });
   expect(result.success).toBe(true);
   const window = new Window({ url: 'https://example.com/' });
+  // biome-ignore lint/security/noGlobalEval: needed for Happy DOM test environment
+  (window as unknown as { eval: typeof eval }).eval = globalThis.eval;
   let listener: (
     message: unknown,
     sender: unknown,
     reply: (response: unknown) => void,
   ) => void;
-  Object.assign(window, {
-    chrome: {
-      runtime: {
-        id: 'rcr-test',
-        onMessage: {
-          addListener: (callback: typeof listener) => {
-            listener = callback;
-          },
+  const chromeObj = {
+    runtime: {
+      id: 'rcr-test',
+      onMessage: {
+        addListener: (callback: typeof listener) => {
+          listener = callback;
         },
-      },
-      storage: {
-        local: {
-          get: (_keys: unknown, callback: (value: unknown) => void) =>
-            callback({}),
-        },
-        onChanged: { addListener: () => {} },
       },
     },
+    storage: {
+      local: {
+        get: (_keys: unknown, callback: (value: unknown) => void) =>
+          callback({}),
+      },
+      onChanged: { addListener: () => {} },
+    },
+  };
+  Object.assign(window, { chrome: chromeObj });
+  Object.assign(globalThis, {
+    window,
+    document: window.document,
+    chrome: chromeObj,
+    CustomEvent: window.CustomEvent,
+    Event: window.Event,
+    MouseEvent: window.MouseEvent,
+    HTMLElement: window.HTMLElement,
+    Element: window.Element,
+    Node: window.Node,
+    MutationObserver: window.MutationObserver,
+    requestAnimationFrame: window.requestAnimationFrame,
   });
+  // biome-ignore lint/security/noGlobalEval: needed for Happy DOM test environment
+  (window as unknown as { eval: typeof eval }).eval = globalThis.eval;
   window.document.body.innerHTML = `
     <style>.recording { filter: brightness(0.8) blur(12px) !important; }</style>
     <div class="recording"><video style="filter: contrast(1.2) blur(8px) !important"></video><button>Play</button></div>
@@ -119,25 +135,39 @@ test('bundled content script handles Force Unlock through its registered listene
     sender: unknown,
     reply: (response: unknown) => void,
   ) => void;
-  Object.assign(window, {
-    chrome: {
-      runtime: {
-        id: 'rcr-test',
-        onMessage: {
-          addListener: (callback: typeof listener) => {
-            listener = callback;
-          },
+  const chromeObj = {
+    runtime: {
+      id: 'rcr-test',
+      onMessage: {
+        addListener: (callback: typeof listener) => {
+          listener = callback;
         },
-      },
-      storage: {
-        local: {
-          get: (_keys: unknown, callback: (value: unknown) => void) =>
-            callback({ rcr_settings: { enabled: false } }),
-        },
-        onChanged: { addListener: () => {} },
       },
     },
+    storage: {
+      local: {
+        get: (_keys: unknown, callback: (value: unknown) => void) =>
+          callback({ rcr_settings: { enabled: false } }),
+      },
+      onChanged: { addListener: () => {} },
+    },
+  };
+  Object.assign(window, { chrome: chromeObj });
+  Object.assign(globalThis, {
+    window,
+    document: window.document,
+    chrome: chromeObj,
+    CustomEvent: window.CustomEvent,
+    Event: window.Event,
+    MouseEvent: window.MouseEvent,
+    HTMLElement: window.HTMLElement,
+    Element: window.Element,
+    Node: window.Node,
+    MutationObserver: window.MutationObserver,
+    requestAnimationFrame: window.requestAnimationFrame,
   });
+  // biome-ignore lint/security/noGlobalEval: needed for Happy DOM test environment
+  (window as unknown as { eval: typeof eval }).eval = globalThis.eval;
   window.document.body.innerHTML =
     '<p oncontextmenu="return false">Blocked</p><div class="html5-video-player"><video oncontextmenu="return false"></video><div class="cover"></div><button>Play</button></div><input>';
   const pageScript = result.outputs.find((output) =>

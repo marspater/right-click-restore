@@ -76,3 +76,8 @@
 **Vulnerability:** Direct property access to `element.parentElement` allowed untrusted web pages to clobber `parentElement` using named child inputs (e.g. `<form><input name="parentElement"></form>`), returning input elements or spoofed non-Element objects that caused DOM traversal errors and bypassed interactive element checks or video unblur scanning.
 **Learning:** Accessing `.parentElement` directly assumes the property is unshadowed by child form controls or named getters.
 **Prevention:** Use `safeGetParentElement` across all DOM parent element traversals to retrieve native getters via `getNativeParentElementGetter`/`getUnshadowedGetter` and verify node interface prototype inheritance.
+
+## 2025-05-25 - DOM Clobbering Resistance for Element Hierarchy Checking (`contains`)
+**Vulnerability:** Invoking `(root as Node).contains(element)` directly allowed untrusted web pages to clobber `contains` on form or container elements (e.g., using `<form><input name="contains"></form>`), throwing runtime `TypeError`s and breaking video filter restoration in content scripts.
+**Learning:** Direct method calls on DOM instances assume instance properties are unshadowed by named child form inputs or host script overrides.
+**Prevention:** Use `safeContains` across all element hierarchy checks to retrieve unshadowed prototype methods via `getUnshadowedMethod` and execute via `safeApply`.

@@ -150,6 +150,15 @@ export function handleContentMessage(
   const BATCH_SIZE = 50;
   const MAX_PENDING_NODES = 1000;
 
+  function isElementNode(node: unknown): node is Element {
+    return Boolean(
+      node &&
+        typeof node === 'object' &&
+        'nodeType' in node &&
+        (node as Node).nodeType === 1,
+    );
+  }
+
   function processPendingMutations() {
     batchScheduled = false;
     if (!currentSettings.enabled || pendingNodes.size === 0) return;
@@ -160,7 +169,7 @@ export function handleContentMessage(
       pendingNodes.delete(node);
       try {
         cleanAddedNodeBase(node, currentSettings);
-        if (currentSettings.unblurVideos && node instanceof Element) {
+        if (currentSettings.unblurVideos && isElementNode(node)) {
           videoUnblur.scan(node);
         }
       } catch (_e) {}
@@ -447,7 +456,7 @@ export function handleContentMessage(
 
   function handleMutation(mutation: MutationRecord) {
     if (mutation.type === 'childList') {
-      if (currentSettings.unblurVideos && mutation.target instanceof Element) {
+      if (currentSettings.unblurVideos && isElementNode(mutation.target)) {
         pendingNodes.add(mutation.target);
       }
       for (const node of mutation.addedNodes) {
@@ -458,7 +467,7 @@ export function handleContentMessage(
       }
     } else if (
       mutation.type === 'attributes' &&
-      mutation.target instanceof Element
+      isElementNode(mutation.target)
     ) {
       cleanNode(mutation.target);
       if (currentSettings.unblurVideos) {

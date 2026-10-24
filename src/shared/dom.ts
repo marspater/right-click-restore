@@ -636,9 +636,26 @@ export function safeRemoveElement(element: Element): void {
 }
 
 /* eslint-disable @typescript-eslint/unbound-method */
+const nativeContains: NativeDOMMethod<typeof Node.prototype.contains> =
+  typeof Node !== 'undefined' ? Node.prototype.contains : null;
 const nativeAppendChild: NativeDOMMethod<typeof Node.prototype.appendChild> =
   typeof Node !== 'undefined' ? Node.prototype.appendChild : null;
 /* eslint-enable @typescript-eslint/unbound-method */
+
+export function safeContains(parent: Node, node: Node): boolean {
+  try {
+    const fn = getUnshadowedMethod(parent, 'contains');
+    if (fn) {
+      return Boolean(safeApply(fn, parent, [node]));
+    }
+    if (nativeContains && !Object.hasOwn(parent, 'contains')) {
+      return Boolean(safeApply(nativeContains, parent, [node]));
+    }
+    return Boolean(parent.contains(node));
+  } catch {
+    return false;
+  }
+}
 
 export function safeAppendChild<T extends Node>(
   parent: Node,
@@ -696,22 +713,6 @@ function getNativeShadowRootGetter(): ((this: unknown) => unknown) | null {
     }
   }
   return nativeShadowRootGetter;
-}
-
-let nativeStyleGetter: ((this: unknown) => unknown) | null | undefined;
-function getNativeStyleGetter(): ((this: unknown) => unknown) | null {
-  if (nativeStyleGetter === undefined) {
-    try {
-      nativeStyleGetter =
-        typeof HTMLElement !== 'undefined'
-          ? (Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'style')
-              ?.get ?? null)
-          : null;
-    } catch {
-      nativeStyleGetter = null;
-    }
-  }
-  return nativeStyleGetter;
 }
 
 let nativeParentElementGetter: ((this: unknown) => unknown) | null | undefined;
@@ -835,17 +836,8 @@ export function safeGetParentElement(element: Node): Element | null {
 export function safeGetStyle(element: HTMLElement): CSSStyleDeclaration | null {
   try {
     let style: unknown = null;
-    const nativeGetter = getNativeStyleGetter();
-    if (
-      nativeGetter &&
-      typeof HTMLElement !== 'undefined' &&
-      element instanceof HTMLElement
-    ) {
-      style = safeApply(nativeGetter, element, []);
-    } else {
-      const getter = getUnshadowedGetter(element, 'style');
-      style = getter ? safeApply(getter, element, []) : element.style;
-    }
+    const getter = getUnshadowedGetter(element, 'style');
+    style = getter ? safeApply(getter, element, []) : element.style;
     if (style && typeof style === 'object') {
       const proto = Object.getPrototypeOf(style);
       if (

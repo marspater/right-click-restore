@@ -1,4 +1,5 @@
 import {
+  safeContains,
   safeGetParentElement,
   safeGetStyle,
   safeGetTagName,
@@ -18,8 +19,7 @@ export class VideoUnblur {
 
   restore(root?: ParentNode): void {
     for (const [element, saved] of this.overrides) {
-      if (root && root !== element && !(root as Node).contains(element))
-        continue;
+      if (root && root !== element && !safeContains(root, element)) continue;
       const style = safeGetStyle(element);
       if (
         style?.filter === saved.applied &&
@@ -72,13 +72,11 @@ export class VideoUnblur {
         if (!(element instanceof HTMLElement) || !element.isConnected) continue;
         const style = safeGetStyle(element);
         const ownerDoc =
-          typeof Document !== 'undefined' &&
-          element.ownerDocument instanceof Document
-            ? element.ownerDocument
-            : typeof document !== 'undefined'
-              ? document
-              : null;
-        const view = ownerDoc?.defaultView;
+          element.ownerDocument ||
+          (typeof document !== 'undefined' ? document : null);
+        const view =
+          ownerDoc?.defaultView ||
+          (typeof window !== 'undefined' ? window : null);
         if (!style || !view || typeof view.getComputedStyle !== 'function')
           continue;
         const filter = view.getComputedStyle(element).filter;

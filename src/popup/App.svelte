@@ -297,7 +297,10 @@ async function forceUnlockPage() {
       </span>
     </label>
   {:else}
-    <section class={`glass-card domain-card px-3 py-2.5 mb-2 flex items-center justify-between transition-all ${settings.enabled ? '' : 'dimmed'}`}>
+    <section
+      class={`glass-card domain-card px-3 py-2.5 mb-2 flex items-center justify-between transition-all ${settings.enabled ? '' : 'dimmed'}`}
+      title={settings.enabled ? 'Protection is unavailable on system pages' : 'Extension is paused globally'}
+    >
       <div class="flex items-center gap-2.5 min-w-0 pr-2">
         <!-- Status Beacon -->
         <div class="flex items-center justify-center flex-shrink-0" aria-hidden="true">
@@ -317,7 +320,7 @@ async function forceUnlockPage() {
 
         <!-- Domain Labels Stack -->
         <div class="min-w-0 flex flex-col justify-center">
-          <span class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
+          <span id="desc-system-domain-status" class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
             {!settings.enabled ? 'Extension Paused' : !isToggleableDomain ? 'System / Restricted Page' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
           </span>
           <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-0.5" title={currentHostname}>
@@ -556,7 +559,7 @@ async function forceUnlockPage() {
       {:else if isSiteDisabled}
         Protection is disabled on this domain
       {:else if settings.bypassModifierKey}
-        Tip: Hold <kbd>⇧ Shift</kbd> or <kbd>⌥ Option</kbd> for native menu
+        Tip: Hold <kbd class="kbd-subtext">⇧ Shift</kbd> or <kbd class="kbd-subtext">⌥ Option</kbd> for native menu
       {:else}
         Tip: <button
           type="button"
@@ -564,7 +567,7 @@ async function forceUnlockPage() {
           disabled={!isSiteActive}
           class="text-[var(--accent-blue)] font-medium hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent-blue)] rounded-[2px] cursor-pointer inline disabled:no-underline disabled:cursor-not-allowed disabled:text-[var(--text-tertiary)]"
           title="Enable Modifier Key Bypass setting"
-        >Enable Modifier Key Bypass</button> to hold <kbd>⇧ Shift</kbd>
+        >Enable Modifier Key Bypass</button> to hold <kbd class="kbd-subtext">⇧ Shift</kbd>
       {/if}
     </p>
   </footer>

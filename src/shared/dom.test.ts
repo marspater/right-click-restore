@@ -7,6 +7,7 @@ import {
   safeApply,
   safeAttachShadow,
   safeClosest,
+  safeContains,
   safeCreateElement,
   safeElementsFromPoint,
   safeGetAttribute,
@@ -518,19 +519,54 @@ describe('shared DOM utilities', () => {
     return form;
   }
 
+  describe('safeContains', () => {
+    test('returns true when parent contains child and false otherwise', () => {
+      const parent = document.createElement('div');
+      const child = document.createElement('span');
+      const stranger = document.createElement('p');
+      parent.appendChild(child);
+
+      expect(safeContains(parent, child)).toBe(true);
+      expect(safeContains(parent, parent)).toBe(true);
+      expect(safeContains(parent, stranger)).toBe(false);
+    });
+
+    test('resists DOM clobbering when contains property is overridden on form or input', () => {
+      const form = createClobberedForm('contains');
+      const child = document.createElement('span');
+      form.appendChild(child);
+
+      expect(safeContains(form, child)).toBe(true);
+
+      const stranger = document.createElement('div');
+      expect(safeContains(form, stranger)).toBe(false);
+    });
+
+    test('returns false when contains throws or is invalid', () => {
+      const faulty = {
+        contains: () => {
+          throw new Error('fail');
+        },
+      } as unknown as Node;
+      const child = document.createElement('span');
+
+      expect(safeContains(faulty, child)).toBe(false);
+    });
+  });
+
   describe('safeAppendChild', () => {
     test('appends child element to parent container', () => {
       const parent = document.createElement('div');
       const child = document.createElement('span');
       safeAppendChild(parent, child);
-      expect(parent.contains(child)).toBe(true);
+      expect(safeContains(parent, child)).toBe(true);
     });
 
     test('resists DOM clobbering when appendChild is overridden by child input', () => {
       const form = createClobberedForm('appendChild');
       const child = document.createElement('span');
       expect(() => safeAppendChild(form, child)).not.toThrow();
-      expect(form.contains(child)).toBe(true);
+      expect(safeContains(form, child)).toBe(true);
     });
   });
 

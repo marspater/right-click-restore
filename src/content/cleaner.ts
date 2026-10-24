@@ -19,6 +19,7 @@ export {
   safeAppendChild,
   safeAttachShadow,
   safeClosest,
+  safeContains,
   safeCreateElement,
   safeGetAttribute,
   safeGetElementById,

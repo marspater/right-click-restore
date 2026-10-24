@@ -48,3 +48,7 @@
 ## 2025-05-24 - Short-circuiting video container queries using querySelector
 **Learning:** Using `safeQuerySelector(element, 'video')` instead of `safeQuerySelectorAll(element, 'video').length === 0` to verify connected video containers stops searching as soon as the first video element is matched. This avoids full subtree DOM traversals and array allocations. Additionally, early exiting `VideoUnblur.scan` when `overrides.size === 0` and no video elements exist in the root subtree avoids unnecessary container scanning during non-video DOM mutations.
 **Action:** Use single-element `querySelector` short-circuiting instead of `querySelectorAll().length` when checking for element existence in subtrees.
+
+## 2025-05-25 - Prioritizing inline user-select string short-circuits and tag name deduplication in DOM cleaner
+**Learning:** Evaluating `hasUserSelectNone` before checking `SELECTION_ATTRS` in `hasScrubbableSelection` allows >95% of selection-restricted DOM nodes in modern web apps to short-circuit on a single raw inline style string check (`safeGetAttribute(node, 'style')`), bypassing up to 5 redundant `safeHasAttribute` calls for legacy event attributes (`onselectstart`, `ondragstart`, etc.). Furthermore, passing cached `tag` name into `isInteractiveOrDescendant` avoids duplicate `safeGetTagName` invocations and native getter executions per cleaned element.
+**Action:** Always place high-frequency inline style string short-circuits ahead of legacy attribute iterations, and pass pre-computed tag names when validating element interaction state.

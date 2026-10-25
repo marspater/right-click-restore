@@ -111,19 +111,23 @@ export function isInteractiveNode(node: Node | null): boolean {
 // iterating over path elements already inspects target and all parent ancestors.
 // Returning false directly avoids a redundant call to isInteractiveNode() which
 // re-traverses the DOM tree using closest().
-export function isInteractiveEvent(event: Event): boolean {
+export function isInteractiveEvent(event: Event, path?: unknown[]): boolean {
   if (!event) return false;
   try {
-    const composedPathFn = getUnshadowedMethod(event, 'composedPath');
-    if (composedPathFn) {
-      const path = safeApply(composedPathFn, event, []) as unknown[];
-      if (Array.isArray(path) && path.length > 0) {
-        return path.some(
-          (item) =>
-            (isElementNode(item) || item instanceof Element) &&
-            isInteractiveElement(item as Element),
-        );
-      }
+    const eventPath =
+      path ??
+      (() => {
+        const composedPathFn = getUnshadowedMethod(event, 'composedPath');
+        return composedPathFn
+          ? (safeApply(composedPathFn, event, []) as unknown[])
+          : null;
+      })();
+    if (Array.isArray(eventPath) && eventPath.length > 0) {
+      return eventPath.some(
+        (item) =>
+          (isElementNode(item) || item instanceof Element) &&
+          isInteractiveElement(item as Element),
+      );
     }
   } catch {
     // Suppress errors checking composedPath
@@ -167,13 +171,17 @@ const OVERLAY_TAGS = new Set(['CANVAS', 'PICTURE', 'SVG']);
 
 // Player wrappers must not exempt the media itself from native-menu restoration.
 // Performance optimization: Use O(1) Set lookup instead of regex execution
-export function isMediaContextEvent(event: Event): boolean {
+export function isMediaContextEvent(event: Event, path?: unknown[]): boolean {
   if (event.type !== 'contextmenu') return false;
-  const method = getUnshadowedMethod(event, 'composedPath');
-  const path = method ? safeApply(method, event, []) : [];
+  const eventPath =
+    path ??
+    (() => {
+      const method = getUnshadowedMethod(event, 'composedPath');
+      return method ? (safeApply(method, event, []) as unknown[]) : [];
+    })();
   return (
-    Array.isArray(path) &&
-    path.some((node) => {
+    Array.isArray(eventPath) &&
+    eventPath.some((node) => {
       if (!(node instanceof Element)) return false;
       const tag = safeGetTagName(node);
       return tag === 'VIDEO' || tag === 'AUDIO' || tag === 'IMG';
@@ -485,9 +493,25 @@ if (typeof window !== 'undefined') {
         return false;
       }
 
+      // Performance optimization: Evaluate composedPath once and reuse across
+      // isInteractiveEvent and isMediaContextEvent to eliminate redundant array allocations
+      // and DOM path traversals during high-frequency event interception.
+      let path: unknown[] | undefined;
+      try {
+        const composedPathFn = getUnshadowedMethod(event, 'composedPath');
+        if (composedPathFn) {
+          const res = safeApply(composedPathFn, event, []);
+          if (Array.isArray(res)) {
+            path = res;
+          }
+        }
+      } catch {
+        // Suppress errors getting composedPath
+      }
+
       if (
-        isInteractiveEvent(event) &&
-        !isMediaContextEvent(event) &&
+        isInteractiveEvent(event, path) &&
+        !isMediaContextEvent(event, path) &&
         !(isContextMenu && isModifierBypassActive() && isModifierPressed(event))
       ) {
         return false;

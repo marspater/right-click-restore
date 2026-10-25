@@ -7,16 +7,19 @@ import {
   safeApply,
   safeAttachShadow,
   safeClosest,
+  safeContains,
   safeCreateElement,
   safeElementsFromPoint,
   safeGetAttribute,
   safeGetElementById,
+  safeGetOwnerDocument,
   safeGetParentElement,
   safeGetShadowRoot,
   safeGetStyle,
   safeGetTagName,
   safeHasAttribute,
   safeHasAttributes,
+  safeIsConnected,
   safeMatches,
   safeQuerySelector,
   safeQuerySelectorAll,
@@ -867,6 +870,68 @@ describe('shared DOM utilities', () => {
         globalThis.Document = origDocument;
         globalThis.DocumentFragment = origDocumentFragment;
       }
+    });
+  });
+
+  describe('safeIsConnected, safeContains, and safeGetOwnerDocument', () => {
+    test('safeIsConnected determines connection status and resists DOM clobbering', () => {
+      const form = document.createElement('form');
+      const input = document.createElement('input');
+      input.setAttribute('name', 'isConnected');
+      form.appendChild(input);
+
+      // Clobber isConnected on form instance with child input
+      Object.defineProperty(form, 'isConnected', {
+        value: input,
+        configurable: true,
+      });
+
+      expect(safeIsConnected(form)).toBe(false);
+
+      document.body.appendChild(form);
+      expect(safeIsConnected(form)).toBe(true);
+      expect(safeIsConnected(input)).toBe(true);
+
+      document.body.removeChild(form);
+      expect(safeIsConnected(form)).toBe(false);
+    });
+
+    test('safeContains checks descendant relationships and resists DOM clobbering', () => {
+      const parent = document.createElement('div');
+      const form = document.createElement('form');
+      const input = document.createElement('input');
+      input.setAttribute('name', 'contains');
+      form.appendChild(input);
+      parent.appendChild(form);
+
+      // Clobber contains method on form instance
+      Object.defineProperty(form, 'contains', {
+        value: input,
+        configurable: true,
+      });
+
+      expect(safeContains(parent, form)).toBe(true);
+      expect(safeContains(form, input)).toBe(true);
+
+      const externalNode = document.createElement('div');
+      expect(safeContains(form, externalNode)).toBe(false);
+      expect(safeContains(parent, null)).toBe(false);
+    });
+
+    test('safeGetOwnerDocument retrieves ownerDocument and resists DOM clobbering', () => {
+      const form = document.createElement('form');
+      const input = document.createElement('input');
+      input.setAttribute('name', 'ownerDocument');
+      form.appendChild(input);
+
+      // Clobber ownerDocument on form instance
+      Object.defineProperty(form, 'ownerDocument', {
+        value: input,
+        configurable: true,
+      });
+
+      expect(safeGetOwnerDocument(form)).toBe(document);
+      expect(safeGetOwnerDocument(input)).toBe(document);
     });
   });
 });

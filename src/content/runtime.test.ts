@@ -8,7 +8,10 @@ test('video unblur follows site mutations and restores filters when disabled', a
     format: 'iife',
   });
   expect(result.success).toBe(true);
-  const window = new Window({ url: 'https://example.com/' });
+  const window = new Window({
+    url: 'https://example.com/',
+    settings: { disableJavaScriptEvaluation: false },
+  });
   let listener: (
     message: unknown,
     sender: unknown,
@@ -113,7 +116,10 @@ test('bundled content script handles Force Unlock through its registered listene
     format: 'iife',
   });
   expect(result.success).toBe(true);
-  const window = new Window({ url: 'https://example.com/' });
+  const window = new Window({
+    url: 'https://example.com/',
+    settings: { disableJavaScriptEvaluation: false },
+  });
   let listener: (
     message: unknown,
     sender: unknown,

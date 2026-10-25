@@ -162,7 +162,6 @@ label.domain-card:active:not(.dimmed) {
   transform: scale(0.99);
 }
 
-.domain-card:focus-within:not(.dimmed),
 .domain-card:has(input:focus-visible):not(.dimmed) {
   outline: 2px solid var(--accent-blue);
   outline-offset: -1px;
@@ -325,12 +324,14 @@ button:focus-visible {
 }
 
 .settings-row:hover:not(.is-disabled) .setting-icon-badge,
-.settings-row:focus-within:not(.is-disabled) .setting-icon-badge {
+.settings-row:has(input:focus-visible):not(.is-disabled) .setting-icon-badge {
   transform: scale(1.05);
 }
 
 .settings-row:hover:not(.is-disabled) .setting-icon-badge svg,
-.settings-row:focus-within:not(.is-disabled) .setting-icon-badge svg {
+.settings-row:has(input:focus-visible):not(.is-disabled)
+  .setting-icon-badge
+  svg {
   transform: scale(1.08);
 }
 
@@ -347,7 +348,6 @@ button:focus-visible {
   cursor: not-allowed;
 }
 
-.settings-row:focus-within:not(.is-disabled),
 .settings-row:has(input:focus-visible):not(.is-disabled) {
   background-color: var(--bg-row-hover);
   outline: 2px solid var(--accent-blue);

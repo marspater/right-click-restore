@@ -194,6 +194,22 @@ describe('page-script helpers', () => {
       expect(isInteractiveEvent(event)).toBe(true);
     });
 
+    test('reuses explicitly passed path without invoking composedPath on event', () => {
+      let called = false;
+      const input = document.createElement('input');
+      const event = {
+        composedPath: () => {
+          called = true;
+          return [input];
+        },
+        target: null,
+      } as unknown as Event;
+
+      const path = [input];
+      expect(isInteractiveEvent(event, path)).toBe(true);
+      expect(called).toBe(false);
+    });
+
     test('fast-paths non-interactive elements in composedPath without error', () => {
       const divNoAttrs = document.createElement('div');
       const spanNoAttrs = document.createElement('span');
@@ -482,6 +498,17 @@ describe('native media targets', () => {
         type: 'contextmenu',
         composedPath: () => [video, player],
       } as unknown as Event),
+    ).toBe(true);
+    expect(
+      isMediaContextEvent(
+        {
+          type: 'contextmenu',
+          composedPath: () => {
+            throw new Error('should not be called when path is provided');
+          },
+        } as unknown as Event,
+        [video, player],
+      ),
     ).toBe(true);
     expect(
       isMediaContextEvent({

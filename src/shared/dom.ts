@@ -581,7 +581,12 @@ export function safeGetAttribute(
 export function safeHasAttribute(element: Element, attr: string): boolean {
   try {
     const nativeFn = getNativeHasAttributeMethod();
-    if (nativeFn && !Object.hasOwn(element, 'hasAttribute')) {
+    if (
+      nativeFn &&
+      typeof Element !== 'undefined' &&
+      element instanceof Element &&
+      !Object.hasOwn(element, 'hasAttribute')
+    ) {
       return Boolean(safeApply(nativeFn, element, [attr]));
     }
     const fn = getUnshadowedMethod(element, 'hasAttribute');

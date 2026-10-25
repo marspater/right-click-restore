@@ -76,3 +76,8 @@
 **Vulnerability:** Direct property access to `element.parentElement` allowed untrusted web pages to clobber `parentElement` using named child inputs (e.g. `<form><input name="parentElement"></form>`), returning input elements or spoofed non-Element objects that caused DOM traversal errors and bypassed interactive element checks or video unblur scanning.
 **Learning:** Accessing `.parentElement` directly assumes the property is unshadowed by child form controls or named getters.
 **Prevention:** Use `safeGetParentElement` across all DOM parent element traversals to retrieve native getters via `getNativeParentElementGetter`/`getUnshadowedGetter` and verify node interface prototype inheritance.
+
+## 2025-05-25 - DOM Clobbering Resistance for Node Traversal & Connection State (`isConnected`, `contains`, `ownerDocument`)
+**Vulnerability:** Accessing `element.isConnected`, `element.contains`, or `element.ownerDocument` directly allowed untrusted web pages to shadow properties using named form controls (e.g., `<form><input name="isConnected"><input name="contains"><input name="ownerDocument"></form>`). Returning child `HTMLInputElement` objects caused `!element.isConnected` to evaluate to `false` on detached nodes, and `contains()` calls to throw `TypeError`, crashing video filter restoration routines and leaving overrides applied permanently.
+**Learning:** Node traversal getters and methods (`isConnected`, `contains`, `ownerDocument`) on DOM elements can be clobbered by named child inputs on forms or fieldsets in untrusted page contexts.
+**Prevention:** Use `safeIsConnected`, `safeContains`, and `safeGetOwnerDocument` across DOM node traversal and status routines to retrieve unshadowed prototype getters/methods via `safeApply`.

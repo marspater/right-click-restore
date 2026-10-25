@@ -57,6 +57,97 @@ export function getUnshadowedMethod(
   return null;
 }
 
+let nativeIsConnectedGetter: ((this: unknown) => unknown) | null | undefined;
+function getNativeIsConnectedGetter(): ((this: unknown) => unknown) | null {
+  if (nativeIsConnectedGetter === undefined) {
+    try {
+      nativeIsConnectedGetter =
+        typeof Node !== 'undefined'
+          ? (Object.getOwnPropertyDescriptor(Node.prototype, 'isConnected')
+              ?.get ?? null)
+          : null;
+    } catch {
+      nativeIsConnectedGetter = null;
+    }
+  }
+  return nativeIsConnectedGetter;
+}
+
+const nativeContainsMethod: NativeDOMMethod<typeof Node.prototype.contains> =
+  typeof Node !== 'undefined' ? Node.prototype.contains : null;
+
+let nativeOwnerDocumentGetter: ((this: unknown) => unknown) | null | undefined;
+function getNativeOwnerDocumentGetter(): ((this: unknown) => unknown) | null {
+  if (nativeOwnerDocumentGetter === undefined) {
+    try {
+      nativeOwnerDocumentGetter =
+        typeof Node !== 'undefined'
+          ? (Object.getOwnPropertyDescriptor(Node.prototype, 'ownerDocument')
+              ?.get ?? null)
+          : null;
+    } catch {
+      nativeOwnerDocumentGetter = null;
+    }
+  }
+  return nativeOwnerDocumentGetter;
+}
+
+export function safeIsConnected(node: Node): boolean {
+  try {
+    let connected: unknown = null;
+    const nativeGetter = getNativeIsConnectedGetter();
+    if (nativeGetter && typeof Node !== 'undefined' && node instanceof Node) {
+      connected = safeApply(nativeGetter, node, []);
+    } else {
+      const getter = getUnshadowedGetter(node, 'isConnected');
+      connected = getter ? safeApply(getter, node, []) : node.isConnected;
+    }
+    return Boolean(connected);
+  } catch {
+    return false;
+  }
+}
+
+export function safeContains(parent: Node, child: Node | null): boolean {
+  if (!child) return false;
+  try {
+    if (nativeContainsMethod && !Object.hasOwn(parent, 'contains')) {
+      return Boolean(safeApply(nativeContainsMethod, parent, [child]));
+    }
+    const fn = getUnshadowedMethod(parent, 'contains');
+    if (fn) {
+      return Boolean(safeApply(fn, parent, [child]));
+    }
+    return parent.contains(child);
+  } catch {
+    return false;
+  }
+}
+
+export function safeGetOwnerDocument(node: Node): Document | null {
+  try {
+    let doc: unknown = null;
+    const nativeGetter = getNativeOwnerDocumentGetter();
+    if (nativeGetter && typeof Node !== 'undefined' && node instanceof Node) {
+      doc = safeApply(nativeGetter, node, []);
+    } else {
+      const getter = getUnshadowedGetter(node, 'ownerDocument');
+      doc = getter ? safeApply(getter, node, []) : node.ownerDocument;
+    }
+    if (
+      doc &&
+      typeof doc === 'object' &&
+      'nodeType' in doc &&
+      (doc as Node).nodeType === 9
+    ) {
+      return doc as Document;
+    }
+  } catch {
+    // Return null if accessing ownerDocument throws on restricted elements
+  }
+  return typeof document !== 'undefined' ? document : null;
+}
+
 export function getUnshadowedGetter(
   obj: object,
   propName: string,

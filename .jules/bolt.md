@@ -48,3 +48,7 @@
 ## 2025-05-24 - Short-circuiting video container queries using querySelector
 **Learning:** Using `safeQuerySelector(element, 'video')` instead of `safeQuerySelectorAll(element, 'video').length === 0` to verify connected video containers stops searching as soon as the first video element is matched. This avoids full subtree DOM traversals and array allocations. Additionally, early exiting `VideoUnblur.scan` when `overrides.size === 0` and no video elements exist in the root subtree avoids unnecessary container scanning during non-video DOM mutations.
 **Action:** Use single-element `querySelector` short-circuiting instead of `querySelectorAll().length` when checking for element existence in subtrees.
+
+## 2025-05-25 - Caching native Event.prototype.composedPath for high-frequency event interception
+**Learning:** In page-script event handlers, calling `getUnshadowedMethod(event, 'composedPath')` on every intercepted event causes full prototype chain walks (`MouseEvent` -> `UIEvent` -> `Event` -> `Object.prototype`) and descriptor object allocations via `Object.getOwnPropertyDescriptor`. Caching native `Event.prototype.composedPath` at module load and invoking it via `safeApply` when `event instanceof Event && !Object.hasOwn(event, 'composedPath')` eliminates prototype chain search overhead on high-frequency user interactions.
+**Action:** Use cached `Event.prototype.composedPath` via `safeComposedPath` when querying event paths in event interceptors.

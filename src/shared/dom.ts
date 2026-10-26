@@ -193,6 +193,22 @@ function getNativeGetElementByIdMethod(): NativeDOMMethod<
 }
 
 /* eslint-disable @typescript-eslint/unbound-method */
+let nativeComposedPathMethod: NativeDOMMethod<
+  typeof Event.prototype.composedPath
+> = typeof Event !== 'undefined' ? Event.prototype.composedPath : null;
+function getNativeComposedPathMethod(): NativeDOMMethod<
+  typeof Event.prototype.composedPath
+> {
+  if (!nativeComposedPathMethod && typeof Event !== 'undefined') {
+    try {
+      nativeComposedPathMethod = Event.prototype.composedPath;
+    } catch {
+      nativeComposedPathMethod = null;
+    }
+  }
+  return nativeComposedPathMethod;
+}
+
 let nativeGetAttributeMethod: NativeDOMMethod<
   typeof Element.prototype.getAttribute
 > = typeof Element !== 'undefined' ? Element.prototype.getAttribute : null;
@@ -339,6 +355,28 @@ export function safeMatches(element: Element, selector: string): boolean {
   } catch {
     // Return false if selector matching throws on restricted or detached nodes
     return false;
+  }
+}
+
+export function safeComposedPath(event: Event): unknown[] {
+  try {
+    const nativeFn = getNativeComposedPathMethod();
+    if (
+      nativeFn &&
+      typeof Event !== 'undefined' &&
+      event instanceof Event &&
+      !Object.hasOwn(event, 'composedPath')
+    ) {
+      return (safeApply(nativeFn, event, []) as unknown[]) ?? [];
+    }
+    const fn = getUnshadowedMethod(event, 'composedPath');
+    if (fn) {
+      return (safeApply(fn, event, []) as unknown[]) ?? [];
+    }
+    return event.composedPath();
+  } catch {
+    // Return empty array if composedPath throws or is unavailable
+    return [];
   }
 }
 

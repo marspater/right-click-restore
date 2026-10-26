@@ -27,6 +27,17 @@ const isSiteActive = $derived(
   Boolean(settings.enabled && isToggleableDomain && !isSiteDisabled),
 );
 
+const activeFeatureCount = $derived(
+  [
+    settings.restoreRightClick,
+    settings.restoreSelection,
+    settings.antiShield,
+    settings.unblurVideos,
+    settings.absoluteForce,
+    settings.bypassModifierKey,
+  ].filter(Boolean).length,
+);
+
 const disabledRowTooltip = $derived(
   isSiteActive
     ? undefined
@@ -282,9 +293,22 @@ async function forceUnlockPage() {
 
         <!-- Domain Labels Stack -->
         <div class="min-w-0 flex flex-col justify-center">
-          <span id="desc-domain-status" class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
-            {!settings.enabled ? 'Extension Paused' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
-          </span>
+          <div class="flex items-center gap-1.5">
+            <span id="desc-domain-status" class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
+              {!settings.enabled ? 'Extension Paused' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
+            </span>
+            {#if isSiteActive}
+              <span class={`text-[8.5px] font-semibold px-1.5 py-[1px] rounded-full border transition-colors leading-none select-none ${
+                activeFeatureCount === 6
+                  ? 'bg-[var(--bg-badge-active)] text-[var(--accent-blue)] border-[var(--accent-blue)]/20'
+                  : activeFeatureCount > 0
+                    ? 'bg-[var(--bg-badge)] text-[var(--text-secondary)] border-[var(--border-subtle)]'
+                    : 'bg-[var(--accent-orange)]/15 text-[var(--accent-orange)] border-[var(--accent-orange)]/30'
+              }`} title={`${activeFeatureCount} of 6 protection features currently enabled`}>
+                {activeFeatureCount}/6 active
+              </span>
+            {/if}
+          </div>
           <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-0.5" title={currentHostname}>
             {currentHostname || 'Loading…'}
           </span>
@@ -318,7 +342,7 @@ async function forceUnlockPage() {
         <!-- Domain Labels Stack -->
         <div class="min-w-0 flex flex-col justify-center">
           <span class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
-            {!settings.enabled ? 'Extension Paused' : !isToggleableDomain ? 'System / Restricted Page' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
+            {!settings.enabled ? 'Extension Paused' : 'System / Restricted Page'}
           </span>
           <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-0.5" title={currentHostname}>
             {currentHostname || 'Loading…'}
@@ -555,6 +579,8 @@ async function forceUnlockPage() {
         Protection is unavailable on system pages
       {:else if isSiteDisabled}
         Protection is disabled on this domain
+      {:else if activeFeatureCount === 0}
+        <span class="text-[var(--accent-orange)] font-medium">Notice: All protection features are currently turned off</span>
       {:else if settings.bypassModifierKey}
         Tip: Hold <kbd>⇧ Shift</kbd> or <kbd>⌥ Option</kbd> for native menu
       {:else}

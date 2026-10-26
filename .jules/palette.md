@@ -73,3 +73,9 @@
 - Styled `.kbd-subtext` in `popup.css` for compact 9px inline scaling with soft drop shadows and clean baseline alignment.
 - Enhanced header extension app icon with `rounded-[6px]`, subtle drop shadow (`shadow-[0_1px_3px_rgba(0,0,0,0.12)]`), and a smooth hover scale micro-interaction (`hover:scale-105`).
 - Added contextual `title` hover tooltips to the domain card when extension protection is paused globally.
+
+16. **Active Feature Summary Badge & Context-Aware Footer State (`src/popup/App.svelte`)**:
+- Added an `activeFeatureCount` derived calculation in `App.svelte` counting enabled sub-features (`restoreRightClick`, `restoreSelection`, `antiShield`, `unblurVideos`, `absoluteForce`, `bypassModifierKey`).
+- Added a compact, Apple-styled status pill badge (`{activeFeatureCount}/6 active`) next to the "ACTIVE ON DOMAIN" label in the domain card when protection is active.
+- Added a clear footer notification (`Notice: All protection features are currently turned off`) when `isSiteActive` is true but all 6 restoration toggles are turned off, providing immediate clarity on active protection state.
+- Cleaned up redundant ternary branch in the non-toggleable domain section.

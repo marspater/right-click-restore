@@ -7,6 +7,7 @@ import {
   safeApply,
   safeAttachShadow,
   safeClosest,
+  safeComposedPath,
   safeCreateElement,
   safeElementsFromPoint,
   safeGetAttribute,
@@ -734,6 +735,41 @@ describe('shared DOM utilities', () => {
       } as unknown as Document;
       expect(safeGetElementById(mockDoc, 'mock-id')).toBe(el);
       expect(safeGetElementById(mockDoc, 'unknown')).toBeNull();
+    });
+
+    test('cached native composedPath invokes correctly and falls back when shadowed or on mock event', () => {
+      const targetNode = document.createElement('div');
+      const event = new window.Event('click');
+      Object.defineProperty(event, 'target', {
+        value: targetNode,
+        configurable: true,
+      });
+
+      // 1. Invokes cached native method when available
+      const path = safeComposedPath(event);
+      expect(Array.isArray(path)).toBe(true);
+
+      // 2. Falls back when shadowed on instance
+      Object.defineProperty(event, 'composedPath', {
+        value: 'hijacked-composedPath',
+        configurable: true,
+      });
+      expect(Array.isArray(safeComposedPath(event))).toBe(true);
+
+      // 3. Falls back safely on mock event plain object
+      const mockEvent = {
+        composedPath: () => [targetNode],
+      } as unknown as Event;
+      expect(safeComposedPath(mockEvent)).toEqual([targetNode]);
+
+      // 4. Returns empty array on null or throwing event
+      expect(safeComposedPath(null as unknown as Event)).toEqual([]);
+      const throwingEvent = {
+        composedPath: () => {
+          throw new Error('fail');
+        },
+      } as unknown as Event;
+      expect(safeComposedPath(throwingEvent)).toEqual([]);
     });
 
     test('cached native getAttribute invokes correctly and falls back when shadowed or on mock element', () => {

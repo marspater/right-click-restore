@@ -289,6 +289,10 @@ label.domain-card:active:not(.dimmed) {
   outline-offset: 2px;
 }
 
+button[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
 button:focus:not(:focus-visible) {
   outline: none;
 }

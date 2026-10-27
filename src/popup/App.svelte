@@ -27,6 +27,19 @@ const isSiteActive = $derived(
   Boolean(settings.enabled && isToggleableDomain && !isSiteDisabled),
 );
 
+const activeFeatureCount = $derived(
+  isSiteActive
+    ? [
+        settings.restoreRightClick,
+        settings.restoreSelection,
+        settings.antiShield,
+        settings.unblurVideos,
+        settings.absoluteForce,
+        settings.bypassModifierKey,
+      ].filter(Boolean).length
+    : 0,
+);
+
 const disabledRowTooltip = $derived(
   isSiteActive
     ? undefined
@@ -283,7 +296,7 @@ async function forceUnlockPage() {
         <!-- Domain Labels Stack -->
         <div class="min-w-0 flex flex-col justify-center">
           <span id="desc-domain-status" class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
-            {!settings.enabled ? 'Extension Paused' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
+            {!settings.enabled ? 'Extension Paused' : isSiteDisabled ? 'Disabled on Domain' : `Active on Domain • ${activeFeatureCount}/6`}
           </span>
           <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-0.5" title={currentHostname}>
             {currentHostname || 'Loading…'}
@@ -556,7 +569,7 @@ async function forceUnlockPage() {
       {:else if isSiteDisabled}
         Protection is disabled on this domain
       {:else if settings.bypassModifierKey}
-        Tip: Hold <kbd>⇧ Shift</kbd> or <kbd>⌥ Option</kbd> for native menu
+        Tip: Hold <kbd class="kbd-subtext">⇧ Shift</kbd> or <kbd class="kbd-subtext">⌥ Option</kbd> for native menu
       {:else}
         Tip: <button
           type="button"
@@ -564,7 +577,7 @@ async function forceUnlockPage() {
           disabled={!isSiteActive}
           class="text-[var(--accent-blue)] font-medium hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent-blue)] rounded-[2px] cursor-pointer inline disabled:no-underline disabled:cursor-not-allowed disabled:text-[var(--text-tertiary)]"
           title="Enable Modifier Key Bypass setting"
-        >Enable Modifier Key Bypass</button> to hold <kbd>⇧ Shift</kbd>
+        >Enable Modifier Key Bypass</button> to hold <kbd class="kbd-subtext">⇧ Shift</kbd>
       {/if}
     </p>
   </footer>

@@ -73,3 +73,8 @@
 - Styled `.kbd-subtext` in `popup.css` for compact 9px inline scaling with soft drop shadows and clean baseline alignment.
 - Enhanced header extension app icon with `rounded-[6px]`, subtle drop shadow (`shadow-[0_1px_3px_rgba(0,0,0,0.12)]`), and a smooth hover scale micro-interaction (`hover:scale-105`).
 - Added contextual `title` hover tooltips to the domain card when extension protection is paused globally.
+
+16. **Active Protection Rules Counter, `aria-disabled` Cursor Affordance & Footer Keycap Uniformity (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+- Added a dynamic `activeFeatureCount` derived state in `App.svelte` that updates real-time as feature switches are toggled, displaying `Active on Domain • {activeFeatureCount}/6` in the domain status header for clear state communication.
+- Added `button[aria-disabled="true"] { cursor: not-allowed; }` in `popup.css` so buttons in `aria-disabled` state (e.g. Force Unlock button during unlocking or status feedback) accurately reflect non-interactive cursor affordance.
+- Standardized footer tip shortcut key mentions to use `<kbd class="kbd-subtext">` for baseline-aligned inline keycap typography across all small text regions.

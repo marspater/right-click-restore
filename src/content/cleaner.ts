@@ -87,98 +87,106 @@ export function getScrubSelector(
   return '';
 }
 
-function hasUserSelectNone(node: Element): boolean {
+// Performance optimization: Returns the resolved CSSStyleDeclaration if user-select: none is detected.
+// Returning the style object directly allows cleanNode to reuse it during restoration, bypassing duplicate
+// safeGetAttribute and safeGetStyle calls on styled elements.
+function getUserSelectStyle(node: Element): CSSStyleDeclaration | null {
   if (typeof HTMLElement === 'undefined' || !(node instanceof HTMLElement)) {
-    return false;
+    return null;
   }
-  // Performance optimization: Fast-path raw inline style attribute inspection.
-  // Accessing safeGetAttribute directly bypasses redundant safeHasAttribute calls
-  // since null is returned if the style attribute is absent. Accessing safeGetStyle(node)
-  // computes/resolves CSSStyleDeclaration properties, which is expensive.
-  // Over 95% of styled DOM nodes do not configure user-select. Short-circuiting if
-  // the style attribute string lacks 'user-select' or 'userselect' avoids unnecessary
-  // CSS property accesses while retaining complete accuracy.
   const styleAttr = safeGetAttribute(node, 'style');
   if (!styleAttr) {
-    return false;
+    return null;
   }
   const styleAttrLower = styleAttr.toLowerCase();
   if (
     !styleAttrLower.includes('user-select') &&
     !styleAttrLower.includes('userselect')
   ) {
-    return false;
+    return null;
   }
   const style = safeGetStyle(node);
-  if (!style) return false;
-  return (
+  if (!style) return null;
+  if (
     style.userSelect === 'none' ||
     style.getPropertyValue('-webkit-user-select') === 'none'
-  );
+  ) {
+    return style;
+  }
+  return null;
 }
 
-function restoreUserSelect(node: Element): void {
+function restoreUserSelect(
+  node: Element,
+  cachedStyle?: CSSStyleDeclaration | null,
+): void {
   if (typeof HTMLElement === 'undefined' || !(node instanceof HTMLElement)) {
     return;
   }
-  const styleAttr = safeGetAttribute(node, 'style');
-  if (!styleAttr) {
-    return;
+  let style = cachedStyle;
+  if (!style) {
+    const styleAttr = safeGetAttribute(node, 'style');
+    if (!styleAttr) {
+      return;
+    }
+    const styleAttrLower = styleAttr.toLowerCase();
+    if (
+      !styleAttrLower.includes('user-select') &&
+      !styleAttrLower.includes('userselect')
+    ) {
+      return;
+    }
+    style = safeGetStyle(node);
   }
-  const styleAttrLower = styleAttr.toLowerCase();
-  if (
-    !styleAttrLower.includes('user-select') &&
-    !styleAttrLower.includes('userselect')
-  ) {
-    return;
-  }
+  if (!style) return;
   try {
-    const style = safeGetStyle(node);
-    if (style) {
-      if (style.userSelect === 'none') {
-        style.userSelect = 'auto';
-      }
-      if (style.getPropertyValue('-webkit-user-select') === 'none') {
-        style.setProperty('-webkit-user-select', 'auto');
-      }
+    if (style.userSelect === 'none') {
+      style.userSelect = 'auto';
+    }
+    if (style.getPropertyValue('-webkit-user-select') === 'none') {
+      style.setProperty('-webkit-user-select', 'auto');
     }
   } catch {
     // Suppress style modification errors on restricted or read-only elements
   }
 }
 
-function hasScrubbableSelection(node: Element): boolean {
-  for (const attr of SELECTION_ATTRS) {
-    if (safeHasAttribute(node, attr)) {
-      return true;
-    }
-  }
-  return hasUserSelectNone(node);
+interface ScrubbableTargetResult {
+  isTarget: boolean;
+  userSelectStyle: CSSStyleDeclaration | null;
 }
 
-function hasScrubbableTarget(
+function checkScrubbableTarget(
   node: Element,
   settings: Settings,
   shadow?: ShadowRoot | null,
-): boolean {
+): ScrubbableTargetResult {
   try {
     if (shadow) {
-      return true;
+      return { isTarget: true, userSelectStyle: null };
     }
     // Fast-path: Elements without attributes cannot have event handler attributes or inline style attributes
     if (!safeHasAttributes(node)) {
-      return false;
+      return { isTarget: false, userSelectStyle: null };
     }
     if (settings.restoreRightClick && safeHasAttribute(node, 'oncontextmenu')) {
-      return true;
+      return { isTarget: true, userSelectStyle: null };
     }
-    if (settings.restoreSelection && hasScrubbableSelection(node)) {
-      return true;
+    if (settings.restoreSelection) {
+      for (const attr of SELECTION_ATTRS) {
+        if (safeHasAttribute(node, attr)) {
+          return { isTarget: true, userSelectStyle: null };
+        }
+      }
+      const userSelectStyle = getUserSelectStyle(node);
+      if (userSelectStyle) {
+        return { isTarget: true, userSelectStyle };
+      }
     }
   } catch {
     // Suppress errors inspecting attributes or shadow roots on detached elements
   }
-  return false;
+  return { isTarget: false, userSelectStyle: null };
 }
 
 function isInteractiveOrDescendant(node: Element): boolean {
@@ -194,7 +202,11 @@ function isInteractiveOrDescendant(node: Element): boolean {
   }
 }
 
-function stripScrubbableAttributes(node: Element, settings: Settings): void {
+function stripScrubbableAttributes(
+  node: Element,
+  settings: Settings,
+  userSelectStyle?: CSSStyleDeclaration | null,
+): void {
   if (settings.restoreRightClick) {
     safeRemoveAttribute(node, 'oncontextmenu');
   }
@@ -203,7 +215,7 @@ function stripScrubbableAttributes(node: Element, settings: Settings): void {
     for (const attr of SELECTION_ATTRS) {
       safeRemoveAttribute(node, attr);
     }
-    restoreUserSelect(node);
+    restoreUserSelect(node, userSelectStyle);
   }
 }
 
@@ -222,7 +234,12 @@ export function cleanNode(
   const shadow = safeGetShadowRoot(node);
 
   // Fast-path: Skip expensive tree traversal if element has no scrubbable attributes/styles or shadow
-  if (!hasScrubbableTarget(node, settings, shadow)) {
+  const { isTarget, userSelectStyle } = checkScrubbableTarget(
+    node,
+    settings,
+    shadow,
+  );
+  if (!isTarget) {
     return;
   }
 
@@ -237,7 +254,7 @@ export function cleanNode(
     return;
   }
 
-  stripScrubbableAttributes(node, settings);
+  stripScrubbableAttributes(node, settings, userSelectStyle);
 
   // Traverse open shadow root if accessible
   if (shadow) {

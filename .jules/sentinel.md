@@ -76,3 +76,8 @@
 **Vulnerability:** Direct property access to `element.parentElement` allowed untrusted web pages to clobber `parentElement` using named child inputs (e.g. `<form><input name="parentElement"></form>`), returning input elements or spoofed non-Element objects that caused DOM traversal errors and bypassed interactive element checks or video unblur scanning.
 **Learning:** Accessing `.parentElement` directly assumes the property is unshadowed by child form controls or named getters.
 **Prevention:** Use `safeGetParentElement` across all DOM parent element traversals to retrieve native getters via `getNativeParentElementGetter`/`getUnshadowedGetter` and verify node interface prototype inheritance.
+
+## 2025-05-25 - Function Prototype Shadowing Resistance in Cryptographic Nonce Generation
+**Vulnerability:** Invoking `.call()` directly on `randomUUIDFn`, `getRandomValuesFn`, or `objectToString` in page-script or crypto modules allowed untrusted host scripts executing in the host JS context to shadow `Function.prototype.call` (e.g. `Function.prototype.call = fn`), executing attacker code during session nonce generation or throwing errors to disrupt event traps.
+**Learning:** Invoking `.call()` on snapshotted functions directly relies on `Function.prototype.call` being unshadowed in the current JS execution realm.
+**Prevention:** Always use `safeApply(fn, thisArg, args)` (which uses snapshotted `Reflect.apply`) when invoking functions in contexts where `Function.prototype` methods could be modified by page scripts.

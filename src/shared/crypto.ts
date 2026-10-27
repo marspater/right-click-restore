@@ -1,4 +1,4 @@
-import { getUnshadowedMethod } from './dom';
+import { getUnshadowedMethod, safeApply } from './dom';
 
 let fallbackCounter = 0;
 
@@ -36,7 +36,7 @@ export function getSecureRandomString(): string {
 
     if (typeof randomUUIDFn === 'function') {
       try {
-        const uuid = randomUUIDFn.call(currentCrypto);
+        const uuid = safeApply(randomUUIDFn, currentCrypto, []);
         if (typeof uuid === 'string' && uuid.length > 0) {
           return uuid;
         }
@@ -57,7 +57,7 @@ export function getSecureRandomString(): string {
     if (typeof getRandomValuesFn === 'function') {
       try {
         const bytes = new Uint8Array(16);
-        getRandomValuesFn.call(currentCrypto, bytes);
+        safeApply(getRandomValuesFn, currentCrypto, [bytes]);
         return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join(
           '',
         );

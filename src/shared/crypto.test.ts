@@ -83,4 +83,20 @@ describe('getSecureRandomString', () => {
       globalThis.crypto = originalCrypto;
     }
   });
+
+  test('resists Function.prototype.call shadowing during token generation', () => {
+    const originalCall = Function.prototype.call;
+    // Shadow Function.prototype.call with a throwing mock
+    Function.prototype.call = () => {
+      throw new Error('Intercepted by malicious host script');
+    };
+
+    try {
+      const token = getSecureRandomString();
+      expect(typeof token).toBe('string');
+      expect(token.length).toBeGreaterThan(0);
+    } finally {
+      Function.prototype.call = originalCall;
+    }
+  });
 });

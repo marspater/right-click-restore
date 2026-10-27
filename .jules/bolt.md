@@ -48,3 +48,7 @@
 ## 2025-05-24 - Short-circuiting video container queries using querySelector
 **Learning:** Using `safeQuerySelector(element, 'video')` instead of `safeQuerySelectorAll(element, 'video').length === 0` to verify connected video containers stops searching as soon as the first video element is matched. This avoids full subtree DOM traversals and array allocations. Additionally, early exiting `VideoUnblur.scan` when `overrides.size === 0` and no video elements exist in the root subtree avoids unnecessary container scanning during non-video DOM mutations.
 **Action:** Use single-element `querySelector` short-circuiting instead of `querySelectorAll().length` when checking for element existence in subtrees.
+
+## 2025-05-25 - Reusing CSSStyleDeclaration references across DOM target validation and restoration
+**Learning:** Returning the resolved `CSSStyleDeclaration` instance directly from `getUserSelectStyle` during target validation allows `cleanNode` and `stripScrubbableAttributes` to reuse the existing `style` reference when restoring `user-select` properties. This eliminates duplicate `safeGetAttribute('style')` string parsing and `safeGetStyle()` native getter invocations during DOM cleaning sweeps.
+**Action:** When validating DOM targets for style-based modifications, return and pass forward the resolved style declaration object to avoid redundant property reads and getter executions during restoration.

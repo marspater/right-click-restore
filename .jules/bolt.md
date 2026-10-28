@@ -48,3 +48,7 @@
 ## 2025-05-24 - Short-circuiting video container queries using querySelector
 **Learning:** Using `safeQuerySelector(element, 'video')` instead of `safeQuerySelectorAll(element, 'video').length === 0` to verify connected video containers stops searching as soon as the first video element is matched. This avoids full subtree DOM traversals and array allocations. Additionally, early exiting `VideoUnblur.scan` when `overrides.size === 0` and no video elements exist in the root subtree avoids unnecessary container scanning during non-video DOM mutations.
 **Action:** Use single-element `querySelector` short-circuiting instead of `querySelectorAll().length` when checking for element existence in subtrees.
+
+## 2025-05-25 - Fast-pathing nodeType checks over instanceof Element in event paths
+**Learning:** `instanceof Element` checks trigger prototype chain traversals and fail across cross-realm DOM boundaries (such as iframes or shadow trees). Replacing `instanceof Element` with `isElementNode` (`nodeType === 1`) in event handling paths avoids prototype chain lookups and ensures reliable cross-realm node identification.
+**Action:** Prefer `nodeType === 1` checks over `instanceof Element` for fast-path element validation in event handlers and DOM traversals.

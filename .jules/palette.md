@@ -73,3 +73,8 @@
 - Styled `.kbd-subtext` in `popup.css` for compact 9px inline scaling with soft drop shadows and clean baseline alignment.
 - Enhanced header extension app icon with `rounded-[6px]`, subtle drop shadow (`shadow-[0_1px_3px_rgba(0,0,0,0.12)]`), and a smooth hover scale micro-interaction (`hover:scale-105`).
 - Added contextual `title` hover tooltips to the domain card when extension protection is paused globally.
+
+16. **System Page Tooltip Context, Status Label Simplification & Footer Tip Keycaps (`src/popup/App.svelte`)**:
+- Added contextual `title={settings.enabled ? 'Protection is unavailable on system pages' : 'Extension is paused globally'}` hover tooltip attribute to the system/restricted page domain card section (`<section class="glass-card domain-card">`).
+- Simplified system domain status label expression to `!settings.enabled ? 'Extension Paused' : 'System / Restricted Page'`.
+- Standardized footer tip shortcut key badges (`⇧ Shift`, `⌥ Option`) with `<kbd class="kbd-subtext">` for clean baseline alignment and keycap typography consistency across the entire extension popup interface.

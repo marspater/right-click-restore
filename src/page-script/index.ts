@@ -84,6 +84,9 @@ function isElementNode(item: unknown): item is Element {
 // isInteractiveElement(curr) already evaluates whether curr matches ALL_INTERACTIVE_SELECTORS.
 // Calling safeClosest on curr.parentElement avoids re-evaluating the multi-selector CSS rule
 // against curr when isInteractiveElement returns false.
+// Performance optimization: Use isElementNode (nodeType === 1) fast-path instead of
+// redundant instanceof Element checks. Avoids prototype chain walks and cross-realm
+// instanceof failures when inspecting event path targets.
 export function isInteractiveNode(node: Node | null): boolean {
   if (!node) return false;
   try {
@@ -91,7 +94,7 @@ export function isInteractiveNode(node: Node | null): boolean {
     if (curr.nodeType === 3) {
       curr = safeGetParentElement(curr);
     }
-    if (isElementNode(curr) || curr instanceof Element) {
+    if (isElementNode(curr)) {
       const el = curr as Element;
       if (isInteractiveElement(el)) {
         return true;
@@ -120,8 +123,7 @@ export function isInteractiveEvent(event: Event): boolean {
       if (Array.isArray(path) && path.length > 0) {
         return path.some(
           (item) =>
-            (isElementNode(item) || item instanceof Element) &&
-            isInteractiveElement(item as Element),
+            isElementNode(item) && isInteractiveElement(item as Element),
         );
       }
     }
@@ -130,7 +132,8 @@ export function isInteractiveEvent(event: Event): boolean {
   }
   return isInteractiveNode(
     event.target &&
-      (isElementNode(event.target) || event.target instanceof Node)
+      (isElementNode(event.target) ||
+        (typeof event.target === 'object' && 'nodeType' in event.target))
       ? (event.target as Node)
       : null,
   );
@@ -174,8 +177,8 @@ export function isMediaContextEvent(event: Event): boolean {
   return (
     Array.isArray(path) &&
     path.some((node) => {
-      if (!(node instanceof Element)) return false;
-      const tag = safeGetTagName(node);
+      if (!isElementNode(node)) return false;
+      const tag = safeGetTagName(node as Element);
       return tag === 'VIDEO' || tag === 'AUDIO' || tag === 'IMG';
     })
   );
@@ -546,8 +549,8 @@ if (typeof window !== 'undefined') {
       try {
         // Preserve buttons/editors, but allow transparent player surfaces to yield.
         if (
-          e.target instanceof Element &&
-          safeClosest(e.target, INTERACTIVE_ELEMENTS)
+          isElementNode(e.target) &&
+          safeClosest(e.target as Element, INTERACTIVE_ELEMENTS)
         )
           return;
         if (typeof document === 'undefined') return;

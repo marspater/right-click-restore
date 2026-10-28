@@ -57,6 +57,90 @@ export function getUnshadowedMethod(
   return null;
 }
 
+let nativeClassListGetter: ((this: unknown) => unknown) | null | undefined;
+function getNativeClassListGetter(): ((this: unknown) => unknown) | null {
+  if (nativeClassListGetter === undefined) {
+    try {
+      nativeClassListGetter =
+        typeof Element !== 'undefined'
+          ? (Object.getOwnPropertyDescriptor(Element.prototype, 'classList')
+              ?.get ?? null)
+          : null;
+    } catch {
+      nativeClassListGetter = null;
+    }
+  }
+  return nativeClassListGetter;
+}
+
+export function safeAddClass(element: Element, className: string): void {
+  try {
+    const nativeGetter = getNativeClassListGetter();
+    const list = nativeGetter
+      ? safeApply(nativeGetter, element, [])
+      : (() => {
+          const getter = getUnshadowedGetter(element, 'classList');
+          return getter ? safeApply(getter, element, []) : element.classList;
+        })();
+    if (list && typeof list === 'object') {
+      const addFn = getUnshadowedMethod(list, 'add');
+      if (addFn) safeApply(addFn, list, [className]);
+    }
+  } catch {
+    // Suppress errors adding class
+  }
+}
+
+export function safeRemoveClass(element: Element, className: string): void {
+  try {
+    const nativeGetter = getNativeClassListGetter();
+    const list = nativeGetter
+      ? safeApply(nativeGetter, element, [])
+      : (() => {
+          const getter = getUnshadowedGetter(element, 'classList');
+          return getter ? safeApply(getter, element, []) : element.classList;
+        })();
+    if (list && typeof list === 'object') {
+      const removeFn = getUnshadowedMethod(list, 'remove');
+      if (removeFn) safeApply(removeFn, list, [className]);
+    }
+  } catch {
+    // Suppress errors removing class
+  }
+}
+
+let nativeTextContentGetter: ((this: unknown) => unknown) | null | undefined;
+function getNativeTextContentGetter(): ((this: unknown) => unknown) | null {
+  if (nativeTextContentGetter === undefined) {
+    try {
+      nativeTextContentGetter =
+        typeof Node !== 'undefined'
+          ? (Object.getOwnPropertyDescriptor(Node.prototype, 'textContent')
+              ?.get ?? null)
+          : null;
+    } catch {
+      nativeTextContentGetter = null;
+    }
+  }
+  return nativeTextContentGetter;
+}
+
+export function safeGetTextContent(node: Node): string {
+  try {
+    const nativeGetter = getNativeTextContentGetter();
+    const text = nativeGetter
+      ? safeApply(nativeGetter, node, [])
+      : (() => {
+          const getter = getUnshadowedGetter(node, 'textContent');
+          return getter ? safeApply(getter, node, []) : node.textContent;
+        })();
+    if (typeof text === 'string') return text;
+  } catch {
+    // Suppress errors reading textContent
+  }
+  return '';
+}
+
 export function getUnshadowedGetter(
   obj: object,
   propName: string,

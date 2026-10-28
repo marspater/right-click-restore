@@ -5,14 +5,17 @@ import {
 import { getSecureRandomString } from '../shared/crypto';
 import {
   getUnshadowedMethod,
+  safeAddClass,
   safeApply,
   safeClosest,
   safeElementsFromPoint,
   safeGetParentElement,
   safeGetStyle,
   safeGetTagName,
+  safeGetTextContent,
   safeHasAttributes,
   safeMatches,
+  safeRemoveClass,
   safeRemoveElement,
 } from '../shared/dom';
 import {
@@ -512,12 +515,12 @@ if (typeof window !== 'undefined') {
       const prevPointerEvents = style.pointerEvents;
       const prevPriority = style.getPropertyPriority('pointer-events');
 
-      el.classList.add('rcr-unmasked-overlay');
+      safeAddClass(el, 'rcr-unmasked-overlay');
       style.setProperty('pointer-events', 'none', 'important');
 
       const timer = setTimeout(() => {
         try {
-          el.classList.remove('rcr-unmasked-overlay');
+          safeRemoveClass(el, 'rcr-unmasked-overlay');
           const currentStyle = safeGetStyle(el);
           if (currentStyle) {
             if (prevPointerEvents) {
@@ -566,7 +569,7 @@ if (typeof window !== 'undefined') {
               index > 0 &&
               (OVERLAY_TAGS.has(safeGetTagName(el)) ||
                 (el instanceof HTMLElement &&
-                  (el.textContent || '').trim().length > 0)),
+                  safeGetTextContent(el).trim().length > 0)),
           );
         if (target && elements[0] !== target) {
           for (const el of elements) {

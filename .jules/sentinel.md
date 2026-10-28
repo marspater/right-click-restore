@@ -76,3 +76,8 @@
 **Vulnerability:** Direct property access to `element.parentElement` allowed untrusted web pages to clobber `parentElement` using named child inputs (e.g. `<form><input name="parentElement"></form>`), returning input elements or spoofed non-Element objects that caused DOM traversal errors and bypassed interactive element checks or video unblur scanning.
 **Learning:** Accessing `.parentElement` directly assumes the property is unshadowed by child form controls or named getters.
 **Prevention:** Use `safeGetParentElement` across all DOM parent element traversals to retrieve native getters via `getNativeParentElementGetter`/`getUnshadowedGetter` and verify node interface prototype inheritance.
+
+## 2025-05-25 - DOM Clobbering Resistance for Class List Manipulation & Text Content Selection
+**Vulnerability:** Untrusted host page elements (e.g., `<form id="overlay">` or `<fieldset>`) containing child input elements named `classList` or `textContent` (such as `<input name="classList">` or `<input name="textContent">`) clobbered `element.classList` and `element.textContent` properties. Direct invocation of `el.classList.add`/`remove` or `el.textContent.trim()` threw `TypeError`s, crashing overlay unmasking routines and bypassing the anti-shield overlay piercer.
+**Learning:** HTML collection and form getters return named child inputs for properties like `classList` and `textContent`, replacing native `DOMTokenList` or string accessors with `HTMLInputElement` objects.
+**Prevention:** Use `safeAddClass`, `safeRemoveClass`, and `safeGetTextContent` to unshadow `Element.prototype.classList` and `Node.prototype.textContent` getters using `safeApply` and `getUnshadowedGetter`.

@@ -3,6 +3,7 @@ import { Window } from 'happy-dom';
 import {
   getUnshadowedGetter,
   getUnshadowedMethod,
+  safeAddClass,
   safeAppendChild,
   safeApply,
   safeAttachShadow,
@@ -15,12 +16,14 @@ import {
   safeGetShadowRoot,
   safeGetStyle,
   safeGetTagName,
+  safeGetTextContent,
   safeHasAttribute,
   safeHasAttributes,
   safeMatches,
   safeQuerySelector,
   safeQuerySelectorAll,
   safeRemoveAttribute,
+  safeRemoveClass,
   safeRemoveElement,
 } from './dom';
 
@@ -235,6 +238,35 @@ describe('shared DOM utilities', () => {
       expect(parent.contains(form)).toBe(true);
       safeRemoveElement(form);
       expect(parent.contains(form)).toBe(false);
+    });
+
+    test('safeAddClass, safeRemoveClass, and safeGetTextContent resist DOM clobbering', () => {
+      const form = document.createElement('form');
+      const inputClassList = document.createElement('input');
+      inputClassList.setAttribute('name', 'classList');
+      const inputTextContent = document.createElement('input');
+      inputTextContent.setAttribute('name', 'textContent');
+
+      form.appendChild(inputClassList);
+      form.appendChild(inputTextContent);
+
+      Object.defineProperty(form, 'classList', {
+        value: inputClassList,
+        configurable: true,
+      });
+      Object.defineProperty(form, 'textContent', {
+        value: inputTextContent,
+        configurable: true,
+      });
+
+      expect(() => safeAddClass(form, 'active-overlay')).not.toThrow();
+      expect(form.getAttribute('class')).toContain('active-overlay');
+
+      expect(() => safeRemoveClass(form, 'active-overlay')).not.toThrow();
+      expect(form.getAttribute('class') ?? '').not.toContain('active-overlay');
+
+      expect(() => safeGetTextContent(form)).not.toThrow();
+      expect(typeof safeGetTextContent(form)).toBe('string');
     });
 
     test('safeHasAttributes checks attribute presence accurately and resists DOM clobbering', () => {

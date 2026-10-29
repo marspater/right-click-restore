@@ -7,6 +7,7 @@ import {
   getUnshadowedMethod,
   safeApply,
   safeClosest,
+  safeComposedPath,
   safeElementsFromPoint,
   safeGetParentElement,
   safeGetStyle,
@@ -25,6 +26,7 @@ export {
   getUnshadowedMethod,
   safeApply,
   safeClosest,
+  safeComposedPath,
   safeMatches,
 } from '../shared/dom';
 
@@ -114,16 +116,13 @@ export function isInteractiveNode(node: Node | null): boolean {
 export function isInteractiveEvent(event: Event): boolean {
   if (!event) return false;
   try {
-    const composedPathFn = getUnshadowedMethod(event, 'composedPath');
-    if (composedPathFn) {
-      const path = safeApply(composedPathFn, event, []) as unknown[];
-      if (Array.isArray(path) && path.length > 0) {
-        return path.some(
-          (item) =>
-            (isElementNode(item) || item instanceof Element) &&
-            isInteractiveElement(item as Element),
-        );
-      }
+    const path = safeComposedPath(event);
+    if (path.length > 0) {
+      return path.some(
+        (item) =>
+          (isElementNode(item) || item instanceof Element) &&
+          isInteractiveElement(item as Element),
+      );
     }
   } catch {
     // Suppress errors checking composedPath
@@ -169,16 +168,12 @@ const OVERLAY_TAGS = new Set(['CANVAS', 'PICTURE', 'SVG']);
 // Performance optimization: Use O(1) Set lookup instead of regex execution
 export function isMediaContextEvent(event: Event): boolean {
   if (event.type !== 'contextmenu') return false;
-  const method = getUnshadowedMethod(event, 'composedPath');
-  const path = method ? safeApply(method, event, []) : [];
-  return (
-    Array.isArray(path) &&
-    path.some((node) => {
-      if (!(node instanceof Element)) return false;
-      const tag = safeGetTagName(node);
-      return tag === 'VIDEO' || tag === 'AUDIO' || tag === 'IMG';
-    })
-  );
+  const path = safeComposedPath(event);
+  return path.some((node) => {
+    if (!(node instanceof Element)) return false;
+    const tag = safeGetTagName(node);
+    return tag === 'VIDEO' || tag === 'AUDIO' || tag === 'IMG';
+  });
 }
 
 export function findUnderlyingMedia(elements: Element[]): Element | undefined {

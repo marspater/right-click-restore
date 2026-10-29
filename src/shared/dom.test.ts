@@ -7,6 +7,7 @@ import {
   safeApply,
   safeAttachShadow,
   safeClosest,
+  safeContains,
   safeCreateElement,
   safeElementsFromPoint,
   safeGetAttribute,
@@ -17,6 +18,7 @@ import {
   safeGetTagName,
   safeHasAttribute,
   safeHasAttributes,
+  safeIsConnected,
   safeMatches,
   safeQuerySelector,
   safeQuerySelectorAll,
@@ -334,6 +336,61 @@ describe('shared DOM utilities', () => {
 
       const shadow = safeGetShadowRoot(form);
       expect(shadow).toBeNull();
+    });
+  });
+
+  describe('safeContains', () => {
+    test('returns true when child is contained within parent node', () => {
+      const parent = document.createElement('div');
+      const child = document.createElement('span');
+      parent.appendChild(child);
+
+      expect(safeContains(parent, child)).toBe(true);
+      expect(safeContains(parent, null)).toBe(false);
+      expect(safeContains(child, parent)).toBe(false);
+    });
+
+    test('resists DOM clobbering when contains is overridden by named input in form', () => {
+      const form = document.createElement('form');
+      const input = document.createElement('input');
+      input.setAttribute('name', 'contains');
+      form.appendChild(input);
+
+      Object.defineProperty(form, 'contains', {
+        value: input,
+        configurable: true,
+      });
+
+      expect(safeContains(form, input)).toBe(true);
+      expect(safeContains(form, document.createElement('div'))).toBe(false);
+    });
+  });
+
+  describe('safeIsConnected', () => {
+    test('returns connection status of node accurately', () => {
+      const el = document.createElement('div');
+      expect(safeIsConnected(el)).toBe(false);
+
+      document.body.appendChild(el);
+      expect(safeIsConnected(el)).toBe(true);
+      el.remove();
+    });
+
+    test('resists DOM clobbering when isConnected getter is overridden on form element', () => {
+      const form = document.createElement('form');
+      const input = document.createElement('input');
+      input.setAttribute('name', 'isConnected');
+      form.appendChild(input);
+
+      Object.defineProperty(form, 'isConnected', {
+        value: input,
+        configurable: true,
+      });
+
+      expect(safeIsConnected(form)).toBe(false);
+      document.body.appendChild(form);
+      expect(safeIsConnected(form)).toBe(true);
+      form.remove();
     });
   });
 

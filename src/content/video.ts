@@ -1,7 +1,11 @@
 import {
+  getUnshadowedMethod,
+  safeApply,
+  safeContains,
   safeGetParentElement,
   safeGetStyle,
   safeGetTagName,
+  safeIsConnected,
   safeQuerySelector,
   safeQuerySelectorAll,
 } from '../shared/dom';
@@ -18,8 +22,7 @@ export class VideoUnblur {
 
   restore(root?: ParentNode): void {
     for (const [element, saved] of this.overrides) {
-      if (root && root !== element && !(root as Node).contains(element))
-        continue;
+      if (root && root !== element && !safeContains(root, element)) continue;
       const style = safeGetStyle(element);
       if (
         style?.filter === saved.applied &&
@@ -50,7 +53,7 @@ export class VideoUnblur {
     // Performance optimization: Use safeQuerySelector to stop search on the first matched video, avoiding full subtree array allocations.
     for (const element of this.overrides.keys()) {
       if (
-        !element.isConnected ||
+        !safeIsConnected(element) ||
         (safeGetTagName(element) !== 'VIDEO' &&
           !safeQuerySelector(element, 'video'))
       ) {
@@ -69,7 +72,8 @@ export class VideoUnblur {
       ) {
         if (visited.has(element)) break;
         visited.add(element);
-        if (!(element instanceof HTMLElement) || !element.isConnected) continue;
+        if (!(element instanceof HTMLElement) || !safeIsConnected(element))
+          continue;
         const style = safeGetStyle(element);
         const ownerDoc =
           typeof Document !== 'undefined' &&
@@ -79,9 +83,17 @@ export class VideoUnblur {
               ? document
               : null;
         const view = ownerDoc?.defaultView;
-        if (!style || !view || typeof view.getComputedStyle !== 'function')
-          continue;
-        const filter = view.getComputedStyle(element).filter;
+        if (!style || !view) continue;
+        const getComputedStyleFn = getUnshadowedMethod(
+          view,
+          'getComputedStyle',
+        );
+        if (!getComputedStyleFn) continue;
+        const computedStyle = safeApply(getComputedStyleFn, view, [element]) as
+          | CSSStyleDeclaration
+          | null
+          | undefined;
+        const filter = computedStyle?.filter;
         if (!filter || !/\bblur\(/i.test(filter)) continue;
         // Computed blur lengths are resolved; preserve brightness, contrast, etc.
         const unblurred = filter.replace(/\bblur\([^)]*\)/gi, 'blur(0px)');

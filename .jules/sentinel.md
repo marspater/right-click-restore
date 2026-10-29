@@ -76,3 +76,8 @@
 **Vulnerability:** Direct property access to `element.parentElement` allowed untrusted web pages to clobber `parentElement` using named child inputs (e.g. `<form><input name="parentElement"></form>`), returning input elements or spoofed non-Element objects that caused DOM traversal errors and bypassed interactive element checks or video unblur scanning.
 **Learning:** Accessing `.parentElement` directly assumes the property is unshadowed by child form controls or named getters.
 **Prevention:** Use `safeGetParentElement` across all DOM parent element traversals to retrieve native getters via `getNativeParentElementGetter`/`getUnshadowedGetter` and verify node interface prototype inheritance.
+
+## 2025-05-25 - DOM Clobbering & Method Shadowing Resistance for Video Unblur Subtree Inspection
+**Vulnerability:** Invoking `root.contains(element)`, reading `element.isConnected`, or calling `view.getComputedStyle(element)` directly allowed untrusted web pages with clobbered methods or getters (e.g. `<form id="root"><input name="contains"><input name="isConnected"></form>`) or shadowed `window.getComputedStyle` functions to throw runtime TypeErrors and bypass video unblur scanning and filter cleanup.
+**Learning:** Method calls (`contains`, `getComputedStyle`) and getters (`isConnected`) on DOM nodes and view objects can be clobbered by named form inputs or shadowed by page scripts in host DOM contexts.
+**Prevention:** Use `safeContains` and `safeIsConnected` with native prototype methods/getters and `getUnshadowedMethod` for `getComputedStyle` across video scanning and filter restoration routines.

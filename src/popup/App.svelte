@@ -500,18 +500,18 @@ async function forceUnlockPage() {
           : !isToggleableDomain
             ? 'Protection is unavailable on system pages'
             : 'Protection is inactive on this domain'}
-      class={`w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none disabled:cursor-not-allowed ${
-        isSiteActive && unlockStatus === 'idle' ? 'active:scale-[0.985]' : ''
+      class={`w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 select-none ${
+        isSiteActive && unlockStatus === 'idle' ? 'active:scale-[0.985] cursor-pointer' : ''
       } ${
         unlockStatus === 'unlocking'
-          ? 'bg-[var(--bg-badge-active)] text-[var(--accent-blue)] border border-[var(--accent-blue)]/30 shadow-sm disabled:opacity-100'
+          ? 'bg-[var(--bg-badge-active)] text-[var(--accent-blue)] border border-[var(--accent-blue)]/30 shadow-sm disabled:opacity-100 cursor-wait'
           : unlockStatus === 'success'
-            ? 'bg-[var(--accent-green)] text-white shadow-sm border border-transparent disabled:opacity-100'
+            ? 'bg-[var(--accent-green)] text-white shadow-sm border border-transparent disabled:opacity-100 cursor-default'
             : unlockStatus === 'error'
-              ? 'bg-[var(--accent-red)] text-white shadow-sm border border-transparent disabled:opacity-100'
+              ? 'bg-[var(--accent-red)] text-white shadow-sm border border-transparent disabled:opacity-100 cursor-default'
               : isSiteActive
-                ? 'bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] hover:border-[var(--border-subtle)] text-[var(--text-primary)] border border-[var(--border-subtle)] shadow-[var(--shadow-btn)]'
-                : 'bg-[var(--bg-card)] text-[var(--text-tertiary)] border border-[var(--border-subtle)] opacity-50'
+                ? 'bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] hover:border-[var(--border-subtle)] text-[var(--text-primary)] border border-[var(--border-subtle)] shadow-[var(--shadow-btn)] cursor-pointer'
+                : 'bg-[var(--bg-card)] text-[var(--text-tertiary)] border border-[var(--border-subtle)] opacity-50 cursor-not-allowed'
       }`}
     >
       {#if unlockStatus === 'unlocking'}
@@ -556,7 +556,7 @@ async function forceUnlockPage() {
       {:else if isSiteDisabled}
         Protection is disabled on this domain
       {:else if settings.bypassModifierKey}
-        Tip: Hold <kbd>⇧ Shift</kbd> or <kbd>⌥ Option</kbd> for native menu
+        Tip: Hold <kbd class="kbd-subtext">⇧ Shift</kbd> or <kbd class="kbd-subtext">⌥ Option</kbd> for native menu
       {:else}
         Tip: <button
           type="button"
@@ -564,7 +564,7 @@ async function forceUnlockPage() {
           disabled={!isSiteActive}
           class="text-[var(--accent-blue)] font-medium hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent-blue)] rounded-[2px] cursor-pointer inline disabled:no-underline disabled:cursor-not-allowed disabled:text-[var(--text-tertiary)]"
           title="Enable Modifier Key Bypass setting"
-        >Enable Modifier Key Bypass</button> to hold <kbd>⇧ Shift</kbd>
+        >Enable Modifier Key Bypass</button> to hold <kbd class="kbd-subtext">⇧ Shift</kbd>
       {/if}
     </p>
   </footer>

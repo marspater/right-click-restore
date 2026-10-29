@@ -86,6 +86,23 @@ export function getUnshadowedGetter(
 
 type NativeDOMMethod<T extends (..._args: never[]) => unknown> = T | null;
 
+let nativeComposedPathMethod:
+  | NativeDOMMethod<typeof Event.prototype.composedPath>
+  | undefined;
+function getNativeComposedPathMethod(): NativeDOMMethod<
+  typeof Event.prototype.composedPath
+> {
+  if (nativeComposedPathMethod === undefined) {
+    try {
+      nativeComposedPathMethod =
+        typeof Event !== 'undefined' ? Event.prototype.composedPath : null;
+    } catch {
+      nativeComposedPathMethod = null;
+    }
+  }
+  return nativeComposedPathMethod;
+}
+
 let nativeMatchesMethod:
   | NativeDOMMethod<typeof Element.prototype.matches>
   | undefined;
@@ -324,6 +341,32 @@ function getNativeDocumentFragmentQuerySelectorAllMethod(): NativeDOMMethod<
   return nativeDocumentFragmentQuerySelectorAllMethod;
 }
 /* eslint-enable @typescript-eslint/unbound-method */
+
+export function safeComposedPath(event: Event): unknown[] {
+  try {
+    // Performance optimization: Lazy-cached native prototype execution for Event.prototype.composedPath.
+    // Bypasses getUnshadowedMethod prototype walks and Object.getOwnPropertyDescriptor allocations on standard DOM events.
+    const nativeFn = getNativeComposedPathMethod();
+    if (
+      nativeFn &&
+      typeof Event !== 'undefined' &&
+      event instanceof Event &&
+      !Object.hasOwn(event, 'composedPath')
+    ) {
+      return (safeApply(nativeFn, event, []) as unknown[]) ?? [];
+    }
+    const fn = getUnshadowedMethod(event, 'composedPath');
+    if (fn) {
+      return (safeApply(fn, event, []) as unknown[]) ?? [];
+    }
+    if (typeof event.composedPath === 'function') {
+      return event.composedPath();
+    }
+  } catch {
+    // Return empty array if composedPath throws on restricted event objects
+  }
+  return [];
+}
 
 export function safeMatches(element: Element, selector: string): boolean {
   try {

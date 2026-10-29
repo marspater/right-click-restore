@@ -7,6 +7,7 @@ import {
   safeApply,
   safeAttachShadow,
   safeClosest,
+  safeComposedPath,
   safeCreateElement,
   safeElementsFromPoint,
   safeGetAttribute,
@@ -89,6 +90,54 @@ describe('shared DOM utilities', () => {
 
     test('returns null if property does not exist', () => {
       expect(getUnshadowedGetter({}, 'nonexistent')).toBeNull();
+    });
+  });
+
+  describe('safeComposedPath', () => {
+    test('retrieves composedPath for standard Event instance', () => {
+      const target = document.createElement('div');
+      const event = new window.Event('click', { bubbles: true });
+      target.dispatchEvent(event);
+
+      const path = safeComposedPath(event);
+      expect(Array.isArray(path)).toBe(true);
+      expect(path).toContain(target);
+    });
+
+    test('resists DOM clobbering when composedPath is shadowed on Event instance', () => {
+      const target = document.createElement('div');
+      const event = new window.Event('click', { bubbles: true });
+      target.dispatchEvent(event);
+
+      Object.defineProperty(event, 'composedPath', {
+        value: 'hijackedComposedPath',
+        configurable: true,
+      });
+
+      const path = safeComposedPath(event);
+      expect(Array.isArray(path)).toBe(true);
+      expect(path).toContain(target);
+    });
+
+    test('falls back to custom method or mock composedPath implementation', () => {
+      const mockItem = document.createElement('span');
+      const mockEvent = {
+        composedPath: () => [mockItem],
+      } as unknown as Event;
+
+      const path = safeComposedPath(mockEvent);
+      expect(path).toEqual([mockItem]);
+    });
+
+    test('returns empty array when event is null or composedPath throws', () => {
+      expect(safeComposedPath(null as unknown as Event)).toEqual([]);
+
+      const throwingEvent = {
+        composedPath: () => {
+          throw new Error('access error');
+        },
+      } as unknown as Event;
+      expect(safeComposedPath(throwingEvent)).toEqual([]);
     });
   });
 

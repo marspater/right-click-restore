@@ -73,3 +73,7 @@
 - Styled `.kbd-subtext` in `popup.css` for compact 9px inline scaling with soft drop shadows and clean baseline alignment.
 - Enhanced header extension app icon with `rounded-[6px]`, subtle drop shadow (`shadow-[0_1px_3px_rgba(0,0,0,0.12)]`), and a smooth hover scale micro-interaction (`hover:scale-105`).
 - Added contextual `title` hover tooltips to the domain card when extension protection is paused globally.
+
+16. **Footer Tip Keycap Badge Typography & Action Button Cursor Affordances (`src/popup/App.svelte`)**:
+- Applied `.kbd-subtext` inline keycap styling to shortcut key mentions (`⇧ Shift`, `⌥ Option`) in footer tip text, ensuring consistent keycap typography and baseline alignment across setting subtext and footer tip regions.
+- Refined Force Unlock button cursor states (`cursor-wait` during unlocking, `cursor-default` during success/error status messages, `cursor-pointer` when active and idle, and `cursor-not-allowed` when inactive), delivering precise cursor feedback matching action status.

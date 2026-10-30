@@ -194,6 +194,20 @@ describe('page-script helpers', () => {
       expect(isInteractiveEvent(event)).toBe(true);
     });
 
+    test('accepts optional pre-computed eventPath array', () => {
+      const input = document.createElement('input');
+      const divNoAttrs = document.createElement('div');
+      const event = {
+        composedPath: () => {
+          throw new Error('Should not be called when eventPath is provided');
+        },
+        target: null,
+      } as unknown as Event;
+
+      expect(isInteractiveEvent(event, [input, divNoAttrs])).toBe(true);
+      expect(isInteractiveEvent(event, [divNoAttrs])).toBe(false);
+    });
+
     test('fast-paths non-interactive elements in composedPath without error', () => {
       const divNoAttrs = document.createElement('div');
       const spanNoAttrs = document.createElement('span');
@@ -489,5 +503,24 @@ describe('native media targets', () => {
         composedPath: () => [video, player],
       } as unknown as Event),
     ).toBe(false);
+  });
+
+  test('isMediaContextEvent accepts optional pre-computed eventPath array', () => {
+    const window = new Window();
+    Object.assign(globalThis, { Node: window.Node, Element: window.Element });
+    const video = window.document.createElement('video');
+    const div = window.document.createElement('div');
+
+    const event = {
+      type: 'contextmenu',
+      composedPath: () => {
+        throw new Error(
+          'Should not call composedPath when eventPath is provided',
+        );
+      },
+    } as unknown as Event;
+
+    expect(isMediaContextEvent(event, [video, div])).toBe(true);
+    expect(isMediaContextEvent(event, [div])).toBe(false);
   });
 });

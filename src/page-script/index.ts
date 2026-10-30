@@ -111,19 +111,28 @@ export function isInteractiveNode(node: Node | null): boolean {
 // iterating over path elements already inspects target and all parent ancestors.
 // Returning false directly avoids a redundant call to isInteractiveNode() which
 // re-traverses the DOM tree using closest().
-export function isInteractiveEvent(event: Event): boolean {
+// Accepts optional pre-computed eventPath to avoid duplicate composedPath() calls on hot paths.
+export function isInteractiveEvent(
+  event: Event,
+  eventPath?: unknown[],
+): boolean {
   if (!event) return false;
   try {
-    const composedPathFn = getUnshadowedMethod(event, 'composedPath');
-    if (composedPathFn) {
-      const path = safeApply(composedPathFn, event, []) as unknown[];
-      if (Array.isArray(path) && path.length > 0) {
-        return path.some(
-          (item) =>
-            (isElementNode(item) || item instanceof Element) &&
-            isInteractiveElement(item as Element),
-        );
-      }
+    const path =
+      eventPath ??
+      (() => {
+        const composedPathFn = getUnshadowedMethod(event, 'composedPath');
+        if (composedPathFn) {
+          return safeApply(composedPathFn, event, []) as unknown[];
+        }
+        return null;
+      })();
+    if (Array.isArray(path) && path.length > 0) {
+      return path.some(
+        (item) =>
+          (isElementNode(item) || item instanceof Element) &&
+          isInteractiveElement(item as Element),
+      );
     }
   } catch {
     // Suppress errors checking composedPath
@@ -166,11 +175,19 @@ export const SELECTION_EVENTS = new Set([
 const OVERLAY_TAGS = new Set(['CANVAS', 'PICTURE', 'SVG']);
 
 // Player wrappers must not exempt the media itself from native-menu restoration.
-// Performance optimization: Use O(1) Set lookup instead of regex execution
-export function isMediaContextEvent(event: Event): boolean {
+// Performance optimization: Use O(1) Set lookup instead of regex execution.
+// Accepts optional pre-computed eventPath to reuse composedPath() across event checks.
+export function isMediaContextEvent(
+  event: Event,
+  eventPath?: unknown[],
+): boolean {
   if (event.type !== 'contextmenu') return false;
-  const method = getUnshadowedMethod(event, 'composedPath');
-  const path = method ? safeApply(method, event, []) : [];
+  const path =
+    eventPath ??
+    (() => {
+      const method = getUnshadowedMethod(event, 'composedPath');
+      return method ? (safeApply(method, event, []) as unknown[]) : [];
+    })();
   return (
     Array.isArray(path) &&
     path.some((node) => {
@@ -467,10 +484,24 @@ if (typeof window !== 'undefined') {
       return isShieldActive() && activeConfig.bypassModifierKey !== false;
     }
 
+    // Helper to extract composedPath once per event evaluation.
+    function getEventPath(event: Event): unknown[] | undefined {
+      try {
+        const composedPathFn = getUnshadowedMethod(event, 'composedPath');
+        if (composedPathFn) {
+          const path = safeApply(composedPathFn, event, []);
+          if (Array.isArray(path)) return path as unknown[];
+        }
+      } catch {
+        // Suppress errors getting composedPath
+      }
+      return undefined;
+    }
+
     // Hot-path optimization: Check event type and active restoration setting BEFORE
     // inspecting DOM path or running CSS selector matches via isInteractiveEvent().
-    // Bypasses expensive composedPath() traversals and CSS selector evaluations when
-    // features are disabled or events are non-targets.
+    // Also reuses pre-computed composedPath array across isInteractiveEvent and
+    // isMediaContextEvent to eliminate duplicate DOM path retrievals and array allocations.
     function shouldBlockEvent(event: Event): boolean {
       if (!event || !isShieldActive()) {
         return false;
@@ -485,9 +516,11 @@ if (typeof window !== 'undefined') {
         return false;
       }
 
+      const path = getEventPath(event);
+
       if (
-        isInteractiveEvent(event) &&
-        !isMediaContextEvent(event) &&
+        isInteractiveEvent(event, path) &&
+        !isMediaContextEvent(event, path) &&
         !(isContextMenu && isModifierBypassActive() && isModifierPressed(event))
       ) {
         return false;

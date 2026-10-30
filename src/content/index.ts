@@ -48,10 +48,14 @@ function isAuthorizedSender(
     typeof chrome.runtime.getURL === 'function'
       ? chrome.runtime.getURL('')
       : '';
+  const extOrigin = extPrefix.endsWith('/')
+    ? extPrefix.slice(0, -1)
+    : extPrefix;
+
   const isExtensionUri = (uri?: string) => {
     if (!uri) return false;
     if (extPrefix) {
-      return uri.startsWith(extPrefix);
+      return uri === extOrigin || uri.startsWith(extPrefix);
     }
     return (
       uri.startsWith('chrome-extension://') ||

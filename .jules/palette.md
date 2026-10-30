@@ -73,3 +73,7 @@
 - Styled `.kbd-subtext` in `popup.css` for compact 9px inline scaling with soft drop shadows and clean baseline alignment.
 - Enhanced header extension app icon with `rounded-[6px]`, subtle drop shadow (`shadow-[0_1px_3px_rgba(0,0,0,0.12)]`), and a smooth hover scale micro-interaction (`hover:scale-105`).
 - Added contextual `title` hover tooltips to the domain card when extension protection is paused globally.
+
+16. **Force Unlock Tooltip Discoverability & Context Alignment (`src/popup/App.svelte`)**:
+- Replaced custom multi-branch title ternary on the Force Unlock button with `title={disabledRowTooltip || 'Force unlock context menu and selection on active page'}` to match setting row tooltips.
+- Removed native HTML `disabled` attribute from Force Unlock button in favor of `aria-disabled` and conditional `cursor-not-allowed` styling while maintaining safety guards in `forceUnlockPage()`. This allows browser hover tooltips to trigger consistently across all inactive button states while preserving keyboard navigation and preventing accidental triggers.

@@ -491,16 +491,11 @@ async function forceUnlockPage() {
     <button
       type="button"
       onclick={forceUnlockPage}
-      disabled={!isSiteActive}
-      aria-disabled={unlockStatus !== 'idle' || !isSiteActive}
-      title={isSiteActive
-        ? 'Force unlock context menu and selection on active page'
-        : !settings.enabled
-          ? 'Extension is paused globally'
-          : !isToggleableDomain
-            ? 'Protection is unavailable on system pages'
-            : 'Protection is inactive on this domain'}
-      class={`w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none disabled:cursor-not-allowed ${
+      aria-disabled={!isSiteActive || unlockStatus !== 'idle'}
+      title={disabledRowTooltip || 'Force unlock context menu and selection on active page'}
+      class={`w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 select-none ${
+        !isSiteActive || unlockStatus !== 'idle' ? 'cursor-not-allowed' : 'cursor-pointer'
+      } ${
         isSiteActive && unlockStatus === 'idle' ? 'active:scale-[0.985]' : ''
       } ${
         unlockStatus === 'unlocking'

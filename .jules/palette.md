@@ -73,3 +73,8 @@
 - Styled `.kbd-subtext` in `popup.css` for compact 9px inline scaling with soft drop shadows and clean baseline alignment.
 - Enhanced header extension app icon with `rounded-[6px]`, subtle drop shadow (`shadow-[0_1px_3px_rgba(0,0,0,0.12)]`), and a smooth hover scale micro-interaction (`hover:scale-105`).
 - Added contextual `title` hover tooltips to the domain card when extension protection is paused globally.
+
+16. **Force Unlock Tactile Press Micro-Interactions, Feedback Polish & State Transitions (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+- Refined `.force-unlock-btn` with smooth cubic-bezier transitions across background, border, shadow, and scale transforms.
+- Added tactile press active feedback (`.force-unlock-btn:active:not(:disabled):not([aria-disabled="true"]) .force-unlock-icon { transform: scale(0.95); }` and button scale `active:scale-[0.985]`) matching Apple tactile button affordances.
+- Maintained clean flex-shrink sizing (`flex-shrink-0`) across status SVG icons preventing distortion on narrow viewports.

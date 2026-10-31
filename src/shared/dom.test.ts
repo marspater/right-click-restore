@@ -18,6 +18,7 @@ import {
   safeHasAttribute,
   safeHasAttributes,
   safeMatches,
+  safeNodeContains,
   safeQuerySelector,
   safeQuerySelectorAll,
   safeRemoveAttribute,
@@ -517,6 +518,52 @@ describe('shared DOM utilities', () => {
     });
     return form;
   }
+
+  describe('safeNodeContains', () => {
+    test('accurately determines node containment', () => {
+      const parent = document.createElement('div');
+      const child = document.createElement('span');
+      parent.appendChild(child);
+
+      expect(safeNodeContains(parent, child)).toBe(true);
+      expect(safeNodeContains(child, parent)).toBe(false);
+
+      const outside = document.createElement('p');
+      expect(safeNodeContains(parent, outside)).toBe(false);
+    });
+
+    test('resists DOM clobbering when contains is shadowed by child input or object property', () => {
+      const form = document.createElement('form');
+      const input = document.createElement('input');
+      input.setAttribute('name', 'contains');
+      form.appendChild(input);
+
+      Object.defineProperty(form, 'contains', {
+        value: input,
+        configurable: true,
+      });
+
+      expect(() => safeNodeContains(form, input)).not.toThrow();
+      expect(safeNodeContains(form, input)).toBe(true);
+
+      const outside = document.createElement('div');
+      expect(safeNodeContains(form, outside)).toBe(false);
+    });
+
+    test('handles null, undefined, and non-node inputs safely without throwing', () => {
+      const el = document.createElement('div');
+      expect(safeNodeContains(null, el)).toBe(false);
+      expect(safeNodeContains(el, null)).toBe(false);
+      expect(safeNodeContains(undefined, undefined)).toBe(false);
+
+      const faulty = {
+        contains: () => {
+          throw new Error('contains error');
+        },
+      } as unknown as Node;
+      expect(safeNodeContains(faulty, el)).toBe(false);
+    });
+  });
 
   describe('safeAppendChild', () => {
     test('appends child element to parent container', () => {

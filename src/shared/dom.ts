@@ -636,6 +636,28 @@ export function safeRemoveElement(element: Element): void {
 }
 
 /* eslint-disable @typescript-eslint/unbound-method */
+const nativeContainsMethod: NativeDOMMethod<typeof Node.prototype.contains> =
+  typeof Node !== 'undefined' ? Node.prototype.contains : null;
+
+export function safeNodeContains(
+  root: Node | null | undefined,
+  node: Node | null | undefined,
+): boolean {
+  if (!root || !node) return false;
+  try {
+    if (nativeContainsMethod && !Object.hasOwn(root, 'contains')) {
+      return Boolean(safeApply(nativeContainsMethod, root, [node]));
+    }
+    const fn = getUnshadowedMethod(root, 'contains');
+    if (fn) {
+      return Boolean(safeApply(fn, root, [node]));
+    }
+    return root.contains(node);
+  } catch {
+    return false;
+  }
+}
+
 const nativeAppendChild: NativeDOMMethod<typeof Node.prototype.appendChild> =
   typeof Node !== 'undefined' ? Node.prototype.appendChild : null;
 /* eslint-enable @typescript-eslint/unbound-method */

@@ -2,6 +2,7 @@ import {
   safeGetParentElement,
   safeGetStyle,
   safeGetTagName,
+  safeNodeContains,
   safeQuerySelector,
   safeQuerySelectorAll,
 } from '../shared/dom';
@@ -18,7 +19,7 @@ export class VideoUnblur {
 
   restore(root?: ParentNode): void {
     for (const [element, saved] of this.overrides) {
-      if (root && root !== element && !(root as Node).contains(element))
+      if (root && root !== element && !safeNodeContains(root as Node, element))
         continue;
       const style = safeGetStyle(element);
       if (

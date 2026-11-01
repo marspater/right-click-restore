@@ -1,7 +1,9 @@
 import {
+  safeContains,
   safeGetParentElement,
   safeGetStyle,
   safeGetTagName,
+  safeIsConnected,
   safeQuerySelector,
   safeQuerySelectorAll,
 } from '../shared/dom';
@@ -18,7 +20,7 @@ export class VideoUnblur {
 
   restore(root?: ParentNode): void {
     for (const [element, saved] of this.overrides) {
-      if (root && root !== element && !(root as Node).contains(element))
+      if (root && root !== element && !safeContains(root as Node, element))
         continue;
       const style = safeGetStyle(element);
       if (
@@ -50,7 +52,7 @@ export class VideoUnblur {
     // Performance optimization: Use safeQuerySelector to stop search on the first matched video, avoiding full subtree array allocations.
     for (const element of this.overrides.keys()) {
       if (
-        !element.isConnected ||
+        !safeIsConnected(element) ||
         (safeGetTagName(element) !== 'VIDEO' &&
           !safeQuerySelector(element, 'video'))
       ) {
@@ -69,7 +71,8 @@ export class VideoUnblur {
       ) {
         if (visited.has(element)) break;
         visited.add(element);
-        if (!(element instanceof HTMLElement) || !element.isConnected) continue;
+        if (!(element instanceof HTMLElement) || !safeIsConnected(element))
+          continue;
         const style = safeGetStyle(element);
         const ownerDoc =
           typeof Document !== 'undefined' &&

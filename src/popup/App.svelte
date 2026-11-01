@@ -282,7 +282,7 @@ async function forceUnlockPage() {
 
         <!-- Domain Labels Stack -->
         <div class="min-w-0 flex flex-col justify-center">
-          <span id="desc-domain-status" class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
+          <span id="desc-domain-status" class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none whitespace-nowrap">
             {!settings.enabled ? 'Extension Paused' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
           </span>
           <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-0.5" title={currentHostname}>
@@ -291,7 +291,7 @@ async function forceUnlockPage() {
         </div>
       </div>
 
-      <span class="apple-switch apple-switch-sm" title={isSiteDisabled ? `Enable protection on ${currentHostname}` : `Disable protection on ${currentHostname}`}>
+      <span class="apple-switch apple-switch-sm">
         <input type="checkbox" role="switch" checked={!isSiteDisabled} aria-checked={!isSiteDisabled} aria-describedby="desc-domain-status" disabled={!settings.enabled} onchange={toggleCurrentSite} aria-label={`Protection on ${currentHostname}`} />
         <span class="apple-slider"></span>
       </span>
@@ -317,8 +317,8 @@ async function forceUnlockPage() {
 
         <!-- Domain Labels Stack -->
         <div class="min-w-0 flex flex-col justify-center">
-          <span class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
-            {!settings.enabled ? 'Extension Paused' : !isToggleableDomain ? 'System / Restricted Page' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
+          <span class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none whitespace-nowrap">
+            {!settings.enabled ? 'Extension Paused' : 'Restricted Page'}
           </span>
           <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-0.5" title={currentHostname}>
             {currentHostname || 'Loading…'}
@@ -548,7 +548,7 @@ async function forceUnlockPage() {
 
   <!-- Footnote Tip with Dynamic Context Awareness & Quick-Action -->
   <footer class="pt-0.5 text-center select-none">
-    <p class="text-[10px] text-[var(--text-tertiary)] leading-tight m-0 inline">
+    <p class="text-[10px] text-[var(--text-secondary)] leading-tight m-0 inline">
       {#if !settings.enabled}
         Extension is paused globally
       {:else if !isToggleableDomain}
@@ -562,7 +562,7 @@ async function forceUnlockPage() {
           type="button"
           onclick={() => toggleFeature('bypassModifierKey')}
           disabled={!isSiteActive}
-          class="text-[var(--accent-blue)] font-medium hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent-blue)] rounded-[2px] cursor-pointer inline disabled:no-underline disabled:cursor-not-allowed disabled:text-[var(--text-tertiary)]"
+          class="text-[var(--accent-blue)] font-medium hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent-blue)] rounded-[2px] cursor-pointer inline disabled:no-underline disabled:cursor-not-allowed disabled:text-[var(--text-secondary)]"
           title="Enable Modifier Key Bypass setting"
         >Enable Modifier Key Bypass</button> to hold <kbd>⇧ Shift</kbd>
       {/if}

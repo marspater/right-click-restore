@@ -194,6 +194,22 @@ describe('page-script helpers', () => {
       expect(isInteractiveEvent(event)).toBe(true);
     });
 
+    test('reuses pre-computed eventPath without calling composedPath on event', () => {
+      let composedPathCalled = false;
+      const input = document.createElement('input');
+      const event = {
+        composedPath: () => {
+          composedPathCalled = true;
+          return [input];
+        },
+        target: null,
+      } as unknown as Event;
+
+      const path = [input];
+      expect(isInteractiveEvent(event, path)).toBe(true);
+      expect(composedPathCalled).toBe(false);
+    });
+
     test('fast-paths non-interactive elements in composedPath without error', () => {
       const divNoAttrs = document.createElement('div');
       const spanNoAttrs = document.createElement('span');
@@ -489,5 +505,16 @@ describe('native media targets', () => {
         composedPath: () => [video, player],
       } as unknown as Event),
     ).toBe(false);
+    expect(
+      isMediaContextEvent(
+        {
+          type: 'contextmenu',
+          composedPath: () => {
+            throw new Error('should not be called when eventPath is provided');
+          },
+        } as unknown as Event,
+        [video, player],
+      ),
+    ).toBe(true);
   });
 });

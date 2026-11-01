@@ -106,4 +106,13 @@ test('App.svelte declares setting-icon-badge and inactive tooltip on unblur vide
   const appContent = await Bun.file(appPath).text();
   expect(appContent).toContain('setting-icon-badge w-6 h-6');
   expect(appContent).toContain('title={disabledRowTooltip}');
+  expect(appContent).toContain('Restricted Page');
+});
+
+test('popup.css uses :has(input:focus-visible) for clean keyboard focus indicators without mouse-click outlines', async () => {
+  const cssContent = await Bun.file(popupCssPath).text();
+  expect(cssContent).toContain('.domain-card:has(input:focus-visible)');
+  expect(cssContent).toContain('.settings-row:has(input:focus-visible)');
+  expect(cssContent).not.toContain('.domain-card:focus-within');
+  expect(cssContent).not.toContain('.settings-row:focus-within');
 });

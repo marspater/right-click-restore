@@ -73,3 +73,9 @@
 - Styled `.kbd-subtext` in `popup.css` for compact 9px inline scaling with soft drop shadows and clean baseline alignment.
 - Enhanced header extension app icon with `rounded-[6px]`, subtle drop shadow (`shadow-[0_1px_3px_rgba(0,0,0,0.12)]`), and a smooth hover scale micro-interaction (`hover:scale-105`).
 - Added contextual `title` hover tooltips to the domain card when extension protection is paused globally.
+
+16. **Keyboard-Only Focus Outlines, Restricted Page Labeling & Accessible Footer Contrast (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+- Replaced `.domain-card:focus-within` and `.settings-row:focus-within` with `.domain-card:has(input:focus-visible)` and `.settings-row:has(input:focus-visible)` in `popup.css`. Mouse clicks on switch labels or rows now execute cleanly without leaving persistent blue focus rings, while keyboard Tab navigation preserves crisp, high-visibility 2px focus indicators.
+- Streamlined non-toggleable domain view label in `App.svelte` from `"System / Restricted Page"` to `"Restricted Page"` with `whitespace-nowrap`, eliminating clumsy two-line wrapping next to the "Global Protection" badge and preserving visual hierarchy.
+- Elevated footer tip text from `text-[var(--text-tertiary)]` to `text-[var(--text-secondary)]`, raising contrast ratio from ~2.8:1 to ~5.2:1 against background cards for full WCAG 2.1 AA compliance.
+- Removed conflicting inner switch tooltip on the domain card switch so parent card tooltips display consistently when protection is paused.

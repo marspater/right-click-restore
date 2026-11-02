@@ -638,7 +638,25 @@ export function safeRemoveElement(element: Element): void {
 /* eslint-disable @typescript-eslint/unbound-method */
 const nativeAppendChild: NativeDOMMethod<typeof Node.prototype.appendChild> =
   typeof Node !== 'undefined' ? Node.prototype.appendChild : null;
+const nativeContains: NativeDOMMethod<typeof Node.prototype.contains> =
+  typeof Node !== 'undefined' ? Node.prototype.contains : null;
 /* eslint-enable @typescript-eslint/unbound-method */
+
+export function safeContains(parent: Node, child: Node | null): boolean {
+  try {
+    if (!child) return false;
+    if (nativeContains && !Object.hasOwn(parent, 'contains')) {
+      return Boolean(safeApply(nativeContains, parent, [child]));
+    }
+    const fn = getUnshadowedMethod(parent, 'contains');
+    if (fn) {
+      return Boolean(safeApply(fn, parent, [child]));
+    }
+    return Boolean(parent.contains(child));
+  } catch {
+    return false;
+  }
+}
 
 export function safeAppendChild<T extends Node>(
   parent: Node,
@@ -712,6 +730,22 @@ function getNativeStyleGetter(): ((this: unknown) => unknown) | null {
     }
   }
   return nativeStyleGetter;
+}
+
+let nativeIsConnectedGetter: ((this: unknown) => unknown) | null | undefined;
+function getNativeIsConnectedGetter(): ((this: unknown) => unknown) | null {
+  if (nativeIsConnectedGetter === undefined) {
+    try {
+      nativeIsConnectedGetter =
+        typeof Node !== 'undefined'
+          ? (Object.getOwnPropertyDescriptor(Node.prototype, 'isConnected')
+              ?.get ?? null)
+          : null;
+    } catch {
+      nativeIsConnectedGetter = null;
+    }
+  }
+  return nativeIsConnectedGetter;
 }
 
 let nativeParentElementGetter: ((this: unknown) => unknown) | null | undefined;
@@ -797,6 +831,27 @@ export function safeGetShadowRoot(element: Element): ShadowRoot | null {
     // Return null if accessing shadowRoot throws on restricted elements
   }
   return null;
+}
+
+export function safeIsConnected(node: Node): boolean {
+  try {
+    const nativeGetter = getNativeIsConnectedGetter();
+    if (
+      nativeGetter &&
+      typeof Node !== 'undefined' &&
+      node instanceof Node &&
+      !Object.hasOwn(node, 'isConnected')
+    ) {
+      return Boolean(safeApply(nativeGetter, node, []));
+    }
+    const getter = getUnshadowedGetter(node, 'isConnected');
+    if (getter) {
+      return Boolean(safeApply(getter, node, []));
+    }
+    return Boolean(node.isConnected);
+  } catch {
+    return false;
+  }
 }
 
 export function safeGetParentElement(element: Node): Element | null {

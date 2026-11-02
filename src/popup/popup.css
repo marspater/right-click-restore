@@ -443,6 +443,23 @@ kbd.kbd-subtext {
   animation: popIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Force Unlock Action Button Polish */
+.force-unlock-btn {
+  cursor: pointer;
+  transition:
+    background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease, transform 0.12s cubic-bezier(
+      0.16,
+      1,
+      0.3,
+      1
+    ), opacity 0.16s ease;
+}
+
+.force-unlock-btn:disabled,
+.force-unlock-btn[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
 /* Force Unlock Button Icon Hover Micro-Interaction */
 button:hover:not(:disabled):not([aria-disabled="true"]) .force-unlock-icon,
 button:focus-visible:not(:disabled):not([aria-disabled="true"])

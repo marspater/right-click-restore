@@ -332,8 +332,13 @@ async function forceUnlockPage() {
     </section>
   {/if}
 
+  <!-- Section Header -->
+  <div class="px-1 pb-1 flex items-center justify-between text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] select-none">
+    <span>Protection Features</span>
+  </div>
+
   <!-- Settings List Group -->
-  <section class={`glass-card p-1 mb-2 flex flex-col ${isSiteActive ? '' : 'dimmed'}`}>
+  <section class={`glass-card p-1 mb-2.5 flex flex-col ${isSiteActive ? '' : 'dimmed'}`}>
     <!-- Feature 1: Restore Right Click -->
     <label class={`settings-row ${isSiteActive ? '' : 'is-disabled'}`} aria-disabled={!isSiteActive} title={disabledRowTooltip}>
       <div class="flex items-center gap-2.5 min-w-0">
@@ -500,9 +505,7 @@ async function forceUnlockPage() {
           : !isToggleableDomain
             ? 'Protection is unavailable on system pages'
             : 'Protection is inactive on this domain'}
-      class={`w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none disabled:cursor-not-allowed ${
-        isSiteActive && unlockStatus === 'idle' ? 'active:scale-[0.985]' : ''
-      } ${
+      class={`force-unlock-btn w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] flex items-center justify-center gap-1.5 select-none ${
         unlockStatus === 'unlocking'
           ? 'bg-[var(--bg-badge-active)] text-[var(--accent-blue)] border border-[var(--accent-blue)]/30 shadow-sm disabled:opacity-100'
           : unlockStatus === 'success'
@@ -510,8 +513,8 @@ async function forceUnlockPage() {
             : unlockStatus === 'error'
               ? 'bg-[var(--accent-red)] text-white shadow-sm border border-transparent disabled:opacity-100'
               : isSiteActive
-                ? 'bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] hover:border-[var(--border-subtle)] text-[var(--text-primary)] border border-[var(--border-subtle)] shadow-[var(--shadow-btn)]'
-                : 'bg-[var(--bg-card)] text-[var(--text-tertiary)] border border-[var(--border-subtle)] opacity-50'
+                ? 'bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] hover:border-[var(--border-subtle)] text-[var(--text-primary)] border border-[var(--border-subtle)] shadow-[var(--shadow-btn)] active:scale-[0.985]'
+                : 'bg-[var(--bg-card)] text-[var(--text-tertiary)] border border-[var(--border-subtle)] opacity-50 cursor-not-allowed'
       }`}
     >
       {#if unlockStatus === 'unlocking'}

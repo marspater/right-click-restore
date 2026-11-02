@@ -73,3 +73,7 @@
 - Styled `.kbd-subtext` in `popup.css` for compact 9px inline scaling with soft drop shadows and clean baseline alignment.
 - Enhanced header extension app icon with `rounded-[6px]`, subtle drop shadow (`shadow-[0_1px_3px_rgba(0,0,0,0.12)]`), and a smooth hover scale micro-interaction (`hover:scale-105`).
 - Added contextual `title` hover tooltips to the domain card when extension protection is paused globally.
+
+16. **Settings Group Header Hierarchy & Force Unlock Tactile Micro-Interactions (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+- Added an Apple Inset Grouped Section Header (`.settings-group-header` reading "Protection Features") positioned between the domain status card and the settings group card, establishing clear visual hierarchy, structure, and semantic grouping (`aria-hidden="true"` alongside `aria-label="Protection Features"` on the settings card).
+- Refined the Force Unlock button with dedicated `.force-unlock-btn` styling, adding physical tactile press response (`active:scale-[0.98]`), smooth color/opacity transitions (`transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.12s ease-out, border-color 0.2s ease, box-shadow 0.2s ease`), and explicit cursor states (`cursor: pointer`, `cursor: wait` while unlocking, `cursor: not-allowed` when disabled).

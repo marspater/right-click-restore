@@ -500,15 +500,15 @@ async function forceUnlockPage() {
           : !isToggleableDomain
             ? 'Protection is unavailable on system pages'
             : 'Protection is inactive on this domain'}
-      class={`w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none disabled:cursor-not-allowed ${
+      class={`force-unlock-btn w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] flex items-center justify-center gap-1.5 cursor-pointer select-none disabled:cursor-not-allowed ${
         isSiteActive && unlockStatus === 'idle' ? 'active:scale-[0.985]' : ''
       } ${
         unlockStatus === 'unlocking'
           ? 'bg-[var(--bg-badge-active)] text-[var(--accent-blue)] border border-[var(--accent-blue)]/30 shadow-sm disabled:opacity-100'
           : unlockStatus === 'success'
-            ? 'bg-[var(--accent-green)] text-white shadow-sm border border-transparent disabled:opacity-100'
+            ? 'is-success bg-[var(--accent-green)] text-white border border-transparent disabled:opacity-100'
             : unlockStatus === 'error'
-              ? 'bg-[var(--accent-red)] text-white shadow-sm border border-transparent disabled:opacity-100'
+              ? 'is-error bg-[var(--accent-red)] text-white border border-transparent disabled:opacity-100'
               : isSiteActive
                 ? 'bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] hover:border-[var(--border-subtle)] text-[var(--text-primary)] border border-[var(--border-subtle)] shadow-[var(--shadow-btn)]'
                 : 'bg-[var(--bg-card)] text-[var(--text-tertiary)] border border-[var(--border-subtle)] opacity-50'
@@ -562,7 +562,7 @@ async function forceUnlockPage() {
           type="button"
           onclick={() => toggleFeature('bypassModifierKey')}
           disabled={!isSiteActive}
-          class="text-[var(--accent-blue)] font-medium hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent-blue)] rounded-[2px] cursor-pointer inline disabled:no-underline disabled:cursor-not-allowed disabled:text-[var(--text-tertiary)]"
+          class="tip-action-btn text-[var(--accent-blue)] font-medium hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent-blue)] cursor-pointer inline disabled:no-underline disabled:cursor-not-allowed disabled:text-[var(--text-tertiary)]"
           title="Enable Modifier Key Bypass setting"
         >Enable Modifier Key Bypass</button> to hold <kbd>⇧ Shift</kbd>
       {/if}

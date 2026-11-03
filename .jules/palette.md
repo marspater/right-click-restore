@@ -73,3 +73,8 @@
 - Styled `.kbd-subtext` in `popup.css` for compact 9px inline scaling with soft drop shadows and clean baseline alignment.
 - Enhanced header extension app icon with `rounded-[6px]`, subtle drop shadow (`shadow-[0_1px_3px_rgba(0,0,0,0.12)]`), and a smooth hover scale micro-interaction (`hover:scale-105`).
 - Added contextual `title` hover tooltips to the domain card when extension protection is paused globally.
+
+16. **Force Unlock Tactile Glow Feedback & Quick-Action Tip Tap Target Polish (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+- Added `.force-unlock-btn` class with smooth cubic-bezier transitions for background color, border color, box shadow, transform, and opacity.
+- Added tactile status glow shadows (`.force-unlock-btn.is-success` with `--beacon-green-glow` and `.force-unlock-btn.is-error` with soft red glow) to provide immediate, delightful visual confirmation when unlocking succeeds or encounters an issue.
+- Added `.tip-action-btn` styling to the footer tip shortcut with comfortable tap target padding (`padding: 1px 4px; margin: -1px -2px; border-radius: 4px`) and subtle hover row background color, improving click/touch affordance and keyboard focus comfort.

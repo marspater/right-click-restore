@@ -73,3 +73,8 @@
 - Styled `.kbd-subtext` in `popup.css` for compact 9px inline scaling with soft drop shadows and clean baseline alignment.
 - Enhanced header extension app icon with `rounded-[6px]`, subtle drop shadow (`shadow-[0_1px_3px_rgba(0,0,0,0.12)]`), and a smooth hover scale micro-interaction (`hover:scale-105`).
 - Added contextual `title` hover tooltips to the domain card when extension protection is paused globally.
+
+16. **Visual Hierarchy, Focus Ring Radii & Footer Interaction Polish (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+- Refined the "Unblur Videos" description copy from the awkward semicolon-laden technical string (`Removes site CSS blur; protected capture stays blocked`) to a crisp Apple HIG-aligned label (`Restores clarity on blurred video players`), harmonizing typography across all feature cards.
+- Refined container focus ring rendering on `.domain-card` and `.settings-row` with conforming `box-shadow` rings, preventing sharp unrounded corner clipping when tabbing with the keyboard.
+- Refined the footer quick-action button ("Enable Modifier Key Bypass") with interactive tactile press feedback (`active:scale-[0.98] transition-all duration-150`), negative-margin hit area expansion (`px-1 py-0.5 -mx-1 -my-0.5 rounded-[3px]`), and a refined keyboard focus ring.

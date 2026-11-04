@@ -425,7 +425,7 @@ async function forceUnlockPage() {
         </div>
         <div class="min-w-0">
           <div class="text-[12px] font-medium text-[var(--text-primary)] leading-tight">Unblur Videos</div>
-          <div id="desc-unblur-videos" class="text-[10px] text-[var(--text-secondary)] leading-tight">Removes site CSS blur; protected capture stays blocked</div>
+          <div id="desc-unblur-videos" class="text-[10px] text-[var(--text-secondary)] leading-tight">Restores clarity on blurred video players</div>
         </div>
       </div>
       <span class="apple-switch apple-switch-sm">
@@ -562,7 +562,7 @@ async function forceUnlockPage() {
           type="button"
           onclick={() => toggleFeature('bypassModifierKey')}
           disabled={!isSiteActive}
-          class="text-[var(--accent-blue)] font-medium hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent-blue)] rounded-[2px] cursor-pointer inline disabled:no-underline disabled:cursor-not-allowed disabled:text-[var(--text-tertiary)]"
+          class="text-[var(--accent-blue)] font-medium hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent-blue)] rounded-[3px] px-1 py-0.5 -mx-1 -my-0.5 transition-all duration-150 active:scale-[0.98] cursor-pointer inline disabled:no-underline disabled:cursor-not-allowed disabled:text-[var(--text-tertiary)]"
           title="Enable Modifier Key Bypass setting"
         >Enable Modifier Key Bypass</button> to hold <kbd>⇧ Shift</kbd>
       {/if}

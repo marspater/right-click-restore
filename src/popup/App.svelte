@@ -282,7 +282,7 @@ async function forceUnlockPage() {
 
         <!-- Domain Labels Stack -->
         <div class="min-w-0 flex flex-col justify-center">
-          <span id="desc-domain-status" class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
+          <span id="desc-domain-status" class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-tight">
             {!settings.enabled ? 'Extension Paused' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
           </span>
           <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-0.5" title={currentHostname}>
@@ -317,7 +317,7 @@ async function forceUnlockPage() {
 
         <!-- Domain Labels Stack -->
         <div class="min-w-0 flex flex-col justify-center">
-          <span class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
+          <span class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-tight">
             {!settings.enabled ? 'Extension Paused' : !isToggleableDomain ? 'System / Restricted Page' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
           </span>
           <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-0.5" title={currentHostname}>
@@ -326,7 +326,7 @@ async function forceUnlockPage() {
         </div>
       </div>
 
-      <span class="text-[9.5px] font-medium text-[var(--text-tertiary)] bg-[var(--bg-badge)] px-2 py-0.5 rounded-full border border-[var(--border-subtle)] flex-shrink-0 select-none" title="Per-site toggling is unavailable for system and local pages">
+      <span class="text-[10px] font-medium text-[var(--text-secondary)] bg-[var(--bg-badge)] px-2.5 py-0.5 rounded-full border border-[var(--border-subtle)] flex-shrink-0 select-none shadow-[0_0.5px_1px_rgba(0,0,0,0.03)]" title="Per-site toggling is unavailable for system and local pages">
         Global Protection
       </span>
     </section>

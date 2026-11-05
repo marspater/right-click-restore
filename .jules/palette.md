@@ -73,3 +73,8 @@
 - Styled `.kbd-subtext` in `popup.css` for compact 9px inline scaling with soft drop shadows and clean baseline alignment.
 - Enhanced header extension app icon with `rounded-[6px]`, subtle drop shadow (`shadow-[0_1px_3px_rgba(0,0,0,0.12)]`), and a smooth hover scale micro-interaction (`hover:scale-105`).
 - Added contextual `title` hover tooltips to the domain card when extension protection is paused globally.
+
+16. **Domain Status Typography Alignment, Badge Contrast & Switch Focus Polish (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+- Refined domain status category eyebrow line-height from `leading-none` to `leading-tight` in `App.svelte`, eliminating cramped baselines and awkward vertical collision on wrapped labels like "System / Restricted Page".
+- Enhanced the "Global Protection" tag badge styling with higher-contrast `text-[var(--text-secondary)]`, `font-medium`, `text-[10px]`, `px-2.5`, and a subtle drop shadow to match Apple system pill badge treatments.
+- Added crisp separation ring (`box-shadow: 0 0 0 1px var(--bg-popover)`) to `.apple-switch input:focus-visible + .apple-slider` in `popup.css` to prevent focus outline collision with outer card and popover boundaries.

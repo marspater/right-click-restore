@@ -287,6 +287,7 @@ label.domain-card:active:not(.dimmed) {
 .apple-switch input:focus-visible + .apple-slider {
   outline: 2px solid var(--accent-blue);
   outline-offset: 2px;
+  box-shadow: 0 0 0 1px var(--bg-popover);
 }
 
 button:focus:not(:focus-visible) {

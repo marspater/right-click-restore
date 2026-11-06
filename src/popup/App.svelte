@@ -556,15 +556,16 @@ async function forceUnlockPage() {
       {:else if isSiteDisabled}
         Protection is disabled on this domain
       {:else if settings.bypassModifierKey}
-        Tip: Hold <kbd>⇧ Shift</kbd> or <kbd>⌥ Option</kbd> for native menu
+        Tip: Hold <kbd class="kbd-subtext">⇧ Shift</kbd> or <kbd class="kbd-subtext">⌥ Option</kbd> for native menu
       {:else}
         Tip: <button
           type="button"
           onclick={() => toggleFeature('bypassModifierKey')}
           disabled={!isSiteActive}
-          class="text-[var(--accent-blue)] font-medium hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent-blue)] rounded-[2px] cursor-pointer inline disabled:no-underline disabled:cursor-not-allowed disabled:text-[var(--text-tertiary)]"
+          class="text-[var(--accent-blue)] font-medium hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-1.5 focus-visible:ring-[var(--accent-blue)] rounded-[4px] px-0.5 -mx-0.5 cursor-pointer inline transition-all active:opacity-75 disabled:no-underline disabled:cursor-not-allowed disabled:text-[var(--text-tertiary)]"
           title="Enable Modifier Key Bypass setting"
-        >Enable Modifier Key Bypass</button> to hold <kbd>⇧ Shift</kbd>
+          aria-label="Enable Modifier Key Bypass to hold Shift or Option for native menu"
+        >Enable Bypass</button> to hold <kbd class="kbd-subtext">⇧ Shift</kbd> or <kbd class="kbd-subtext">⌥ Option</kbd>
       {/if}
     </p>
   </footer>

@@ -73,3 +73,9 @@
 - Styled `.kbd-subtext` in `popup.css` for compact 9px inline scaling with soft drop shadows and clean baseline alignment.
 - Enhanced header extension app icon with `rounded-[6px]`, subtle drop shadow (`shadow-[0_1px_3px_rgba(0,0,0,0.12)]`), and a smooth hover scale micro-interaction (`hover:scale-105`).
 - Added contextual `title` hover tooltips to the domain card when extension protection is paused globally.
+
+16. **Footer Tip Harmony, Keycap Alignment & Quick-Action Polish (`src/popup/App.svelte`)**:
+- Applied `.kbd-subtext` styling to footer tip `<kbd>` badges (`⇧ Shift` and `⌥ Option`) to harmonize sizing, padding, and baseline alignment with setting list subtexts and avoid vertical line-height jumping in the footer caption.
+- Updated the footer quick-action tip copy to include both modifier keys (`⇧ Shift` or `⌥ Option`) and tightened button text to "Enable Bypass", preventing awkward multi-line wrapping in the compact 324px popover.
+- Added explicit `aria-label="Enable Modifier Key Bypass to hold Shift or Option for native menu"` for accessible screen reader announcements.
+- Refined quick-action button interactions with rounded geometry (`rounded-[4px] px-0.5 -mx-0.5`), tactile press feedback (`active:opacity-75`), and accessible focus ring (`focus-visible:ring-1.5 focus-visible:ring-[var(--accent-blue)]`).

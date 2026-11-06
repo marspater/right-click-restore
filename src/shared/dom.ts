@@ -638,7 +638,31 @@ export function safeRemoveElement(element: Element): void {
 /* eslint-disable @typescript-eslint/unbound-method */
 const nativeAppendChild: NativeDOMMethod<typeof Node.prototype.appendChild> =
   typeof Node !== 'undefined' ? Node.prototype.appendChild : null;
+const nativeContains: NativeDOMMethod<typeof Node.prototype.contains> =
+  typeof Node !== 'undefined' ? Node.prototype.contains : null;
 /* eslint-enable @typescript-eslint/unbound-method */
+
+export function safeContains(parent: Node, child: Node | null): boolean {
+  try {
+    if (!parent || !child) return false;
+    if (nativeContains && !Object.hasOwn(parent, 'contains')) {
+      return Boolean(safeApply(nativeContains, parent, [child]));
+    }
+    const fn = getUnshadowedMethod(parent, 'contains');
+    if (fn) {
+      return Boolean(safeApply(fn, parent, [child]));
+    }
+    // Fallback: traverse upwards via safeGetParentElement
+    let curr: Node | null = child;
+    while (curr) {
+      if (curr === parent) return true;
+      curr = safeGetParentElement(curr) ?? curr.parentNode;
+    }
+  } catch {
+    // Return false if contains check throws on restricted elements
+  }
+  return false;
+}
 
 export function safeAppendChild<T extends Node>(
   parent: Node,
@@ -731,6 +755,48 @@ function getNativeParentElementGetter(): ((this: unknown) => unknown) | null {
     }
   }
   return nativeParentElementGetter;
+}
+
+let nativeIsConnectedGetter: ((this: unknown) => unknown) | null | undefined;
+function getNativeIsConnectedGetter(): ((this: unknown) => unknown) | null {
+  if (nativeIsConnectedGetter === undefined) {
+    try {
+      nativeIsConnectedGetter =
+        typeof Node !== 'undefined'
+          ? (Object.getOwnPropertyDescriptor(Node.prototype, 'isConnected')
+              ?.get ?? null)
+          : null;
+    } catch {
+      nativeIsConnectedGetter = null;
+    }
+  }
+  return nativeIsConnectedGetter;
+}
+
+export function safeIsConnected(node: Node): boolean {
+  try {
+    if (!node || typeof node !== 'object') return false;
+    let connected: unknown = null;
+    const nativeGetter = getNativeIsConnectedGetter();
+    if (nativeGetter && typeof Node !== 'undefined' && node instanceof Node) {
+      connected = safeApply(nativeGetter, node, []);
+    } else {
+      const getter = getUnshadowedGetter(node, 'isConnected');
+      connected = getter ? safeApply(getter, node, []) : node.isConnected;
+    }
+    if (typeof connected === 'boolean') {
+      return connected;
+    }
+    // Fallback if isConnected getter is unavailable or returns non-boolean
+    let curr: Node | null = node;
+    while (curr) {
+      if (curr.nodeType === 9) return true; // Document
+      curr = safeGetParentElement(curr) ?? curr.parentNode;
+    }
+  } catch {
+    // Return false if checking isConnected throws on restricted elements
+  }
+  return false;
 }
 
 let nativeTagNameGetter: ((this: unknown) => unknown) | null | undefined;

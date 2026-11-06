@@ -7,6 +7,7 @@ import {
   safeApply,
   safeAttachShadow,
   safeClosest,
+  safeContains,
   safeCreateElement,
   safeElementsFromPoint,
   safeGetAttribute,
@@ -17,6 +18,7 @@ import {
   safeGetTagName,
   safeHasAttribute,
   safeHasAttributes,
+  safeIsConnected,
   safeMatches,
   safeQuerySelector,
   safeQuerySelectorAll,
@@ -370,6 +372,66 @@ describe('shared DOM utilities', () => {
       } as unknown as Node;
 
       expect(safeGetParentElement(fakeNode)).toBeNull();
+    });
+  });
+
+  describe('safeContains', () => {
+    test('returns true for parent containing child and false otherwise', () => {
+      const parent = document.createElement('div');
+      const child = document.createElement('span');
+      const other = document.createElement('p');
+      parent.appendChild(child);
+
+      expect(safeContains(parent, child)).toBe(true);
+      expect(safeContains(parent, parent)).toBe(true);
+      expect(safeContains(parent, other)).toBe(false);
+      expect(safeContains(parent, null)).toBe(false);
+    });
+
+    test('resists DOM clobbering when contains is overridden on parent element', () => {
+      const form = document.createElement('form');
+      const input = document.createElement('input');
+      input.setAttribute('name', 'contains');
+      form.appendChild(input);
+
+      Object.defineProperty(form, 'contains', {
+        value: input,
+        configurable: true,
+      });
+
+      expect(safeContains(form, input)).toBe(true);
+      const outside = document.createElement('div');
+      expect(safeContains(form, outside)).toBe(false);
+    });
+  });
+
+  describe('safeIsConnected', () => {
+    test('returns true for connected element and false for disconnected element', () => {
+      const el = document.createElement('div');
+      expect(safeIsConnected(el)).toBe(false);
+
+      document.body.appendChild(el);
+      expect(safeIsConnected(el)).toBe(true);
+
+      document.body.removeChild(el);
+      expect(safeIsConnected(el)).toBe(false);
+    });
+
+    test('resists DOM clobbering when isConnected is overridden on element', () => {
+      const form = document.createElement('form');
+      const input = document.createElement('input');
+      input.setAttribute('name', 'isConnected');
+      form.appendChild(input);
+      document.body.appendChild(form);
+
+      Object.defineProperty(form, 'isConnected', {
+        value: input,
+        configurable: true,
+      });
+
+      expect(safeIsConnected(form)).toBe(true);
+      document.body.removeChild(form);
+      expect(safeIsConnected(form)).toBe(false);
     });
   });
 

@@ -17,12 +17,14 @@ import {
   safeGetTagName,
   safeHasAttribute,
   safeHasAttributes,
+  safeIsConnected,
   safeMatches,
   safeQuerySelector,
   safeQuerySelectorAll,
   safeRemoveAttribute,
   safeRemoveElement,
 } from './dom';
+import { safeContains } from './dom';
 
 describe('shared DOM utilities', () => {
   let window: Window;
@@ -517,6 +519,83 @@ describe('shared DOM utilities', () => {
     });
     return form;
   }
+
+  describe('safeContains & safeIsConnected', () => {
+    test('safeContains accurately checks containment', () => {
+      const parent = document.createElement('div');
+      const child = document.createElement('span');
+      parent.appendChild(child);
+      const outside = document.createElement('p');
+
+      expect(safeContains(parent, child)).toBe(true);
+      expect(safeContains(parent, outside)).toBe(false);
+      expect(safeContains(parent, null)).toBe(false);
+    });
+
+    test('safeContains resists DOM clobbering when contains is overridden by input', () => {
+      const form = createClobberedForm('contains');
+      const child = document.createElement('span');
+      form.appendChild(child);
+
+      expect(safeContains(form, child)).toBe(true);
+      expect(safeContains(form, document.body)).toBe(false);
+    });
+
+    test('safeContains falls back on mock objects and handles errors safely', () => {
+      const child = document.createElement('span');
+      const mockObj = {
+        contains: (node: unknown) => node === child,
+      } as unknown as Node;
+
+      expect(safeContains(mockObj, child)).toBe(true);
+      expect(safeContains(mockObj, null)).toBe(false);
+
+      const throwingObj = {
+        contains: () => {
+          throw new Error('boom');
+        },
+      } as unknown as Node;
+      expect(safeContains(throwingObj, child)).toBe(false);
+    });
+
+    test('safeIsConnected accurately checks connection status', () => {
+      const el = document.createElement('div');
+      expect(safeIsConnected(el)).toBe(false);
+
+      document.body.appendChild(el);
+      expect(safeIsConnected(el)).toBe(true);
+
+      el.remove();
+      expect(safeIsConnected(el)).toBe(false);
+    });
+
+    test('safeIsConnected resists DOM clobbering when isConnected is overridden by named input', () => {
+      const form = createClobberedForm('isConnected');
+      // Detached form with named input 'isConnected'
+      expect(safeIsConnected(form)).toBe(false);
+
+      document.body.appendChild(form);
+      expect(safeIsConnected(form)).toBe(true);
+
+      form.remove();
+      expect(safeIsConnected(form)).toBe(false);
+    });
+
+    test('safeIsConnected safely rejects non-boolean values and handles errors', () => {
+      const spoofedObj = {
+        isConnected: 'truthy string',
+      } as unknown as Node;
+      expect(safeIsConnected(spoofedObj)).toBe(false);
+
+      const throwingObj = {} as unknown as Node;
+      Object.defineProperty(throwingObj, 'isConnected', {
+        get() {
+          throw new Error('access denied');
+        },
+      });
+      expect(safeIsConnected(throwingObj)).toBe(false);
+    });
+  });
 
   describe('safeAppendChild', () => {
     test('appends child element to parent container', () => {

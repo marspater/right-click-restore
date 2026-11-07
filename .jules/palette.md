@@ -73,3 +73,8 @@
 - Styled `.kbd-subtext` in `popup.css` for compact 9px inline scaling with soft drop shadows and clean baseline alignment.
 - Enhanced header extension app icon with `rounded-[6px]`, subtle drop shadow (`shadow-[0_1px_3px_rgba(0,0,0,0.12)]`), and a smooth hover scale micro-interaction (`hover:scale-105`).
 - Added contextual `title` hover tooltips to the domain card when extension protection is paused globally.
+
+16. **Domain Status Tag Semantic Color Harmony & Footer Quick-Action Polish (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+- Harmonized the domain status tag text color with the beacon dot's semantic state: dynamically applying `text-[var(--accent-green)]` for active protection, `text-[var(--accent-orange)]` for disabled domain protection, and `text-[var(--text-tertiary)]`/`text-[var(--text-secondary)]` for paused extension or system pages, replacing mismatched static or muted colors.
+- Polished the footer tip "Enable Modifier Key Bypass" quick-action with `.footer-quick-action`: added subtle hover background fill (`hover:bg-[var(--bg-badge-active)]`), tactile active press scaling (`active:scale-[0.98]`), and a clear accessibility focus ring (`focus-visible:ring-1.5 focus-visible:ring-[var(--accent-blue)]`).
+- Wrapped `<kbd>⇧ Shift</kbd> or <kbd>⌥ Option</kbd>` keycaps in a non-breaking inline group (`whitespace-nowrap`) in the footer footnote, preventing awkward orphaned shortcut wraps and matching both supported modifier bypass keys.

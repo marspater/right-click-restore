@@ -229,6 +229,22 @@ describe('cleaner module', () => {
       expect(root.hasAttribute('oncontextmenu')).toBe(true);
       expect(child.hasAttribute('onselectstart')).toBe(true);
     });
+
+    test('cleans leaf nodes without child elements and short-circuits subtree query', () => {
+      const leaf = document.createElement('div');
+      leaf.setAttribute('oncontextmenu', 'return false');
+
+      let querySelectorAllCalled = false;
+      leaf.querySelectorAll = () => {
+        querySelectorAllCalled = true;
+        return [] as unknown as NodeListOf<Element>;
+      };
+
+      cleanAddedNode(leaf, DEFAULT_SETTINGS);
+
+      expect(leaf.hasAttribute('oncontextmenu')).toBe(false);
+      expect(querySelectorAllCalled).toBe(false);
+    });
   });
 
   describe('cleanDOMTree', () => {

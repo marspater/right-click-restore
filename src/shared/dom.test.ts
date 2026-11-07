@@ -17,6 +17,7 @@ import {
   safeGetTagName,
   safeHasAttribute,
   safeHasAttributes,
+  safeHasChildElements,
   safeMatches,
   safeQuerySelector,
   safeQuerySelectorAll,
@@ -370,6 +371,54 @@ describe('shared DOM utilities', () => {
       } as unknown as Node;
 
       expect(safeGetParentElement(fakeNode)).toBeNull();
+    });
+  });
+
+  describe('safeHasChildElements', () => {
+    test('returns false for leaf elements and text-only elements', () => {
+      const leafDiv = document.createElement('div');
+      expect(safeHasChildElements(leafDiv)).toBe(false);
+
+      const textDiv = document.createElement('div');
+      textDiv.appendChild(document.createTextNode('Hello world'));
+      expect(safeHasChildElements(textDiv)).toBe(false);
+    });
+
+    test('returns true for elements with child elements', () => {
+      const parent = document.createElement('div');
+      const child = document.createElement('span');
+      parent.appendChild(child);
+      expect(safeHasChildElements(parent)).toBe(true);
+    });
+
+    test('resists DOM clobbering when firstElementChild is overridden on form', () => {
+      const form = document.createElement('form');
+      const input = document.createElement('input');
+      input.setAttribute('name', 'firstElementChild');
+      form.appendChild(input);
+
+      Object.defineProperty(form, 'firstElementChild', {
+        value: input,
+        configurable: true,
+      });
+
+      expect(safeHasChildElements(form)).toBe(true);
+
+      const emptyForm = document.createElement('form');
+      Object.defineProperty(emptyForm, 'firstElementChild', {
+        value: null,
+        configurable: true,
+      });
+      expect(safeHasChildElements(emptyForm)).toBe(false);
+    });
+
+    test('fails safe and returns true if firstElementChild access throws', () => {
+      const faulty = {
+        get firstElementChild(): Element | null {
+          throw new Error('Access denied');
+        },
+      } as unknown as Element;
+      expect(safeHasChildElements(faulty)).toBe(true);
     });
   });
 

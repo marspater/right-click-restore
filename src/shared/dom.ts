@@ -749,6 +749,54 @@ function getNativeTagNameGetter(): ((this: unknown) => unknown) | null {
   return nativeTagNameGetter;
 }
 
+let nativeFirstElementChildGetter:
+  | ((this: unknown) => unknown)
+  | null
+  | undefined;
+function getNativeFirstElementChildGetter():
+  | ((this: unknown) => unknown)
+  | null {
+  if (nativeFirstElementChildGetter === undefined) {
+    try {
+      nativeFirstElementChildGetter =
+        typeof Element !== 'undefined'
+          ? (Object.getOwnPropertyDescriptor(
+              Element.prototype,
+              'firstElementChild',
+            )?.get ?? null)
+          : null;
+    } catch {
+      nativeFirstElementChildGetter = null;
+    }
+  }
+  return nativeFirstElementChildGetter;
+}
+
+// Performance optimization: Fast-path element child existence check to short-circuit
+// subtree querySelectorAll scans on leaf nodes. Resists DOM clobbering while bypassing
+// expensive full selector engine traversals on childless elements.
+export function safeHasChildElements(element: Element): boolean {
+  try {
+    const nativeGetter = getNativeFirstElementChildGetter();
+    if (
+      nativeGetter &&
+      typeof Element !== 'undefined' &&
+      element instanceof Element &&
+      !Object.hasOwn(element, 'firstElementChild')
+    ) {
+      return safeApply(nativeGetter, element, []) !== null;
+    }
+    const getter = getUnshadowedGetter(element, 'firstElementChild');
+    if (getter) {
+      return safeApply(getter, element, []) !== null;
+    }
+    return element.firstElementChild !== null;
+  } catch {
+    // Fail safe on restricted or detached nodes: assume child elements may exist
+    return true;
+  }
+}
+
 export function safeGetTagName(element: Element): string {
   try {
     let tag: unknown = null;

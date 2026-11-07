@@ -282,7 +282,13 @@ async function forceUnlockPage() {
 
         <!-- Domain Labels Stack -->
         <div class="min-w-0 flex flex-col justify-center">
-          <span id="desc-domain-status" class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
+          <span id="desc-domain-status" class={`text-[9.5px] uppercase font-semibold tracking-wider leading-none transition-colors duration-150 ${
+            !settings.enabled
+              ? 'text-[var(--text-tertiary)]'
+              : isSiteDisabled
+                ? 'text-[var(--accent-orange)]'
+                : 'text-[var(--accent-green)]'
+          }`}>
             {!settings.enabled ? 'Extension Paused' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
           </span>
           <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-0.5" title={currentHostname}>
@@ -317,7 +323,15 @@ async function forceUnlockPage() {
 
         <!-- Domain Labels Stack -->
         <div class="min-w-0 flex flex-col justify-center">
-          <span class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
+          <span class={`text-[9.5px] uppercase font-semibold tracking-wider leading-none transition-colors duration-150 ${
+            !settings.enabled
+              ? 'text-[var(--text-tertiary)]'
+              : isSiteDisabled
+                ? 'text-[var(--accent-orange)]'
+                : isSiteActive
+                  ? 'text-[var(--accent-green)]'
+                  : 'text-[var(--text-secondary)]'
+          }`}>
             {!settings.enabled ? 'Extension Paused' : !isToggleableDomain ? 'System / Restricted Page' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
           </span>
           <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-0.5" title={currentHostname}>
@@ -562,9 +576,9 @@ async function forceUnlockPage() {
           type="button"
           onclick={() => toggleFeature('bypassModifierKey')}
           disabled={!isSiteActive}
-          class="text-[var(--accent-blue)] font-medium hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent-blue)] rounded-[2px] cursor-pointer inline disabled:no-underline disabled:cursor-not-allowed disabled:text-[var(--text-tertiary)]"
+          class="footer-quick-action text-[var(--accent-blue)] font-medium hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-1.5 focus-visible:ring-[var(--accent-blue)] rounded-[4px] px-1 py-0.5 cursor-pointer inline-flex items-center gap-0.5 transition-all duration-150 active:scale-[0.98] disabled:no-underline disabled:cursor-not-allowed disabled:text-[var(--text-tertiary)]"
           title="Enable Modifier Key Bypass setting"
-        >Enable Modifier Key Bypass</button> to hold <kbd>⇧ Shift</kbd>
+        >Enable Modifier Key Bypass</button> to hold <span class="inline-block whitespace-nowrap"><kbd>⇧ Shift</kbd> or <kbd>⌥ Option</kbd></span>
       {/if}
     </p>
   </footer>

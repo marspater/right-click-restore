@@ -86,6 +86,23 @@ export function getUnshadowedGetter(
 
 type NativeDOMMethod<T extends (..._args: never[]) => unknown> = T | null;
 
+let nativeContainsMethod:
+  | NativeDOMMethod<typeof Node.prototype.contains>
+  | undefined;
+function getNativeContainsMethod(): NativeDOMMethod<
+  typeof Node.prototype.contains
+> {
+  if (nativeContainsMethod === undefined) {
+    try {
+      nativeContainsMethod =
+        typeof Node !== 'undefined' ? Node.prototype.contains : null;
+    } catch {
+      nativeContainsMethod = null;
+    }
+  }
+  return nativeContainsMethod;
+}
+
 let nativeMatchesMethod:
   | NativeDOMMethod<typeof Element.prototype.matches>
   | undefined;
@@ -324,6 +341,63 @@ function getNativeDocumentFragmentQuerySelectorAllMethod(): NativeDOMMethod<
   return nativeDocumentFragmentQuerySelectorAllMethod;
 }
 /* eslint-enable @typescript-eslint/unbound-method */
+
+export function safeContains(
+  parent: Node | null | undefined,
+  child: Node | null | undefined,
+): boolean {
+  if (
+    !parent ||
+    !child ||
+    typeof parent !== 'object' ||
+    typeof child !== 'object'
+  ) {
+    return false;
+  }
+  try {
+    const parentProto = Object.getPrototypeOf(parent);
+    if (parentProto === null || parentProto === Object.prototype) {
+      return false;
+    }
+    const nativeFn = getNativeContainsMethod();
+    if (nativeFn && !Object.hasOwn(parent, 'contains')) {
+      return Boolean(safeApply(nativeFn, parent, [child]));
+    }
+    const fn = getUnshadowedMethod(parent, 'contains');
+    if (fn) {
+      return Boolean(safeApply(fn, parent, [child]));
+    }
+    return Boolean(parent.contains(child));
+  } catch {
+    return false;
+  }
+}
+
+export function safeIsConnected(node: Node | null | undefined): boolean {
+  if (!node || typeof node !== 'object') return false;
+  try {
+    const proto = Object.getPrototypeOf(node);
+    if (proto === null || proto === Object.prototype) {
+      return false;
+    }
+    let connected: unknown = null;
+    const nativeGetter = getNativeIsConnectedGetter();
+    if (
+      nativeGetter &&
+      typeof Node !== 'undefined' &&
+      node instanceof Node &&
+      !Object.hasOwn(node, 'isConnected')
+    ) {
+      connected = safeApply(nativeGetter, node, []);
+    } else {
+      const getter = getUnshadowedGetter(node, 'isConnected');
+      connected = getter ? safeApply(getter, node, []) : node.isConnected;
+    }
+    return connected === true;
+  } catch {
+    return false;
+  }
+}
 
 export function safeMatches(element: Element, selector: string): boolean {
   try {
@@ -712,6 +786,22 @@ function getNativeStyleGetter(): ((this: unknown) => unknown) | null {
     }
   }
   return nativeStyleGetter;
+}
+
+let nativeIsConnectedGetter: ((this: unknown) => unknown) | null | undefined;
+function getNativeIsConnectedGetter(): ((this: unknown) => unknown) | null {
+  if (nativeIsConnectedGetter === undefined) {
+    try {
+      nativeIsConnectedGetter =
+        typeof Node !== 'undefined'
+          ? (Object.getOwnPropertyDescriptor(Node.prototype, 'isConnected')
+              ?.get ?? null)
+          : null;
+    } catch {
+      nativeIsConnectedGetter = null;
+    }
+  }
+  return nativeIsConnectedGetter;
 }
 
 let nativeParentElementGetter: ((this: unknown) => unknown) | null | undefined;

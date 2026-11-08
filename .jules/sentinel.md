@@ -76,3 +76,8 @@
 **Vulnerability:** Direct property access to `element.parentElement` allowed untrusted web pages to clobber `parentElement` using named child inputs (e.g. `<form><input name="parentElement"></form>`), returning input elements or spoofed non-Element objects that caused DOM traversal errors and bypassed interactive element checks or video unblur scanning.
 **Learning:** Accessing `.parentElement` directly assumes the property is unshadowed by child form controls or named getters.
 **Prevention:** Use `safeGetParentElement` across all DOM parent element traversals to retrieve native getters via `getNativeParentElementGetter`/`getUnshadowedGetter` and verify node interface prototype inheritance.
+
+## 2025-05-25 - DOM Clobbering Resistance for `isConnected` and `contains`
+**Vulnerability:** Direct invocation of `root.contains(...)` and reading `element.isConnected` in content scripts allowed untrusted web pages to clobber `contains` (e.g. `<form><input name="contains"></form>`) and `isConnected` (e.g. `<form><input name="isConnected"></form>`). Calling `contains` threw a runtime `TypeError` breaking style restoration, while reading `isConnected` evaluated to a truthy `HTMLInputElement` on detached forms, causing detached nodes to be processed as connected.
+**Learning:** In browser environments, `<form>` elements expose named controls as instance properties that clobber native methods like `contains` and boolean accessors like `isConnected`.
+**Prevention:** Use `safeContains` and `safeIsConnected` with prototype unshadowing and interface prototype verification across all DOM tree validations and containment checks.

@@ -16,6 +16,11 @@ const isToggleableDomain = $derived(
   Boolean(currentHostname && normalizeHostname(currentHostname)),
 );
 
+const isLocalPage = $derived(
+  currentHostname === 'Local Test Page' ||
+    currentHostname.startsWith('file://'),
+);
+
 const isSiteDisabled = $derived(
   Boolean(
     isToggleableDomain &&
@@ -32,9 +37,11 @@ const disabledRowTooltip = $derived(
     ? undefined
     : !settings.enabled
       ? 'Extension is paused globally'
-      : !isToggleableDomain
-        ? 'Protection is unavailable on system pages'
-        : 'Protection is disabled on this domain',
+      : isLocalPage
+        ? 'Per-site settings are unavailable for local files'
+        : !isToggleableDomain
+          ? 'Protection is unavailable on system pages'
+          : 'Protection is disabled on this domain',
 );
 
 // Load state and active tab on mount
@@ -265,7 +272,7 @@ async function forceUnlockPage() {
     >
       <div class="flex items-center gap-2.5 min-w-0 pr-2">
         <!-- Status Beacon -->
-        <div class="flex items-center justify-center flex-shrink-0" aria-hidden="true">
+        <div class="flex items-center justify-center flex-shrink-0 self-center" aria-hidden="true">
           <span class="relative flex h-2.5 w-2.5 items-center justify-center">
             {#if isSiteActive}
               <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--accent-green)] opacity-35"></span>
@@ -282,7 +289,7 @@ async function forceUnlockPage() {
 
         <!-- Domain Labels Stack -->
         <div class="min-w-0 flex flex-col justify-center">
-          <span id="desc-domain-status" class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
+          <span id="desc-domain-status" class="text-[9px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-tight truncate">
             {!settings.enabled ? 'Extension Paused' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
           </span>
           <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-0.5" title={currentHostname}>
@@ -317,8 +324,8 @@ async function forceUnlockPage() {
 
         <!-- Domain Labels Stack -->
         <div class="min-w-0 flex flex-col justify-center">
-          <span class="text-[9.5px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-none">
-            {!settings.enabled ? 'Extension Paused' : !isToggleableDomain ? 'System / Restricted Page' : isSiteDisabled ? 'Disabled on Domain' : 'Active on Domain'}
+          <span class="text-[9px] uppercase font-semibold tracking-wider text-[var(--text-secondary)] leading-tight truncate">
+            {!settings.enabled ? 'Extension Paused' : isLocalPage ? 'Local File Page' : 'System / Restricted'}
           </span>
           <span class="text-[12.5px] font-semibold text-[var(--text-primary)] truncate leading-snug mt-0.5" title={currentHostname}>
             {currentHostname || 'Loading…'}
@@ -497,9 +504,11 @@ async function forceUnlockPage() {
         ? 'Force unlock context menu and selection on active page'
         : !settings.enabled
           ? 'Extension is paused globally'
-          : !isToggleableDomain
-            ? 'Protection is unavailable on system pages'
-            : 'Protection is inactive on this domain'}
+          : isLocalPage
+            ? 'Force unlock is unavailable for local files'
+            : !isToggleableDomain
+              ? 'Protection is unavailable on system pages'
+              : 'Protection is inactive on this domain'}
       class={`w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none disabled:cursor-not-allowed ${
         isSiteActive && unlockStatus === 'idle' ? 'active:scale-[0.985]' : ''
       } ${
@@ -551,6 +560,8 @@ async function forceUnlockPage() {
     <p class="text-[10px] text-[var(--text-tertiary)] leading-tight m-0 inline">
       {#if !settings.enabled}
         Extension is paused globally
+      {:else if isLocalPage}
+        Protection is unavailable on local files
       {:else if !isToggleableDomain}
         Protection is unavailable on system pages
       {:else if isSiteDisabled}

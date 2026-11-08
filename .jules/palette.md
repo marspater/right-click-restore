@@ -73,3 +73,8 @@
 - Styled `.kbd-subtext` in `popup.css` for compact 9px inline scaling with soft drop shadows and clean baseline alignment.
 - Enhanced header extension app icon with `rounded-[6px]`, subtle drop shadow (`shadow-[0_1px_3px_rgba(0,0,0,0.12)]`), and a smooth hover scale micro-interaction (`hover:scale-105`).
 - Added contextual `title` hover tooltips to the domain card when extension protection is paused globally.
+
+16. **Local File Context Differentiation & Badge Typography Polish (`src/popup/App.svelte`)**:
+- Added distinct `isLocalPage` detection (`file://` and `Local Test Page`), replacing misleading "System / Restricted Page" labeling on local files with an explicit "Local File Page" indicator.
+- Updated contextual tooltips across setting rows, Force Unlock action button, and footer tip to accurately announce local file restrictions ("Protection is unavailable on local files", "Per-site settings are unavailable for local files", "Force unlock is unavailable for local files").
+- Shortened system page tag from "System / Restricted Page" to "System / Restricted" and added `truncate` and `leading-tight` with `self-center` beacon alignment to ensure clean visual balance across localized and long URL contexts.

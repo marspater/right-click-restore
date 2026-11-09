@@ -414,6 +414,7 @@ kbd {
 
 kbd:hover {
   transform: scale(1.05);
+  background-color: var(--bg-card-hover);
 }
 
 kbd.kbd-subtext {
@@ -422,6 +423,10 @@ kbd.kbd-subtext {
   border-radius: 4px;
   vertical-align: 0.5px;
   box-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.06);
+}
+
+kbd.kbd-subtext:hover {
+  transform: scale(1.06);
 }
 
 /* Micro-Animation Keyframes */

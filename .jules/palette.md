@@ -73,3 +73,8 @@
 - Styled `.kbd-subtext` in `popup.css` for compact 9px inline scaling with soft drop shadows and clean baseline alignment.
 - Enhanced header extension app icon with `rounded-[6px]`, subtle drop shadow (`shadow-[0_1px_3px_rgba(0,0,0,0.12)]`), and a smooth hover scale micro-interaction (`hover:scale-105`).
 - Added contextual `title` hover tooltips to the domain card when extension protection is paused globally.
+
+16. **Setting Row Subtext Rhythm, Footer Tip Alignment & Keycap Micro-Interactions (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+- Tightened the "Unblur Videos" subtext in `App.svelte` from verbose multiline explanation (`Removes site CSS blur; protected capture stays blocked`) to a balanced single-line description (`Removes site CSS blur from players`), eliminating awkward text wrapping and visual density friction in the settings list.
+- Balanced the footer tip quick-action call-to-action when Modifier Key Bypass is disabled (`Tip: Enable bypass with ⇧ Shift or ⌥ Option`), ensuring symmetry with the active state tip without awkward line wrap. Added `transition-colors` and `active:opacity-75` to the footer action button.
+- Added `kbd:hover` background-color brightness transition (`var(--bg-card-hover)`) and refined `kbd.kbd-subtext:hover` scale in `popup.css` for consistent tactile feel across all shortcut badges.

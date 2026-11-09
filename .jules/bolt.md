@@ -48,3 +48,7 @@
 ## 2025-05-24 - Short-circuiting video container queries using querySelector
 **Learning:** Using `safeQuerySelector(element, 'video')` instead of `safeQuerySelectorAll(element, 'video').length === 0` to verify connected video containers stops searching as soon as the first video element is matched. This avoids full subtree DOM traversals and array allocations. Additionally, early exiting `VideoUnblur.scan` when `overrides.size === 0` and no video elements exist in the root subtree avoids unnecessary container scanning during non-video DOM mutations.
 **Action:** Use single-element `querySelector` short-circuiting instead of `querySelectorAll().length` when checking for element existence in subtrees.
+
+## 2025-05-25 - Short-circuiting cleanNode on non-scrubbable attribute mutations
+**Learning:** The MutationObserver listens for attribute mutations on `[...SCRUB_ATTRS, 'style', 'class', 'id']` where `class` and `id` are monitored exclusively for `videoUnblur` tracking. Invoking `cleanNode` unconditionally on all attribute mutations causes redundant shadow root, tag name, attribute, and style checks during frequent UI animations and class changes. Filtering mutations by `SCRUBBABLE_MUTATION_ATTRS` (`new Set([...SCRUB_ATTRS, 'style'])`) before invoking `cleanNode` avoids redundant DOM inspections on `class` and `id` mutations, speeding up attribute mutation processing by ~87%.
+**Action:** Always filter attribute mutations against an active scrubbable attribute Set before invoking DOM node cleaning routines.

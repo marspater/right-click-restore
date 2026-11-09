@@ -3,6 +3,7 @@ import { Window } from 'happy-dom';
 import { DEFAULT_SETTINGS } from '../shared/settings';
 import {
   RIGHT_CLICK_SELECTOR,
+  SCRUBBABLE_MUTATION_ATTRS,
   SCRUB_SELECTOR,
   SELECTION_SELECTOR,
   cleanAddedNode,
@@ -315,6 +316,25 @@ describe('cleaner module', () => {
         restoreSelection: false,
       };
       expect(getScrubSelector(settings)).toBe('');
+    });
+  });
+
+  describe('SCRUBBABLE_MUTATION_ATTRS', () => {
+    test('contains all scrubbable event attributes and style', () => {
+      expect(SCRUBBABLE_MUTATION_ATTRS.has('oncontextmenu')).toBe(true);
+      expect(SCRUBBABLE_MUTATION_ATTRS.has('onselectstart')).toBe(true);
+      expect(SCRUBBABLE_MUTATION_ATTRS.has('ondragstart')).toBe(true);
+      expect(SCRUBBABLE_MUTATION_ATTRS.has('oncopy')).toBe(true);
+      expect(SCRUBBABLE_MUTATION_ATTRS.has('oncut')).toBe(true);
+      expect(SCRUBBABLE_MUTATION_ATTRS.has('onbeforecopy')).toBe(true);
+      expect(SCRUBBABLE_MUTATION_ATTRS.has('style')).toBe(true);
+    });
+
+    test('excludes non-scrubbable attributes like class, id, title', () => {
+      expect(SCRUBBABLE_MUTATION_ATTRS.has('class')).toBe(false);
+      expect(SCRUBBABLE_MUTATION_ATTRS.has('id')).toBe(false);
+      expect(SCRUBBABLE_MUTATION_ATTRS.has('title')).toBe(false);
+      expect(SCRUBBABLE_MUTATION_ATTRS.has('href')).toBe(false);
     });
   });
 });

@@ -69,6 +69,10 @@ export const SELECTION_SELECTOR = [
   '[style*="UserSelect"]',
 ].join(',');
 
+// Set of all attribute names that cleanNode inspects and scrubs.
+// Used to short-circuit non-scrubbable attribute mutations (such as 'class' or 'id').
+export const SCRUBBABLE_MUTATION_ATTRS = new Set([...SCRUB_ATTRS, 'style']);
+
 // Performance optimization: Construct minimal targeted CSS selectors based on active restoration settings.
 // Scanning for disabled features (e.g. searching for user-select styles when restoreSelection is false)
 // causes unnecessary querySelectorAll work across large DOM trees.

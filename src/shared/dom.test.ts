@@ -7,6 +7,7 @@ import {
   safeApply,
   safeAttachShadow,
   safeClosest,
+  safeContains,
   safeCreateElement,
   safeElementsFromPoint,
   safeGetAttribute,
@@ -17,6 +18,7 @@ import {
   safeGetTagName,
   safeHasAttribute,
   safeHasAttributes,
+  safeIsConnected,
   safeMatches,
   safeQuerySelector,
   safeQuerySelectorAll,
@@ -370,6 +372,87 @@ describe('shared DOM utilities', () => {
       } as unknown as Node;
 
       expect(safeGetParentElement(fakeNode)).toBeNull();
+    });
+  });
+
+  describe('safeContains', () => {
+    test('returns true when element is descendant or same node, false otherwise', () => {
+      const parent = document.createElement('div');
+      const child = document.createElement('span');
+      parent.appendChild(child);
+
+      expect(safeContains(parent, child)).toBe(true);
+      expect(safeContains(parent, parent)).toBe(true);
+
+      const unattached = document.createElement('p');
+      expect(safeContains(parent, unattached)).toBe(false);
+      expect(safeContains(parent, null)).toBe(false);
+    });
+
+    test('resists DOM clobbering when contains is overridden by named input on form', () => {
+      const form = document.createElement('form');
+      const input = document.createElement('input');
+      input.setAttribute('name', 'contains');
+      form.appendChild(input);
+
+      Object.defineProperty(form, 'contains', {
+        value: input,
+        configurable: true,
+      });
+
+      expect(safeContains(form, input)).toBe(true);
+      const other = document.createElement('div');
+      expect(safeContains(form, other)).toBe(false);
+    });
+
+    test('handles exceptions and non-node objects gracefully without throwing', () => {
+      const faulty = {
+        contains: () => {
+          throw new Error('fail');
+        },
+      } as unknown as Node;
+      expect(safeContains(faulty, document.createElement('div'))).toBe(false);
+    });
+  });
+
+  describe('safeIsConnected', () => {
+    test('returns true when connected to document, false when detached', () => {
+      const div = document.createElement('div');
+      expect(safeIsConnected(div)).toBe(false);
+
+      document.body.appendChild(div);
+      expect(safeIsConnected(div)).toBe(true);
+
+      document.body.removeChild(div);
+      expect(safeIsConnected(div)).toBe(false);
+    });
+
+    test('resists DOM clobbering when isConnected is overridden by named input on form', () => {
+      const form = document.createElement('form');
+      const input = document.createElement('input');
+      input.setAttribute('name', 'isConnected');
+      form.appendChild(input);
+
+      Object.defineProperty(form, 'isConnected', {
+        value: input,
+        configurable: true,
+      });
+
+      // While detached, returns false even though form.isConnected is an HTMLInputElement (truthy)
+      expect(safeIsConnected(form)).toBe(false);
+
+      document.body.appendChild(form);
+      expect(safeIsConnected(form)).toBe(true);
+    });
+
+    test('handles null or faulty objects safely without throwing', () => {
+      expect(safeIsConnected(null as unknown as Node)).toBe(false);
+      const faulty = {
+        get isConnected() {
+          throw new Error('fail');
+        },
+      } as unknown as Node;
+      expect(safeIsConnected(faulty)).toBe(false);
     });
   });
 

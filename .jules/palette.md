@@ -73,3 +73,7 @@
 - Styled `.kbd-subtext` in `popup.css` for compact 9px inline scaling with soft drop shadows and clean baseline alignment.
 - Enhanced header extension app icon with `rounded-[6px]`, subtle drop shadow (`shadow-[0_1px_3px_rgba(0,0,0,0.12)]`), and a smooth hover scale micro-interaction (`hover:scale-105`).
 - Added contextual `title` hover tooltips to the domain card when extension protection is paused globally.
+
+16. **Pill-Conforming Switch Keyboard Focus Rings & Tip Action Micro-Interactions (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+- Refined Apple switch keyboard focus rings in `popup.css` (`.switch input:focus-visible + .slider`, `.switch input:focus-visible + .apple-switch-slider`): replaced boxy `outline: 2px solid var(--accent-blue)` and `outline-offset: 2px` with a 2-layer `box-shadow: 0 0 0 2px var(--bg-popover), 0 0 0 4px var(--accent-blue)`. This conforms cleanly to the pill-shaped slider (`border-radius: 9999px`) across light and dark themes without clipping or square edges.
+- Refined the footer tip action button ("Enable Modifier Key Bypass") in `App.svelte` with `hover:text-[var(--accent-blue-hover)] transition-all duration-150 active:scale-[0.98] active:opacity-80` for immediate interactive feedback.

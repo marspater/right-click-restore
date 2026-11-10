@@ -285,8 +285,8 @@ label.domain-card:active:not(.dimmed) {
 
 /* Accessible Focus States */
 .apple-switch input:focus-visible + .apple-slider {
-  outline: 2px solid var(--accent-blue);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: 0 0 0 2px var(--bg-popover), 0 0 0 4px var(--accent-blue);
 }
 
 button:focus:not(:focus-visible) {

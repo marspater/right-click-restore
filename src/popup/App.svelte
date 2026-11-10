@@ -562,7 +562,7 @@ async function forceUnlockPage() {
           type="button"
           onclick={() => toggleFeature('bypassModifierKey')}
           disabled={!isSiteActive}
-          class="text-[var(--accent-blue)] font-medium hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent-blue)] rounded-[2px] cursor-pointer inline disabled:no-underline disabled:cursor-not-allowed disabled:text-[var(--text-tertiary)]"
+          class="text-[var(--accent-blue)] hover:text-[var(--accent-blue-hover)] font-medium hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent-blue)] rounded-[2px] cursor-pointer inline transition-all duration-150 active:scale-[0.98] active:opacity-80 disabled:no-underline disabled:cursor-not-allowed disabled:text-[var(--text-tertiary)]"
           title="Enable Modifier Key Bypass setting"
         >Enable Modifier Key Bypass</button> to hold <kbd>⇧ Shift</kbd>
       {/if}

@@ -323,6 +323,22 @@ function getNativeDocumentFragmentQuerySelectorAllMethod(): NativeDOMMethod<
   }
   return nativeDocumentFragmentQuerySelectorAllMethod;
 }
+
+let nativeComposedPathMethod: NativeDOMMethod<
+  typeof Event.prototype.composedPath
+> = typeof Event !== 'undefined' ? Event.prototype.composedPath : null;
+function getNativeComposedPathMethod(): NativeDOMMethod<
+  typeof Event.prototype.composedPath
+> {
+  if (!nativeComposedPathMethod && typeof Event !== 'undefined') {
+    try {
+      nativeComposedPathMethod = Event.prototype.composedPath;
+    } catch {
+      nativeComposedPathMethod = null;
+    }
+  }
+  return nativeComposedPathMethod;
+}
 /* eslint-enable @typescript-eslint/unbound-method */
 
 export function safeMatches(element: Element, selector: string): boolean {
@@ -413,6 +429,28 @@ export function safeElementsFromPoint(
     // Suppress errors if elementsFromPoint fails
   }
   return [];
+}
+
+export function safeComposedPath(event: Event): EventTarget[] {
+  try {
+    const nativeFn = getNativeComposedPathMethod();
+    if (
+      nativeFn &&
+      typeof Event !== 'undefined' &&
+      event instanceof Event &&
+      !Object.hasOwn(event, 'composedPath')
+    ) {
+      return (safeApply(nativeFn, event, []) as EventTarget[]) ?? [];
+    }
+    const fn = getUnshadowedMethod(event, 'composedPath');
+    if (fn) {
+      return (safeApply(fn, event, []) as EventTarget[]) ?? [];
+    }
+    return typeof event.composedPath === 'function' ? event.composedPath() : [];
+  } catch {
+    // Return empty array if composedPath throws on invalid or mock event contexts
+    return [];
+  }
 }
 
 export function safeGetElementById(

@@ -73,3 +73,7 @@
 - Styled `.kbd-subtext` in `popup.css` for compact 9px inline scaling with soft drop shadows and clean baseline alignment.
 - Enhanced header extension app icon with `rounded-[6px]`, subtle drop shadow (`shadow-[0_1px_3px_rgba(0,0,0,0.12)]`), and a smooth hover scale micro-interaction (`hover:scale-105`).
 - Added contextual `title` hover tooltips to the domain card when extension protection is paused globally.
+
+16. **Settings List Typography Hierarchy & Force Unlock Tactile Feedback (`src/popup/App.svelte` & `src/popup/popup.css`)**:
+- Streamlined "Unblur Videos" subtext from "Removes site CSS blur; protected capture stays blocked" to "Removes site CSS blur filters on video", matching the single-line scanning rhythm of all other feature rows in the Apple Inset Grouped List.
+- Added tactile `:active` press micro-interaction (`transform: scale(0.985)`, `opacity: 0.9`) to `.force-unlock-btn` when unlocked, providing responsive physical feedback to user clicks.

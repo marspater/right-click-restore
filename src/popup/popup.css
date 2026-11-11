@@ -443,7 +443,12 @@ kbd.kbd-subtext {
   animation: popIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Force Unlock Button Icon Hover Micro-Interaction */
+/* Force Unlock Button Icon Hover & Press Micro-Interactions */
+.force-unlock-btn:active:not(:disabled):not([aria-disabled="true"]) {
+  transform: scale(0.985);
+  opacity: 0.9;
+}
+
 button:hover:not(:disabled):not([aria-disabled="true"]) .force-unlock-icon,
 button:focus-visible:not(:disabled):not([aria-disabled="true"])
   .force-unlock-icon {

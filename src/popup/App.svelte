@@ -425,7 +425,7 @@ async function forceUnlockPage() {
         </div>
         <div class="min-w-0">
           <div class="text-[12px] font-medium text-[var(--text-primary)] leading-tight">Unblur Videos</div>
-          <div id="desc-unblur-videos" class="text-[10px] text-[var(--text-secondary)] leading-tight">Removes site CSS blur; protected capture stays blocked</div>
+          <div id="desc-unblur-videos" class="text-[10px] text-[var(--text-secondary)] leading-tight">Removes site CSS blur filters on video</div>
         </div>
       </div>
       <span class="apple-switch apple-switch-sm">
@@ -500,9 +500,7 @@ async function forceUnlockPage() {
           : !isToggleableDomain
             ? 'Protection is unavailable on system pages'
             : 'Protection is inactive on this domain'}
-      class={`w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none disabled:cursor-not-allowed ${
-        isSiteActive && unlockStatus === 'idle' ? 'active:scale-[0.985]' : ''
-      } ${
+      class={`force-unlock-btn w-full py-1.5 px-3 rounded-[10px] font-medium text-[12px] transition-all flex items-center justify-center gap-1.5 select-none disabled:cursor-not-allowed ${
         unlockStatus === 'unlocking'
           ? 'bg-[var(--bg-badge-active)] text-[var(--accent-blue)] border border-[var(--accent-blue)]/30 shadow-sm disabled:opacity-100'
           : unlockStatus === 'success'
@@ -510,7 +508,7 @@ async function forceUnlockPage() {
             : unlockStatus === 'error'
               ? 'bg-[var(--accent-red)] text-white shadow-sm border border-transparent disabled:opacity-100'
               : isSiteActive
-                ? 'bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] hover:border-[var(--border-subtle)] text-[var(--text-primary)] border border-[var(--border-subtle)] shadow-[var(--shadow-btn)]'
+                ? 'bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] hover:border-[var(--border-subtle)] text-[var(--text-primary)] border border-[var(--border-subtle)] shadow-[var(--shadow-btn)] cursor-pointer'
                 : 'bg-[var(--bg-card)] text-[var(--text-tertiary)] border border-[var(--border-subtle)] opacity-50'
       }`}
     >

@@ -207,6 +207,22 @@ describe('cleaner module', () => {
       expect(child2.hasAttribute('oncopy')).toBe(false);
     });
 
+    test('cleans leaf added node and short-circuits without querySelectorAll child traversal', () => {
+      const leaf = document.createElement('div');
+      leaf.setAttribute('oncontextmenu', 'return false');
+
+      let querySelectorAllCalled = false;
+      leaf.querySelectorAll = () => {
+        querySelectorAllCalled = true;
+        return [] as unknown as NodeListOf<Element>;
+      };
+
+      cleanAddedNode(leaf, DEFAULT_SETTINGS);
+
+      expect(leaf.hasAttribute('oncontextmenu')).toBe(false);
+      expect(querySelectorAllCalled).toBe(false);
+    });
+
     test('ignores non-Element added nodes gracefully', () => {
       const textNode = document.createTextNode('sample');
       expect(() => cleanAddedNode(textNode, DEFAULT_SETTINGS)).not.toThrow();

@@ -638,7 +638,25 @@ export function safeRemoveElement(element: Element): void {
 /* eslint-disable @typescript-eslint/unbound-method */
 const nativeAppendChild: NativeDOMMethod<typeof Node.prototype.appendChild> =
   typeof Node !== 'undefined' ? Node.prototype.appendChild : null;
+const nativeContains: NativeDOMMethod<typeof Node.prototype.contains> =
+  typeof Node !== 'undefined' ? Node.prototype.contains : null;
 /* eslint-enable @typescript-eslint/unbound-method */
+
+export function safeContains(root: Node, other: Node | null): boolean {
+  if (!other) return false;
+  try {
+    if (nativeContains && !Object.hasOwn(root, 'contains')) {
+      return Boolean(safeApply(nativeContains, root, [other]));
+    }
+    const fn = getUnshadowedMethod(root, 'contains');
+    if (fn) {
+      return Boolean(safeApply(fn, root, [other]));
+    }
+    return root.contains(other);
+  } catch {
+    return false;
+  }
+}
 
 export function safeAppendChild<T extends Node>(
   parent: Node,
@@ -696,6 +714,38 @@ function getNativeShadowRootGetter(): ((this: unknown) => unknown) | null {
     }
   }
   return nativeShadowRootGetter;
+}
+
+let nativeIsConnectedGetter: ((this: unknown) => unknown) | null | undefined;
+function getNativeIsConnectedGetter(): ((this: unknown) => unknown) | null {
+  if (nativeIsConnectedGetter === undefined) {
+    try {
+      nativeIsConnectedGetter =
+        typeof Node !== 'undefined'
+          ? (Object.getOwnPropertyDescriptor(Node.prototype, 'isConnected')
+              ?.get ?? null)
+          : null;
+    } catch {
+      nativeIsConnectedGetter = null;
+    }
+  }
+  return nativeIsConnectedGetter;
+}
+
+export function safeIsConnected(node: Node): boolean {
+  try {
+    const nativeGetter = getNativeIsConnectedGetter();
+    let res: unknown = null;
+    if (nativeGetter && typeof Node !== 'undefined' && node instanceof Node) {
+      res = safeApply(nativeGetter, node, []);
+    } else {
+      const getter = getUnshadowedGetter(node, 'isConnected');
+      res = getter ? safeApply(getter, node, []) : node.isConnected;
+    }
+    return typeof res === 'boolean' ? res : false;
+  } catch {
+    return false;
+  }
 }
 
 let nativeStyleGetter: ((this: unknown) => unknown) | null | undefined;

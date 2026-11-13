@@ -518,3 +518,71 @@ describe('native media targets', () => {
     ).toBe(false);
   });
 });
+
+test('property traps delegate to an inherited handler accessor', async () => {
+  const { setupPropertyTraps } = await import('./index');
+  const window = new Window();
+  const handlers = new WeakMap<object, unknown>();
+  Object.defineProperty(window.HTMLElement.prototype, 'oncontextmenu', {
+    get() {
+      return handlers.get(this) ?? null;
+    },
+    set(value) {
+      handlers.set(this, value);
+    },
+    configurable: true,
+  });
+  Object.assign(globalThis, {
+    Window: window.Window,
+    Document: window.Document,
+    HTMLElement: window.HTMLElement,
+    HTMLBodyElement: window.HTMLBodyElement,
+  });
+  setupPropertyTraps(() => false);
+
+  const handler = () => {};
+  const body = window.document.body as unknown as HTMLElement;
+  body.oncontextmenu = handler;
+  expect(body.oncontextmenu).toBe(handler);
+});
+
+test('player seek bars and shells count as interactive', () => {
+  const window = new Window();
+  const document = window.document as unknown as Document;
+  Object.assign(globalThis, { window, document, Node: window.Node });
+  document.body.innerHTML =
+    '<div role="slider" id="seek"></div><div class="video-js"><div id="bar"></div></div>';
+  expect(isInteractiveNode(document.getElementById('seek'))).toBe(true);
+  expect(isInteractiveNode(document.getElementById('bar'))).toBe(true);
+});
+
+test('findShieldOverlays yields shields but keeps text content clickable', async () => {
+  const { findShieldOverlays } = await import('./index');
+  const window = new Window();
+  const document = window.document as unknown as Document;
+  Object.assign(globalThis, {
+    window,
+    document,
+    Node: window.Node,
+    Element: window.Element,
+  });
+  document.body.innerHTML =
+    '<p id="p">text <a id="a">link</a><span id="nested"></span></p><div id="shield"></div><video id="v"></video><div id="caption">cc</div>';
+  // Compare ids: deep-equality on happy-dom elements walks the whole window.
+  const yielded = (...ids: string[]) =>
+    findShieldOverlays(
+      ids.map((id) => document.getElementById(id) as Element),
+      // happy-dom overrides textContent per subclass, so the cached
+      // Node.prototype getter the default uses reads empty here.
+      (el) => Boolean(el.textContent?.trim()),
+    ).map((el) => el.id);
+
+  // Link inside a paragraph keeps its own context menu.
+  expect(yielded('a', 'p')).toEqual([]);
+  // Empty shields yield, whether sibling or nested in the text container.
+  expect(yielded('shield', 'p')).toEqual(['shield']);
+  expect(yielded('nested', 'p')).toEqual(['nested']);
+  // Everything above media yields, text or not.
+  expect(yielded('caption', 'shield', 'v')).toEqual(['caption', 'shield']);
+  expect(yielded('v', 'p')).toEqual([]);
+});

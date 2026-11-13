@@ -11,7 +11,6 @@ import {
   safeHasChildNodes,
   safeQuerySelectorAll,
   safeRemoveAttribute,
-  safeRemoveElement,
 } from '../shared/dom';
 import { DEFAULT_SETTINGS, type Settings } from '../shared/settings';
 
@@ -217,6 +216,22 @@ function isInteractiveOrDescendant(node: Element, tag?: string): boolean {
   }
 }
 
+// A page that re-applies its restrictions from its own observer would otherwise
+// ping-pong with ours forever and starve the main thread (and any media on it).
+// Rate-limit per node; stripping resumes in the next one-second window.
+const MAX_STRIPS_PER_SECOND = 20;
+const stripWindows = new WeakMap<Element, { start: number; count: number }>();
+
+function canStrip(node: Element): boolean {
+  const now = Date.now();
+  const window = stripWindows.get(node);
+  if (!window || now - window.start >= 1000) {
+    stripWindows.set(node, { start: now, count: 1 });
+    return true;
+  }
+  return ++window.count <= MAX_STRIPS_PER_SECOND;
+}
+
 function stripScrubbableAttributes(node: Element, settings: Settings): void {
   if (settings.restoreRightClick) {
     safeRemoveAttribute(node, 'oncontextmenu');
@@ -261,7 +276,9 @@ export function cleanNode(
     return;
   }
 
-  stripScrubbableAttributes(node, settings);
+  if (hasScrubbableTarget(node, settings) && canStrip(node)) {
+    stripScrubbableAttributes(node, settings);
+  }
 
   // Traverse open shadow root if accessible
   if (shadow) {

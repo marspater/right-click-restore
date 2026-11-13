@@ -5,14 +5,17 @@ import {
 import { getSecureRandomString } from '../shared/crypto';
 import {
   getUnshadowedMethod,
+  safeAddClass,
   safeApply,
   safeClosest,
   safeElementsFromPoint,
   safeGetParentElement,
   safeGetStyle,
   safeGetTagName,
+  safeGetTextContent,
   safeHasAttributes,
   safeMatches,
+  safeRemoveClass,
   safeRemoveElement,
 } from '../shared/dom';
 import {
@@ -36,7 +39,7 @@ export function isEventInstance(obj: unknown): obj is Event {
   if (NativeEvent && obj instanceof NativeEvent) return true;
   try {
     return (
-      objectToString.call(obj) === '[object Event]' ||
+      safeApply(objectToString, obj, []) === '[object Event]' ||
       ('type' in obj && 'target' in obj && 'preventDefault' in obj)
     );
   } catch {
@@ -114,18 +117,21 @@ export function isInteractiveNode(node: Node | null): boolean {
 // iterating over path elements already inspects target and all parent ancestors.
 // Returning false directly avoids a redundant call to isInteractiveNode() which
 // re-traverses the DOM tree using closest().
-export function isInteractiveEvent(event: Event): boolean {
+export function isInteractiveEvent(event: Event, path?: unknown[]): boolean {
   if (!event) return false;
   try {
-    const composedPathFn = getUnshadowedMethod(event, 'composedPath');
-    if (composedPathFn) {
-      const path = safeApply(composedPathFn, event, []) as unknown[];
-      if (Array.isArray(path) && path.length > 0) {
-        return path.some(
-          (item) =>
-            isElementNode(item) && isInteractiveElement(item as Element),
-        );
-      }
+    const eventPath =
+      path ??
+      (() => {
+        const composedPathFn = getUnshadowedMethod(event, 'composedPath');
+        return composedPathFn
+          ? (safeApply(composedPathFn, event, []) as unknown[])
+          : null;
+      })();
+    if (Array.isArray(eventPath) && eventPath.length > 0) {
+      return eventPath.some(
+        (item) => isElementNode(item) && isInteractiveElement(item as Element),
+      );
     }
   } catch {
     // Suppress errors checking composedPath
@@ -170,13 +176,17 @@ const OVERLAY_TAGS = new Set(['CANVAS', 'PICTURE', 'SVG']);
 
 // Player wrappers must not exempt the media itself from native-menu restoration.
 // Performance optimization: Use O(1) Set lookup instead of regex execution
-export function isMediaContextEvent(event: Event): boolean {
+export function isMediaContextEvent(event: Event, path?: unknown[]): boolean {
   if (event.type !== 'contextmenu') return false;
-  const method = getUnshadowedMethod(event, 'composedPath');
-  const path = method ? safeApply(method, event, []) : [];
+  const eventPath =
+    path ??
+    (() => {
+      const method = getUnshadowedMethod(event, 'composedPath');
+      return method ? (safeApply(method, event, []) as unknown[]) : [];
+    })();
   return (
-    Array.isArray(path) &&
-    path.some((node) => {
+    Array.isArray(eventPath) &&
+    eventPath.some((node) => {
       if (!isElementNode(node)) return false;
       const tag = safeGetTagName(node as Element);
       return tag === 'VIDEO' || tag === 'AUDIO' || tag === 'IMG';
@@ -488,9 +498,25 @@ if (typeof window !== 'undefined') {
         return false;
       }
 
+      // Performance optimization: Evaluate composedPath once and reuse across
+      // isInteractiveEvent and isMediaContextEvent to eliminate redundant array allocations
+      // and DOM path traversals during high-frequency event interception.
+      let path: unknown[] | undefined;
+      try {
+        const composedPathFn = getUnshadowedMethod(event, 'composedPath');
+        if (composedPathFn) {
+          const res = safeApply(composedPathFn, event, []);
+          if (Array.isArray(res)) {
+            path = res;
+          }
+        }
+      } catch {
+        // Suppress errors getting composedPath
+      }
+
       if (
-        isInteractiveEvent(event) &&
-        !isMediaContextEvent(event) &&
+        isInteractiveEvent(event, path) &&
+        !isMediaContextEvent(event, path) &&
         !(isContextMenu && isModifierBypassActive() && isModifierPressed(event))
       ) {
         return false;
@@ -515,12 +541,12 @@ if (typeof window !== 'undefined') {
       const prevPointerEvents = style.pointerEvents;
       const prevPriority = style.getPropertyPriority('pointer-events');
 
-      el.classList.add('rcr-unmasked-overlay');
+      safeAddClass(el, 'rcr-unmasked-overlay');
       style.setProperty('pointer-events', 'none', 'important');
 
       const timer = setTimeout(() => {
         try {
-          el.classList.remove('rcr-unmasked-overlay');
+          safeRemoveClass(el, 'rcr-unmasked-overlay');
           const currentStyle = safeGetStyle(el);
           if (currentStyle) {
             if (prevPointerEvents) {
@@ -569,7 +595,7 @@ if (typeof window !== 'undefined') {
               index > 0 &&
               (OVERLAY_TAGS.has(safeGetTagName(el)) ||
                 (el instanceof HTMLElement &&
-                  (el.textContent || '').trim().length > 0)),
+                  safeGetTextContent(el).trim().length > 0)),
           );
         if (target && elements[0] !== target) {
           for (const el of elements) {

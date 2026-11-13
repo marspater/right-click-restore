@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Icons",
-    system-ui, sans-serif;
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Icons", system-ui,
+    sans-serif;
   --color-popover: var(--bg-popover);
   --color-card: var(--bg-card);
   --color-card-hover: var(--bg-card-hover);
@@ -30,8 +31,9 @@
 }
 
 :root {
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Icons",
-    system-ui, sans-serif;
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Icons", system-ui,
+    sans-serif;
 
   /* Semantic Tokens - Light Mode */
   --bg-popover: rgba(246, 246, 248, 0.92);
@@ -62,8 +64,8 @@
   --beacon-orange-glow: rgba(255, 149, 0, 0.4);
 
   --switch-track-off: rgba(120, 120, 128, 0.22);
-  --switch-knob-shadow: 0 1px 3px rgba(0, 0, 0, 0.18), 0 0.5px 1px
-    rgba(0, 0, 0, 0.1);
+  --switch-knob-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.18), 0 0.5px 1px rgba(0, 0, 0, 0.1);
 
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 0.5px 1px rgba(0, 0, 0, 0.02);
   --shadow-btn: 0 1px 2px rgba(0, 0, 0, 0.08);
@@ -138,19 +140,26 @@ body {
   box-shadow: var(--shadow-card);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  transition: background 0.18s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.18s
-    cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+  transition:
+    background 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.2s ease;
 }
 
 /* Domain Inset Card Interaction & Focus */
 .domain-card {
-  transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.2s
-    ease, transform 0.12s ease;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    opacity 0.2s ease,
+    transform 0.12s ease;
 }
 
 .domain-card .relative > .rounded-full {
-  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), background-color
-    0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 label.domain-card:hover:not(.dimmed) .relative > .rounded-full {
@@ -215,7 +224,9 @@ label.domain-card:active:not(.dimmed) {
   left: 2px;
   bottom: 2px;
   background-color: #ffffff;
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), width 0.15s ease-out;
+  transition:
+    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    width 0.15s ease-out;
   border-radius: 50%;
   box-shadow: var(--switch-knob-shadow);
 }
@@ -307,13 +318,17 @@ button:focus-visible {
   border-radius: 8px;
   cursor: pointer;
   user-select: none;
-  transition: background-color 0.12s ease, opacity 0.12s ease, transform 0.12s
-    cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    background-color 0.12s ease,
+    opacity 0.12s ease,
+    transform 0.12s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .settings-row .setting-icon-badge {
-  transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s
-    cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .settings-row .setting-icon-badge svg {
@@ -385,8 +400,9 @@ button:focus-visible {
 .dimmed {
   opacity: 0.42;
   filter: grayscale(0.65);
-  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s
-    cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dimmed:not(.glass-card) {
@@ -409,7 +425,9 @@ kbd {
   padding: 2px 4px;
   box-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.08);
   vertical-align: middle;
-  transition: transform 0.12s ease, background-color 0.12s ease;
+  transition:
+    transform 0.12s ease,
+    background-color 0.12s ease;
 }
 
 kbd:hover {

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.6.7/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -8,7 +8,16 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "ignore": ["node_modules/**", "build/**", "SafariExtension/**", "bun.lock"]
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!**/build",
+      "!**/SafariExtension",
+      "!**/bun.lock",
+      "!**/*.md",
+      "!**/*.svg",
+      "!**/*.html"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -18,9 +27,15 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "correctness": {
         "noUnusedVariables": "error"
+      },
+      "complexity": {
+        "noImportantStyles": "off"
+      },
+      "style": {
+        "noDescendingSpecificity": "off"
       }
     }
   },
@@ -32,7 +47,7 @@
   },
   "overrides": [
     {
-      "include": ["*.svelte", "**/*.svelte"],
+      "includes": ["**/*.svelte"],
       "linter": {
         "rules": {
           "correctness": {
@@ -40,6 +55,21 @@
           }
         }
       }
+    },
+    {
+      "includes": ["scripts/*.test.ts"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noTemplateCurlyInString": "off"
+          }
+        }
+      }
     }
-  ]
+  ],
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  }
 }

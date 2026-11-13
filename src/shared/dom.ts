@@ -238,6 +238,23 @@ function getNativeHasAttributesMethod(): NativeDOMMethod<
   return nativeHasAttributesMethod;
 }
 
+let nativeHasChildNodesMethod:
+  | NativeDOMMethod<typeof Node.prototype.hasChildNodes>
+  | undefined;
+function getNativeHasChildNodesMethod(): NativeDOMMethod<
+  typeof Node.prototype.hasChildNodes
+> {
+  if (nativeHasChildNodesMethod === undefined) {
+    try {
+      nativeHasChildNodesMethod =
+        typeof Node !== 'undefined' ? Node.prototype.hasChildNodes : null;
+    } catch {
+      nativeHasChildNodesMethod = null;
+    }
+  }
+  return nativeHasChildNodesMethod;
+}
+
 let nativeRemoveAttributeMethod:
   | NativeDOMMethod<typeof Element.prototype.removeAttribute>
   | undefined;
@@ -439,6 +456,28 @@ export function safeHasAttributes(element: Element): boolean {
     return element.hasAttributes();
   } catch {
     // Fail safe on restricted or detached nodes: assume attributes exist
+    return true;
+  }
+}
+
+export function safeHasChildNodes(node: Node): boolean {
+  try {
+    const nativeFn = getNativeHasChildNodesMethod();
+    if (
+      nativeFn &&
+      typeof Node !== 'undefined' &&
+      node instanceof Node &&
+      !Object.hasOwn(node, 'hasChildNodes')
+    ) {
+      return Boolean(safeApply(nativeFn, node, []));
+    }
+    const fn = getUnshadowedMethod(node, 'hasChildNodes');
+    if (fn) {
+      return Boolean(safeApply(fn, node, []));
+    }
+    return node.hasChildNodes();
+  } catch {
+    // Fail safe on restricted or detached nodes: assume child nodes exist to avoid skipping necessary scans
     return true;
   }
 }

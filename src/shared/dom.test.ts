@@ -20,6 +20,7 @@ import {
   safeGetTextContent,
   safeHasAttribute,
   safeHasAttributes,
+  safeHasChildNodes,
   safeIsConnected,
   safeMatches,
   safeQuerySelector,
@@ -299,6 +300,41 @@ describe('shared DOM utilities', () => {
         },
       } as unknown as Element;
       expect(safeHasAttributes(faulty)).toBe(true);
+    });
+  });
+
+  describe('safeHasChildNodes', () => {
+    test('returns false for elements without children and true for elements with children', () => {
+      const emptyDiv = document.createElement('div');
+      expect(safeHasChildNodes(emptyDiv)).toBe(false);
+
+      const parentDiv = document.createElement('div');
+      const child = document.createElement('span');
+      parentDiv.appendChild(child);
+      expect(safeHasChildNodes(parentDiv)).toBe(true);
+    });
+
+    test('resists DOM clobbering when hasChildNodes property is overridden on form', () => {
+      const form = document.createElement('form');
+      const input = document.createElement('input');
+      input.setAttribute('name', 'hasChildNodes');
+      form.appendChild(input);
+
+      Object.defineProperty(form, 'hasChildNodes', {
+        value: input,
+        configurable: true,
+      });
+
+      expect(safeHasChildNodes(form)).toBe(true);
+    });
+
+    test('falls back safely when hasChildNodes throws (fails safe returning true)', () => {
+      const faulty = {
+        hasChildNodes: () => {
+          throw new Error('access error');
+        },
+      } as unknown as Node;
+      expect(safeHasChildNodes(faulty)).toBe(true);
     });
   });
 

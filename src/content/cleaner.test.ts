@@ -2,14 +2,14 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 import { Window } from 'happy-dom';
 import { DEFAULT_SETTINGS } from '../shared/settings';
 import {
-  RIGHT_CLICK_SELECTOR,
-  SCRUBBABLE_MUTATION_ATTRS,
-  SCRUB_SELECTOR,
-  SELECTION_SELECTOR,
   cleanAddedNode,
   cleanDOMTree,
   cleanNode,
   getScrubSelector,
+  RIGHT_CLICK_SELECTOR,
+  SCRUB_SELECTOR,
+  SCRUBBABLE_MUTATION_ATTRS,
+  SELECTION_SELECTOR,
 } from './cleaner';
 
 describe('cleaner module', () => {
@@ -353,4 +353,32 @@ describe('cleaner module', () => {
       expect(SCRUBBABLE_MUTATION_ATTRS.has('href')).toBe(false);
     });
   });
+});
+
+test('rate-limits re-stripping a node the page keeps re-locking', () => {
+  const window = new Window();
+  Object.assign(globalThis, {
+    window,
+    document: window.document,
+    Node: window.Node,
+    Element: window.Element,
+    HTMLElement: window.HTMLElement,
+  });
+  const div = window.document.createElement('div');
+  const relock = () => {
+    div.setAttribute('oncontextmenu', 'return false');
+    cleanNode(div, DEFAULT_SETTINGS);
+    return div.hasAttribute('oncontextmenu');
+  };
+  const realNow = Date.now;
+  try {
+    Date.now = () => 1_000_000;
+    for (let i = 0; i < 20; i++) expect(relock()).toBe(false);
+    expect(relock()).toBe(true);
+    // Stripping resumes in the next window.
+    Date.now = () => 1_001_000;
+    expect(relock()).toBe(false);
+  } finally {
+    Date.now = realNow;
+  }
 });

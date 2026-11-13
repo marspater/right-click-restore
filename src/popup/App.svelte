@@ -1,9 +1,9 @@
 <script lang="ts">
 import {
   DEFAULT_SETTINGS,
-  type Settings,
   isDomainDisabled,
   normalizeHostname,
+  type Settings,
   validateSettings,
 } from '../shared/settings';
 

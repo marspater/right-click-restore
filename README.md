@@ -14,7 +14,7 @@ A high-performance Safari Web Extension and native companion application for mac
 
 | Platform | Minimum Version | Tested & Verified | Design & HIG Target |
 | :--- | :--- | :--- | :--- |
-| **macOS** | macOS 12.0 (Monterey) | macOS 15 (Sequoia) | **macOS 27 Liquid Glass HIG** (Continuous Sheen & Vibrancy) |
+| **macOS** | macOS 12.0 (Monterey) | macOS 15 (Sequoia), macOS 27.2 (build verified) | **macOS 27 Liquid Glass HIG** (Continuous Sheen & Vibrancy) |
 | **iOS / iPadOS** | iOS 15.0+ | iOS 17, iOS 18 | Native Mobile Safari Web Extension Support |
 | **Architecture** | Universal | Apple Silicon (`arm64`), Intel (`x86_64`) | Optimized for Apple M-series chips |
 | **Safari** | Safari 15.0+ | Safari 17, Safari 18, Technology Preview | Manifest V3 (Main World & Isolated World) |

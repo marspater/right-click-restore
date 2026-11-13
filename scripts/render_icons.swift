@@ -169,14 +169,14 @@ for size in [16, 32, 64] {
     NSColor.black.setFill()
 
     // Mouse outline
-    let body = NSBezierPath(roundedRect: NSRect(x: 5.5, y: 2, width: 9, height: 16), xRadius: 4.5, yRadius: 4.5)
+    let body = NSBezierPath(roundedRect: NSRect(x: 5, y: 2.5, width: 10, height: 15), xRadius: 5, yRadius: 5)
     body.lineWidth = 1.5
     body.stroke()
 
     // Right button, filled, clipped to the inside of the outline
     NSGraphicsContext.saveGraphicsState()
-    NSBezierPath(roundedRect: NSRect(x: 7.25, y: 3.75, width: 5.5, height: 12.5), xRadius: 2.75, yRadius: 2.75).addClip()
-    NSBezierPath(rect: NSRect(x: 10.5, y: 10.5, width: 4, height: 7)).fill()
+    NSBezierPath(roundedRect: NSRect(x: 6.75, y: 4.25, width: 6.5, height: 11.5), xRadius: 3.25, yRadius: 3.25).addClip()
+    NSBezierPath(rect: NSRect(x: 10.5, y: 10.5, width: 4.5, height: 7)).fill()
     NSGraphicsContext.restoreGraphicsState()
 
     NSGraphicsContext.restoreGraphicsState()

@@ -1,15 +1,15 @@
 import {
   DEFAULT_SETTINGS,
-  type Settings,
   effectiveSettings,
+  type Settings,
   validateSettings,
 } from '../shared/settings';
 import {
-  SCRUBBABLE_MUTATION_ATTRS,
-  SCRUB_ATTRS,
   cleanAddedNode as cleanAddedNodeBase,
   cleanDOMTree as cleanDOMTreeBase,
   cleanNode as cleanNodeBase,
+  SCRUB_ATTRS,
+  SCRUBBABLE_MUTATION_ATTRS,
   safeAppendChild,
   safeAttachShadow,
   safeCreateElement,
@@ -157,7 +157,11 @@ export function handleContentMessage(
 
   function processPendingMutations() {
     batchScheduled = false;
-    if (!currentSettings.enabled || pendingNodes.size === 0) return;
+    if (!currentSettings.enabled) {
+      pendingNodes.clear();
+      return;
+    }
+    if (pendingNodes.size === 0) return;
 
     let processed = 0;
     for (const node of pendingNodes) {
@@ -165,9 +169,6 @@ export function handleContentMessage(
       pendingNodes.delete(node);
       try {
         cleanAddedNodeBase(node, currentSettings);
-        if (currentSettings.unblurVideos && node instanceof Element) {
-          videoUnblur.scan(node);
-        }
       } catch (_e) {}
       processed++;
     }
@@ -193,6 +194,27 @@ export function handleContentMessage(
     } catch (_e) {
       batchScheduled = false;
     }
+  }
+
+  let videoScanTimer: ReturnType<typeof setTimeout> | null = null;
+  let videoRestoreNeeded = false;
+
+  // One coalesced document scan instead of one per mutated node: scan() forces a
+  // style recalculation for every video ancestor, which stalls busy players.
+  function scheduleVideoScan(restoreFirst: boolean) {
+    videoRestoreNeeded ||= restoreFirst;
+    if (videoScanTimer) return;
+    videoScanTimer = setTimeout(() => {
+      videoScanTimer = null;
+      if (!currentSettings.enabled || !currentSettings.unblurVideos) return;
+      try {
+        if (videoRestoreNeeded) videoUnblur.restore();
+        videoRestoreNeeded = false;
+        videoUnblur.scan(document);
+        // Drop the records from our own style writes, or they re-trigger this scan forever.
+        observer?.takeRecords();
+      } catch (_e) {}
+    }, 200);
   }
 
   function cleanNode(node: Element) {
@@ -321,6 +343,7 @@ export function handleContentMessage(
 
       // Dynamically apply selection styles without polluting root DOM dataset
       updateInjectedStyles();
+      if (observer) startObserver();
       if (currentSettings.enabled && currentSettings.unblurVideos) {
         videoUnblur.scan(document);
       } else {
@@ -452,9 +475,7 @@ export function handleContentMessage(
 
   function handleMutation(mutation: MutationRecord) {
     if (mutation.type === 'childList') {
-      if (currentSettings.unblurVideos && mutation.target instanceof Element) {
-        pendingNodes.add(mutation.target);
-      }
+      if (currentSettings.unblurVideos) scheduleVideoScan(false);
       for (const node of mutation.addedNodes) {
         // Only queue Element nodes; ignore Text, Comment, etc.
         if (node?.nodeType === 1) {
@@ -476,20 +497,25 @@ export function handleContentMessage(
         cleanNode(mutation.target);
       }
       if (currentSettings.unblurVideos) {
-        if (
-          mutation.attributeName === 'class' ||
-          mutation.attributeName === 'id'
-        ) {
-          videoUnblur.restore(mutation.target);
-        }
-        pendingNodes.add(mutation.target);
+        // A class/id change can remove the site's blur; re-derive our overrides.
+        scheduleVideoScan(
+          mutation.attributeName === 'class' || mutation.attributeName === 'id',
+        );
       }
     }
   }
 
+  // class/id are only needed for video unblur; watching them otherwise wakes the
+  // observer on every UI class toggle of a busy page.
+  let observerWatchesClasses = false;
+
   function startObserver() {
+    const watchClasses =
+      currentSettings.enabled && currentSettings.unblurVideos;
+    const upToDate =
+      observer !== null && observerWatchesClasses === watchClasses;
     if (
-      observer ||
+      upToDate ||
       typeof document === 'undefined' ||
       !document.documentElement ||
       typeof MutationObserver === 'undefined'
@@ -497,6 +523,8 @@ export function handleContentMessage(
       return;
 
     try {
+      observer?.disconnect();
+      observerWatchesClasses = watchClasses;
       observer = new MutationObserver((mutations) => {
         if (!currentSettings.enabled) return;
 
@@ -521,7 +549,11 @@ export function handleContentMessage(
         childList: true,
         subtree: true,
         attributes: true,
-        attributeFilter: [...SCRUB_ATTRS, 'style', 'class', 'id'],
+        attributeFilter: [
+          ...SCRUB_ATTRS,
+          'style',
+          ...(watchClasses ? ['class', 'id'] : []),
+        ],
       });
     } catch {
       // Suppress errors initializing MutationObserver

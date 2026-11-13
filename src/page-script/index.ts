@@ -16,7 +16,6 @@ import {
   safeHasAttributes,
   safeMatches,
   safeRemoveClass,
-  safeRemoveElement,
 } from '../shared/dom';
 import {
   DEFAULT_SETTINGS,
@@ -201,6 +200,26 @@ export function findUnderlyingMedia(elements: Element[]): Element | undefined {
   });
 }
 
+// Elements stacked above the first media/text target under the pointer that should
+// yield to it. Above media everything yields. Above text only empty elements do:
+// an element with its own text (a link in a paragraph) is content, not a shield.
+// textContent, not innerText: no forced layout on mousemove.
+export function findShieldOverlays(
+  elements: Element[],
+  hasText = (el: Element) => safeGetTextContent(el).trim().length > 0,
+): Element[] {
+  const media = findUnderlyingMedia(elements);
+  const target =
+    media ??
+    elements.find(
+      (el, index) =>
+        index > 0 && (OVERLAY_TAGS.has(safeGetTagName(el)) || hasText(el)),
+    );
+  if (!target) return [];
+  const above = elements.slice(0, elements.indexOf(target));
+  return media ? above : above.filter((el) => !hasText(el));
+}
+
 const unmaskTimers = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>();
 
 export function handlePageScriptMessage(
@@ -312,7 +331,74 @@ function setupEventInterception(shouldBlockEvent: (event: Event) => boolean) {
   };
 }
 
-function setupPropertyTraps(isForceModeActive: () => boolean) {
+const TRAPPED_HANDLER_PROPS = [
+  'oncontextmenu',
+  'onselectstart',
+  'ondragstart',
+  'oncopy',
+  'oncut',
+  'onbeforecopy',
+];
+
+// The accessor may live further up the chain (e.g. HTMLBodyElement inherits
+// oncontextmenu from HTMLElement).
+function findAccessor(
+  proto: object,
+  prop: string,
+): PropertyDescriptor | undefined {
+  for (
+    let owner: object | null = proto;
+    owner;
+    owner = Object.getPrototypeOf(owner)
+  ) {
+    const descriptor = Object.getOwnPropertyDescriptor(owner, prop);
+    if (descriptor) return descriptor;
+  }
+  return undefined;
+}
+
+function trapHandlerProperty(
+  proto: object,
+  prop: string,
+  isForceModeActive: () => boolean,
+) {
+  if (Object.getOwnPropertyDescriptor(proto, prop)?.configurable === false) {
+    return;
+  }
+  // A trap with nothing to delegate to would silently drop every handler the
+  // page assigns, so skip properties this browser does not define.
+  const original = findAccessor(proto, prop);
+  if (!original) return;
+  // Detached on purpose: both are only ever invoked through safeApply with an explicit receiver.
+  /* eslint-disable-next-line @typescript-eslint/unbound-method */
+  const { get: originalGet, set: originalSet } = original;
+  const isSuppressed = (target: unknown) =>
+    isForceModeActive() && !isInteractiveNode(target as Node);
+
+  Object.defineProperty(proto, prop, {
+    get() {
+      if (isSuppressed(this)) return null;
+      try {
+        if (originalGet) return safeApply(originalGet, this, []);
+      } catch {
+        // Suppress errors calling original event getter
+      }
+      return undefined;
+    },
+    set(val) {
+      if (isSuppressed(this)) return;
+      try {
+        if (originalSet) safeApply(originalSet, this, [val]);
+      } catch {
+        // Suppress errors calling original event setter
+      }
+    },
+    configurable: true,
+    enumerable: true,
+  });
+}
+
+export function setupPropertyTraps(isForceModeActive: () => boolean) {
   const targets = [
     typeof Window !== 'undefined' ? Window.prototype : null,
     typeof Document !== 'undefined' ? Document.prototype : null,
@@ -320,49 +406,10 @@ function setupPropertyTraps(isForceModeActive: () => boolean) {
     typeof HTMLBodyElement !== 'undefined' ? HTMLBodyElement.prototype : null,
   ].filter(Boolean) as object[];
 
-  for (const prop of [
-    'oncontextmenu',
-    'onselectstart',
-    'ondragstart',
-    'oncopy',
-    'oncut',
-    'onbeforecopy',
-  ]) {
+  for (const prop of TRAPPED_HANDLER_PROPS) {
     for (const proto of targets) {
       try {
-        const origDescriptor = Object.getOwnPropertyDescriptor(proto, prop);
-        if (origDescriptor?.configurable === false) {
-          continue;
-        }
-        Object.defineProperty(proto, prop, {
-          get() {
-            if (isForceModeActive() && !isInteractiveNode(this as Node)) {
-              return null;
-            }
-            try {
-              if (origDescriptor?.get) {
-                return safeApply(origDescriptor.get, this, []);
-              }
-            } catch {
-              // Suppress errors calling original event getter
-            }
-            return undefined;
-          },
-          set(val) {
-            if (isForceModeActive() && !isInteractiveNode(this as Node)) {
-              return;
-            }
-            try {
-              if (origDescriptor?.set) {
-                safeApply(origDescriptor.set, this, [val]);
-              }
-            } catch {
-              // Suppress errors calling original event setter
-            }
-          },
-          configurable: true,
-          enumerable: true,
-        });
+        trapHandlerProperty(proto, prop, isForceModeActive);
       } catch {
         // Suppress errors defining event handler properties
       }
@@ -584,26 +631,8 @@ if (typeof window !== 'undefined') {
         const elements = safeElementsFromPoint(document, e.clientX, e.clientY);
         if (!elements || elements.length <= 1) return;
 
-        // Performance optimization: Use el.textContent instead of el.innerText to avoid
-        // forced synchronous layout reflows on high-frequency mousemove events.
-        // Also use constant Set lookups (OVERLAY_TAGS, MEDIA_TAGS) instead of regex tests
-        // for faster tag matching in element loops.
-        const target =
-          findUnderlyingMedia(elements) ??
-          elements.find(
-            (el, index) =>
-              index > 0 &&
-              (OVERLAY_TAGS.has(safeGetTagName(el)) ||
-                (el instanceof HTMLElement &&
-                  safeGetTextContent(el).trim().length > 0)),
-          );
-        if (target && elements[0] !== target) {
-          for (const el of elements) {
-            if (el === target) break;
-            if (el instanceof HTMLElement) {
-              applyUnmaskOverlay(el, unmaskTimers);
-            }
-          }
+        for (const el of findShieldOverlays(elements)) {
+          if (el instanceof HTMLElement) applyUnmaskOverlay(el, unmaskTimers);
         }
       } catch {
         // Suppress errors during media unmasking
@@ -613,6 +642,8 @@ if (typeof window !== 'undefined') {
     try {
       // A contextmenu event cannot change the browser's already hit-tested target.
       // Prepare media on hover in force/modifier mode, or on secondary-button down.
+      // elementsFromPoint forces layout, so hit-test at most every 50ms while hovering.
+      let lastHoverUnmask = 0;
       document.addEventListener(
         'mousemove',
         (e) => {
@@ -620,6 +651,9 @@ if (typeof window !== 'undefined') {
             isForceModeActive() ||
             (isModifierBypassActive() && isModifierPressed(e))
           ) {
+            const now = Date.now();
+            if (now - lastHoverUnmask < 50) return;
+            lastHoverUnmask = now;
             unmaskMedia(e);
           }
         },

@@ -331,6 +331,70 @@ function setupEventInterception(shouldBlockEvent: (event: Event) => boolean) {
   };
 }
 
+const TRAPPED_HANDLER_PROPS = [
+  'oncontextmenu',
+  'onselectstart',
+  'ondragstart',
+  'oncopy',
+  'oncut',
+  'onbeforecopy',
+];
+
+// The accessor may live further up the chain (e.g. HTMLBodyElement inherits
+// oncontextmenu from HTMLElement).
+function findAccessor(
+  proto: object,
+  prop: string,
+): PropertyDescriptor | undefined {
+  for (
+    let owner: object | null = proto;
+    owner;
+    owner = Object.getPrototypeOf(owner)
+  ) {
+    const descriptor = Object.getOwnPropertyDescriptor(owner, prop);
+    if (descriptor) return descriptor;
+  }
+  return undefined;
+}
+
+function trapHandlerProperty(
+  proto: object,
+  prop: string,
+  isForceModeActive: () => boolean,
+) {
+  if (Object.getOwnPropertyDescriptor(proto, prop)?.configurable === false) {
+    return;
+  }
+  // A trap with nothing to delegate to would silently drop every handler the
+  // page assigns, so skip properties this browser does not define.
+  const original = findAccessor(proto, prop);
+  if (!original) return;
+  const isSuppressed = (target: unknown) =>
+    isForceModeActive() && !isInteractiveNode(target as Node);
+
+  Object.defineProperty(proto, prop, {
+    get() {
+      if (isSuppressed(this)) return null;
+      try {
+        if (original.get) return safeApply(original.get, this, []);
+      } catch {
+        // Suppress errors calling original event getter
+      }
+      return undefined;
+    },
+    set(val) {
+      if (isSuppressed(this)) return;
+      try {
+        if (original.set) safeApply(original.set, this, [val]);
+      } catch {
+        // Suppress errors calling original event setter
+      }
+    },
+    configurable: true,
+    enumerable: true,
+  });
+}
+
 export function setupPropertyTraps(isForceModeActive: () => boolean) {
   const targets = [
     typeof Window !== 'undefined' ? Window.prototype : null,
@@ -339,62 +403,10 @@ export function setupPropertyTraps(isForceModeActive: () => boolean) {
     typeof HTMLBodyElement !== 'undefined' ? HTMLBodyElement.prototype : null,
   ].filter(Boolean) as object[];
 
-  for (const prop of [
-    'oncontextmenu',
-    'onselectstart',
-    'ondragstart',
-    'oncopy',
-    'oncut',
-    'onbeforecopy',
-  ]) {
+  for (const prop of TRAPPED_HANDLER_PROPS) {
     for (const proto of targets) {
       try {
-        if (
-          Object.getOwnPropertyDescriptor(proto, prop)?.configurable === false
-        ) {
-          continue;
-        }
-        // The accessor may live further up the chain (e.g. HTMLBodyElement inherits
-        // oncontextmenu). Delegate to it; a trap with nothing to delegate to would
-        // silently drop every handler the page assigns.
-        let origDescriptor: PropertyDescriptor | undefined;
-        for (
-          let owner: object | null = proto;
-          owner && !origDescriptor;
-          owner = Object.getPrototypeOf(owner)
-        ) {
-          origDescriptor = Object.getOwnPropertyDescriptor(owner, prop);
-        }
-        if (!origDescriptor) continue;
-        Object.defineProperty(proto, prop, {
-          get() {
-            if (isForceModeActive() && !isInteractiveNode(this as Node)) {
-              return null;
-            }
-            try {
-              if (origDescriptor?.get) {
-                return safeApply(origDescriptor.get, this, []);
-              }
-            } catch {
-              // Suppress errors calling original event getter
-            }
-            return undefined;
-          },
-          set(val) {
-            if (isForceModeActive() && !isInteractiveNode(this as Node)) {
-              return;
-            }
-            try {
-              if (origDescriptor?.set) {
-                safeApply(origDescriptor.set, this, [val]);
-              }
-            } catch {
-              // Suppress errors calling original event setter
-            }
-          },
-          configurable: true,
-          enumerable: true,
-        });
+        trapHandlerProperty(proto, prop, isForceModeActive);
       } catch {
         // Suppress errors defining event handler properties
       }

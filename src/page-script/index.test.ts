@@ -523,7 +523,8 @@ test('property traps delegate to an inherited handler accessor', async () => {
   const { setupPropertyTraps } = await import('./index');
   const window = new Window();
   const handlers = new WeakMap<object, unknown>();
-  Object.defineProperty(window.HTMLElement.prototype, 'oncontextmenu', {
+  const elementProto: object = window.HTMLElement.prototype;
+  Object.defineProperty(elementProto, 'oncontextmenu', {
     get() {
       return handlers.get(this) ?? null;
     },
@@ -540,10 +541,10 @@ test('property traps delegate to an inherited handler accessor', async () => {
   });
   setupPropertyTraps(() => false);
 
-  const handler = () => {};
-  const body = window.document.body as unknown as HTMLElement;
-  body.oncontextmenu = handler;
-  expect(body.oncontextmenu).toBe(handler);
+  const handler = () => null;
+  const target = window.document.body as unknown as HTMLElement;
+  target.oncontextmenu = handler;
+  expect(target.oncontextmenu).toBe(handler);
 });
 
 test('player seek bars and shells count as interactive', () => {

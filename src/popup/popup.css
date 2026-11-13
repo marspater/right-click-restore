@@ -2,7 +2,7 @@
 
 @theme {
   --font-sans:
-    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Icons", system-ui,
+    -apple-system, blinkmacsystemfont, "SF Pro Text", "SF Pro Icons", system-ui,
     sans-serif;
   --color-popover: var(--bg-popover);
   --color-card: var(--bg-card);
@@ -32,7 +32,7 @@
 
 :root {
   --font-sans:
-    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Icons", system-ui,
+    -apple-system, blinkmacsystemfont, "SF Pro Text", "SF Pro Icons", system-ui,
     sans-serif;
 
   /* Semantic Tokens - Light Mode */

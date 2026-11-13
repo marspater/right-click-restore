@@ -512,8 +512,10 @@ export function handleContentMessage(
   function startObserver() {
     const watchClasses =
       currentSettings.enabled && currentSettings.unblurVideos;
+    const upToDate =
+      observer !== null && observerWatchesClasses === watchClasses;
     if (
-      (observer && observerWatchesClasses === watchClasses) ||
+      upToDate ||
       typeof document === 'undefined' ||
       !document.documentElement ||
       typeof MutationObserver === 'undefined'

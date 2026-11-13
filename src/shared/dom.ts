@@ -57,6 +57,90 @@ export function getUnshadowedMethod(
   return null;
 }
 
+let nativeClassListGetter: ((this: unknown) => unknown) | null | undefined;
+function getNativeClassListGetter(): ((this: unknown) => unknown) | null {
+  if (nativeClassListGetter === undefined) {
+    try {
+      nativeClassListGetter =
+        typeof Element !== 'undefined'
+          ? (Object.getOwnPropertyDescriptor(Element.prototype, 'classList')
+              ?.get ?? null)
+          : null;
+    } catch {
+      nativeClassListGetter = null;
+    }
+  }
+  return nativeClassListGetter;
+}
+
+export function safeAddClass(element: Element, className: string): void {
+  try {
+    const nativeGetter = getNativeClassListGetter();
+    const list = nativeGetter
+      ? safeApply(nativeGetter, element, [])
+      : (() => {
+          const getter = getUnshadowedGetter(element, 'classList');
+          return getter ? safeApply(getter, element, []) : element.classList;
+        })();
+    if (list && typeof list === 'object') {
+      const addFn = getUnshadowedMethod(list, 'add');
+      if (addFn) safeApply(addFn, list, [className]);
+    }
+  } catch {
+    // Suppress errors adding class
+  }
+}
+
+export function safeRemoveClass(element: Element, className: string): void {
+  try {
+    const nativeGetter = getNativeClassListGetter();
+    const list = nativeGetter
+      ? safeApply(nativeGetter, element, [])
+      : (() => {
+          const getter = getUnshadowedGetter(element, 'classList');
+          return getter ? safeApply(getter, element, []) : element.classList;
+        })();
+    if (list && typeof list === 'object') {
+      const removeFn = getUnshadowedMethod(list, 'remove');
+      if (removeFn) safeApply(removeFn, list, [className]);
+    }
+  } catch {
+    // Suppress errors removing class
+  }
+}
+
+let nativeTextContentGetter: ((this: unknown) => unknown) | null | undefined;
+function getNativeTextContentGetter(): ((this: unknown) => unknown) | null {
+  if (nativeTextContentGetter === undefined) {
+    try {
+      nativeTextContentGetter =
+        typeof Node !== 'undefined'
+          ? (Object.getOwnPropertyDescriptor(Node.prototype, 'textContent')
+              ?.get ?? null)
+          : null;
+    } catch {
+      nativeTextContentGetter = null;
+    }
+  }
+  return nativeTextContentGetter;
+}
+
+export function safeGetTextContent(node: Node): string {
+  try {
+    const nativeGetter = getNativeTextContentGetter();
+    const text = nativeGetter
+      ? safeApply(nativeGetter, node, [])
+      : (() => {
+          const getter = getUnshadowedGetter(node, 'textContent');
+          return getter ? safeApply(getter, node, []) : node.textContent;
+        })();
+    if (typeof text === 'string') return text;
+  } catch {
+    // Suppress errors reading textContent
+  }
+  return '';
+}
+
 export function getUnshadowedGetter(
   obj: object,
   propName: string,
@@ -152,6 +236,23 @@ function getNativeHasAttributesMethod(): NativeDOMMethod<
     }
   }
   return nativeHasAttributesMethod;
+}
+
+let nativeHasChildNodesMethod:
+  | NativeDOMMethod<typeof Node.prototype.hasChildNodes>
+  | undefined;
+function getNativeHasChildNodesMethod(): NativeDOMMethod<
+  typeof Node.prototype.hasChildNodes
+> {
+  if (nativeHasChildNodesMethod === undefined) {
+    try {
+      nativeHasChildNodesMethod =
+        typeof Node !== 'undefined' ? Node.prototype.hasChildNodes : null;
+    } catch {
+      nativeHasChildNodesMethod = null;
+    }
+  }
+  return nativeHasChildNodesMethod;
 }
 
 let nativeRemoveAttributeMethod:
@@ -355,6 +456,28 @@ export function safeHasAttributes(element: Element): boolean {
     return element.hasAttributes();
   } catch {
     // Fail safe on restricted or detached nodes: assume attributes exist
+    return true;
+  }
+}
+
+export function safeHasChildNodes(node: Node): boolean {
+  try {
+    const nativeFn = getNativeHasChildNodesMethod();
+    if (
+      nativeFn &&
+      typeof Node !== 'undefined' &&
+      node instanceof Node &&
+      !Object.hasOwn(node, 'hasChildNodes')
+    ) {
+      return Boolean(safeApply(nativeFn, node, []));
+    }
+    const fn = getUnshadowedMethod(node, 'hasChildNodes');
+    if (fn) {
+      return Boolean(safeApply(fn, node, []));
+    }
+    return node.hasChildNodes();
+  } catch {
+    // Fail safe on restricted or detached nodes: assume child nodes exist to avoid skipping necessary scans
     return true;
   }
 }
@@ -643,7 +766,25 @@ export function safeRemoveElement(element: Element): void {
 /* eslint-disable @typescript-eslint/unbound-method */
 const nativeAppendChild: NativeDOMMethod<typeof Node.prototype.appendChild> =
   typeof Node !== 'undefined' ? Node.prototype.appendChild : null;
+const nativeContains: NativeDOMMethod<typeof Node.prototype.contains> =
+  typeof Node !== 'undefined' ? Node.prototype.contains : null;
 /* eslint-enable @typescript-eslint/unbound-method */
+
+export function safeContains(parent: Node, other: Node | null): boolean {
+  try {
+    if (!parent || !other) return false;
+    if (nativeContains && !Object.hasOwn(parent, 'contains')) {
+      return Boolean(safeApply(nativeContains, parent, [other]));
+    }
+    const fn = getUnshadowedMethod(parent, 'contains');
+    if (fn) {
+      return Boolean(safeApply(fn, parent, [other]));
+    }
+    return Boolean(parent.contains(other));
+  } catch {
+    return false;
+  }
+}
 
 export function safeAppendChild<T extends Node>(
   parent: Node,
@@ -717,6 +858,31 @@ function getNativeStyleGetter(): ((this: unknown) => unknown) | null {
     }
   }
   return nativeStyleGetter;
+}
+
+let nativeIsConnectedGetter: ((this: unknown) => unknown) | null | undefined;
+export function safeIsConnected(node: Node): boolean {
+  try {
+    if (!node || typeof node !== 'object') return false;
+    if (nativeIsConnectedGetter === undefined) {
+      nativeIsConnectedGetter =
+        typeof Node !== 'undefined'
+          ? (Object.getOwnPropertyDescriptor(Node.prototype, 'isConnected')
+              ?.get ?? null)
+          : null;
+    }
+    const getter =
+      nativeIsConnectedGetter &&
+      typeof Node !== 'undefined' &&
+      node instanceof Node
+        ? nativeIsConnectedGetter
+        : getUnshadowedGetter(node, 'isConnected');
+    return getter
+      ? safeApply(getter, node, []) === true
+      : node.isConnected === true;
+  } catch {
+    return false;
+  }
 }
 
 let nativeParentElementGetter: ((this: unknown) => unknown) | null | undefined;

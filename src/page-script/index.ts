@@ -36,7 +36,7 @@ export function isEventInstance(obj: unknown): obj is Event {
   if (NativeEvent && obj instanceof NativeEvent) return true;
   try {
     return (
-      objectToString.call(obj) === '[object Event]' ||
+      safeApply(objectToString, obj, []) === '[object Event]' ||
       ('type' in obj && 'target' in obj && 'preventDefault' in obj)
     );
   } catch {

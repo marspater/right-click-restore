@@ -62,7 +62,43 @@ test('video unblur follows site mutations and restores filters when disabled', a
     return globalEval(code);
   };
   try {
-    window.eval(await result.outputs[0].text());
+    const code = await result.outputs[0].text();
+    const fn = new Function(
+      'window',
+      'document',
+      'chrome',
+      'location',
+      'CustomEvent',
+      'Event',
+      'MouseEvent',
+      'MutationObserver',
+      'HTMLElement',
+      'Element',
+      'Node',
+      'Document',
+      'requestAnimationFrame',
+      'setTimeout',
+      'clearTimeout',
+      code,
+    );
+    fn.call(
+      window,
+      window,
+      window.document,
+      (window as unknown as { chrome: unknown }).chrome,
+      window.location,
+      window.CustomEvent,
+      window.Event,
+      window.MouseEvent,
+      window.MutationObserver,
+      window.HTMLElement,
+      window.Element,
+      window.Node,
+      window.Document,
+      window.requestAnimationFrame.bind(window),
+      window.setTimeout.bind(window),
+      window.clearTimeout.bind(window),
+    );
     const video = window.document.querySelector('video');
     const player = window.document.querySelector('div');
     const aside = window.document.querySelector('aside');
@@ -172,6 +208,46 @@ test('bundled content script handles Force Unlock through its registered listene
   );
   if (!pageScript || !contentScript)
     throw new Error('Missing bundled runtime scripts');
+  const runCode = (code: string) => {
+    const fn = new Function(
+      'window',
+      'document',
+      'chrome',
+      'location',
+      'CustomEvent',
+      'Event',
+      'MouseEvent',
+      'MutationObserver',
+      'HTMLElement',
+      'Element',
+      'Node',
+      'Document',
+      'requestAnimationFrame',
+      'setTimeout',
+      'clearTimeout',
+      code,
+    );
+    fn.call(
+      window,
+      window,
+      window.document,
+      (window as unknown as { chrome: unknown }).chrome,
+      window.location,
+      window.CustomEvent,
+      window.Event,
+      window.MouseEvent,
+      window.MutationObserver,
+      window.HTMLElement,
+      window.Element,
+      window.Node,
+      window.Document,
+      window.requestAnimationFrame.bind(window),
+      window.setTimeout.bind(window),
+      window.clearTimeout.bind(window),
+    );
+  };
+  runCode(await pageScript.text());
+  runCode(await contentScript.text());
   const setupWindowGlobals = () => {
     Object.assign(globalThis, {
       window,

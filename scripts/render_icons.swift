@@ -168,45 +168,16 @@ for size in [16, 32, 64] {
     NSColor.black.setStroke()
     NSColor.black.setFill()
 
-    // Menu outline
-    let menu = NSBezierPath()
-    menu.move(to: NSPoint(x: 8, y: 3))
-    menu.line(to: NSPoint(x: 4, y: 3))
-    menu.curve(to: NSPoint(x: 2, y: 5), controlPoint1: NSPoint(x: 2.9, y: 3), controlPoint2: NSPoint(x: 2, y: 3.9))
-    menu.line(to: NSPoint(x: 2, y: 15))
-    menu.curve(to: NSPoint(x: 4, y: 17), controlPoint1: NSPoint(x: 2, y: 16.1), controlPoint2: NSPoint(x: 2.9, y: 17))
-    menu.line(to: NSPoint(x: 15, y: 17))
-    menu.curve(to: NSPoint(x: 17, y: 15), controlPoint1: NSPoint(x: 16.1, y: 17), controlPoint2: NSPoint(x: 17, y: 16.1))
-    menu.line(to: NSPoint(x: 17, y: 10))
-    menu.lineWidth = 1.5
-    menu.lineCapStyle = .round
-    menu.stroke()
+    // Mouse outline
+    let body = NSBezierPath(roundedRect: NSRect(x: 5.5, y: 2, width: 9, height: 16), xRadius: 4.5, yRadius: 4.5)
+    body.lineWidth = 1.5
+    body.stroke()
 
-    // Menu items
-    for y in [13.0, 9.5] {
-        let line = NSBezierPath()
-        line.move(to: NSPoint(x: 5, y: y))
-        line.line(to: NSPoint(x: y == 13.0 ? 13.0 : 8.0, y: y))
-        line.lineWidth = 1.5
-        line.lineCapStyle = .round
-        line.stroke()
-    }
-
-    // Pointer cursor
-    let cursor = NSBezierPath()
-    cursor.move(to: NSPoint(x: 10, y: 10))
-    for point in [
-        NSPoint(x: 10, y: 1.5),
-        NSPoint(x: 12.5, y: 3.8),
-        NSPoint(x: 14.1, y: 0.5),
-        NSPoint(x: 15.8, y: 1.3),
-        NSPoint(x: 14.2, y: 4.5),
-        NSPoint(x: 18, y: 4.5)
-    ] {
-        cursor.line(to: point)
-    }
-    cursor.close()
-    cursor.fill()
+    // Right button, filled, clipped to the inside of the outline
+    NSGraphicsContext.saveGraphicsState()
+    NSBezierPath(roundedRect: NSRect(x: 7.25, y: 3.75, width: 5.5, height: 12.5), xRadius: 2.75, yRadius: 2.75).addClip()
+    NSBezierPath(rect: NSRect(x: 10.5, y: 10.5, width: 4, height: 7)).fill()
+    NSGraphicsContext.restoreGraphicsState()
 
     NSGraphicsContext.restoreGraphicsState()
 

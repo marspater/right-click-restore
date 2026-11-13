@@ -638,7 +638,25 @@ export function safeRemoveElement(element: Element): void {
 /* eslint-disable @typescript-eslint/unbound-method */
 const nativeAppendChild: NativeDOMMethod<typeof Node.prototype.appendChild> =
   typeof Node !== 'undefined' ? Node.prototype.appendChild : null;
+const nativeContains: NativeDOMMethod<typeof Node.prototype.contains> =
+  typeof Node !== 'undefined' ? Node.prototype.contains : null;
 /* eslint-enable @typescript-eslint/unbound-method */
+
+export function safeContains(parent: Node, other: Node | null): boolean {
+  try {
+    if (!parent || !other) return false;
+    if (nativeContains && !Object.hasOwn(parent, 'contains')) {
+      return Boolean(safeApply(nativeContains, parent, [other]));
+    }
+    const fn = getUnshadowedMethod(parent, 'contains');
+    if (fn) {
+      return Boolean(safeApply(fn, parent, [other]));
+    }
+    return Boolean(parent.contains(other));
+  } catch {
+    return false;
+  }
+}
 
 export function safeAppendChild<T extends Node>(
   parent: Node,
@@ -712,6 +730,31 @@ function getNativeStyleGetter(): ((this: unknown) => unknown) | null {
     }
   }
   return nativeStyleGetter;
+}
+
+let nativeIsConnectedGetter: ((this: unknown) => unknown) | null | undefined;
+export function safeIsConnected(node: Node): boolean {
+  try {
+    if (!node || typeof node !== 'object') return false;
+    if (nativeIsConnectedGetter === undefined) {
+      nativeIsConnectedGetter =
+        typeof Node !== 'undefined'
+          ? (Object.getOwnPropertyDescriptor(Node.prototype, 'isConnected')
+              ?.get ?? null)
+          : null;
+    }
+    const getter =
+      nativeIsConnectedGetter &&
+      typeof Node !== 'undefined' &&
+      node instanceof Node
+        ? nativeIsConnectedGetter
+        : getUnshadowedGetter(node, 'isConnected');
+    return getter
+      ? safeApply(getter, node, []) === true
+      : node.isConnected === true;
+  } catch {
+    return false;
+  }
 }
 
 let nativeParentElementGetter: ((this: unknown) => unknown) | null | undefined;

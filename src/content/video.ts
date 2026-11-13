@@ -1,7 +1,9 @@
 import {
+  safeContains,
   safeGetParentElement,
   safeGetStyle,
   safeGetTagName,
+  safeIsConnected,
   safeQuerySelector,
   safeQuerySelectorAll,
 } from '../shared/dom';
@@ -18,7 +20,8 @@ export class VideoUnblur {
 
   restore(root?: ParentNode): void {
     for (const [element, saved] of this.overrides) {
-      if (root && root !== element && !(root as Node).contains(element))
+      // Security hardening: Use safeContains to resist DOM clobbering when root contains named child elements
+      if (root && root !== element && !safeContains(root as Node, element))
         continue;
       const style = safeGetStyle(element);
       if (
@@ -48,9 +51,10 @@ export class VideoUnblur {
 
     // Release detached players and ancestors that no longer contain any video.
     // Performance optimization: Use safeQuerySelector to stop search on the first matched video, avoiding full subtree array allocations.
+    // Security hardening: Use safeIsConnected to resist DOM clobbering on element.isConnected
     for (const element of this.overrides.keys()) {
       if (
-        !element.isConnected ||
+        !safeIsConnected(element) ||
         (safeGetTagName(element) !== 'VIDEO' &&
           !safeQuerySelector(element, 'video'))
       ) {
@@ -69,11 +73,11 @@ export class VideoUnblur {
       ) {
         if (visited.has(element)) break;
         visited.add(element);
-        if (!(element instanceof HTMLElement) || !element.isConnected) continue;
+        if (!(element instanceof HTMLElement) || !safeIsConnected(element))
+          continue;
         const style = safeGetStyle(element);
         const ownerDoc =
-          typeof Document !== 'undefined' &&
-          element.ownerDocument instanceof Document
+          element.ownerDocument && element.ownerDocument.nodeType === 9
             ? element.ownerDocument
             : typeof document !== 'undefined'
               ? document

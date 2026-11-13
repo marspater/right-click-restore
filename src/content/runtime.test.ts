@@ -37,6 +37,30 @@ test('video unblur follows site mutations and restores filters when disabled', a
     <style>.recording { filter: brightness(0.8) blur(12px) !important; }</style>
     <div class="recording"><video style="filter: contrast(1.2) blur(8px) !important"></video><button>Play</button></div>
     <aside style="filter: blur(6px)">Unrelated content</aside>`;
+  const setupWindowGlobals = () => {
+    Object.assign(globalThis, {
+      window,
+      document: window.document,
+      Document: window.Document,
+      Node: window.Node,
+      Element: window.Element,
+      HTMLElement: window.HTMLElement,
+      MutationObserver: window.MutationObserver,
+      CustomEvent: window.CustomEvent,
+      MouseEvent: window.MouseEvent,
+      Event: window.Event,
+      location: window.location,
+      chrome: (window as unknown as Record<string, unknown>).chrome,
+      requestAnimationFrame: window.requestAnimationFrame.bind(window),
+    });
+  };
+  setupWindowGlobals();
+  // biome-ignore lint/security/noGlobalEval: test helper for executing bundled scripts
+  const globalEval = globalThis.eval;
+  (window as unknown as Record<string, unknown>).eval = (code: string) => {
+    setupWindowGlobals();
+    return globalEval(code);
+  };
   try {
     const code = await result.outputs[0].text();
     const fn = new Function(
@@ -224,6 +248,31 @@ test('bundled content script handles Force Unlock through its registered listene
   };
   runCode(await pageScript.text());
   runCode(await contentScript.text());
+  const setupWindowGlobals = () => {
+    Object.assign(globalThis, {
+      window,
+      document: window.document,
+      Document: window.Document,
+      Node: window.Node,
+      Element: window.Element,
+      HTMLElement: window.HTMLElement,
+      MutationObserver: window.MutationObserver,
+      CustomEvent: window.CustomEvent,
+      MouseEvent: window.MouseEvent,
+      Event: window.Event,
+      location: window.location,
+      chrome: (window as unknown as Record<string, unknown>).chrome,
+    });
+  };
+  setupWindowGlobals();
+  // biome-ignore lint/security/noGlobalEval: test helper for executing bundled scripts
+  const globalEval = globalThis.eval;
+  (window as unknown as Record<string, unknown>).eval = (code: string) => {
+    setupWindowGlobals();
+    return globalEval(code);
+  };
+  window.eval(await pageScript.text());
+  window.eval(await contentScript.text());
   const video = window.document.querySelector('video');
   const cover = window.document.querySelector('.cover');
   const button = window.document.querySelector('button');

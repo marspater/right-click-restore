@@ -77,6 +77,10 @@
 **Learning:** Accessing `.parentElement` directly assumes the property is unshadowed by child form controls or named getters.
 **Prevention:** Use `safeGetParentElement` across all DOM parent element traversals to retrieve native getters via `getNativeParentElementGetter`/`getUnshadowedGetter` and verify node interface prototype inheritance.
 
+## 2025-05-25 - DOM Clobbering Resistance for Class List Manipulation & Text Content Selection
+**Vulnerability:** Untrusted host page elements (e.g., `<form id="overlay">` or `<fieldset>`) containing child input elements named `classList` or `textContent` (such as `<input name="classList">` or `<input name="textContent">`) clobbered `element.classList` and `element.textContent` properties. Direct invocation of `el.classList.add`/`remove` or `el.textContent.trim()` threw `TypeError`s, crashing overlay unmasking routines and bypassing the anti-shield overlay piercer.
+**Learning:** HTML collection and form getters return named child inputs for properties like `classList` and `textContent`, replacing native `DOMTokenList` or string accessors with `HTMLInputElement` objects.
+**Prevention:** Use `safeAddClass`, `safeRemoveClass`, and `safeGetTextContent` to unshadow `Element.prototype.classList` and `Node.prototype.textContent` getters using `safeApply` and `getUnshadowedGetter`.
 ## 2025-05-25 - Function Prototype Shadowing Resistance in Cryptographic Nonce Generation
 **Vulnerability:** Invoking `.call()` directly on `randomUUIDFn`, `getRandomValuesFn`, or `objectToString` in page-script or crypto modules allowed untrusted host scripts executing in the host JS context to shadow `Function.prototype.call` (e.g. `Function.prototype.call = fn`), executing attacker code during session nonce generation or throwing errors to disrupt event traps.
 **Learning:** Invoking `.call()` on snapshotted functions directly relies on `Function.prototype.call` being unshadowed in the current JS execution realm.

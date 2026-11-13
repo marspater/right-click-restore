@@ -24,6 +24,7 @@ describe('content script message handler', () => {
     (globalThis as unknown as Record<string, unknown>).chrome = {
       runtime: {
         id: 'extension-id-123',
+        getURL: (path: string) => `chrome-extension://extension-id-123/${path}`,
       },
     };
 
@@ -142,6 +143,8 @@ describe('content script message handler', () => {
 
     const authorizedSender = {
       id: 'extension-id-123',
+      origin: 'chrome-extension://extension-id-123',
+      url: 'chrome-extension://extension-id-123/popup.html',
     } as chrome.runtime.MessageSender;
 
     handleContentMessage(

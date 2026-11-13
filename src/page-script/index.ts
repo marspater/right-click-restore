@@ -369,6 +369,9 @@ function trapHandlerProperty(
   // page assigns, so skip properties this browser does not define.
   const original = findAccessor(proto, prop);
   if (!original) return;
+  // Detached on purpose: both are only ever invoked through safeApply with an explicit receiver.
+  /* eslint-disable-next-line @typescript-eslint/unbound-method */
+  const { get: originalGet, set: originalSet } = original;
   const isSuppressed = (target: unknown) =>
     isForceModeActive() && !isInteractiveNode(target as Node);
 
@@ -376,7 +379,7 @@ function trapHandlerProperty(
     get() {
       if (isSuppressed(this)) return null;
       try {
-        if (original.get) return safeApply(original.get, this, []);
+        if (originalGet) return safeApply(originalGet, this, []);
       } catch {
         // Suppress errors calling original event getter
       }
@@ -385,7 +388,7 @@ function trapHandlerProperty(
     set(val) {
       if (isSuppressed(this)) return;
       try {
-        if (original.set) safeApply(original.set, this, [val]);
+        if (originalSet) safeApply(originalSet, this, [val]);
       } catch {
         // Suppress errors calling original event setter
       }

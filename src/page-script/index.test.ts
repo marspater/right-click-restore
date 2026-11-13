@@ -523,7 +523,11 @@ test('property traps delegate to an inherited handler accessor', async () => {
   const { setupPropertyTraps } = await import('./index');
   const window = new Window();
   const handlers = new WeakMap<object, unknown>();
-  const elementProto: object = window.HTMLElement.prototype;
+  const target = window.document.querySelector('body') as unknown as {
+    oncontextmenu: unknown;
+  };
+  // body -> body element prototype -> generic element prototype that owns the accessor
+  const elementProto = Object.getPrototypeOf(Object.getPrototypeOf(target));
   Object.defineProperty(elementProto, 'oncontextmenu', {
     get() {
       return handlers.get(this) ?? null;
@@ -542,7 +546,6 @@ test('property traps delegate to an inherited handler accessor', async () => {
   setupPropertyTraps(() => false);
 
   const handler = () => null;
-  const target = window.document.body as unknown as HTMLElement;
   target.oncontextmenu = handler;
   expect(target.oncontextmenu).toBe(handler);
 });

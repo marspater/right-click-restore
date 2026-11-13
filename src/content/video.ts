@@ -77,8 +77,7 @@ export class VideoUnblur {
           continue;
         const style = safeGetStyle(element);
         const ownerDoc =
-          typeof Document !== 'undefined' &&
-          element.ownerDocument instanceof Document
+          element.ownerDocument && element.ownerDocument.nodeType === 9
             ? element.ownerDocument
             : typeof document !== 'undefined'
               ? document

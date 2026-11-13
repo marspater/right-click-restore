@@ -4,8 +4,8 @@
     {
       "value": {
         "linear-gradient": [
-          "display-p3:0.01500,0.39000,0.46000,1.00000",
-          "display-p3:0.00500,0.16000,0.20000,1.00000"
+          "display-p3:0.36000,0.30000,0.92000,1.00000",
+          "display-p3:0.13000,0.09000,0.45000,1.00000"
         ]
       }
     },
@@ -13,8 +13,8 @@
       "appearance": "dark",
       "value": {
         "linear-gradient": [
-          "display-p3:0.01000,0.25000,0.30000,1.00000",
-          "display-p3:0.00300,0.08000,0.11000,1.00000"
+          "display-p3:0.17000,0.13000,0.46000,1.00000",
+          "display-p3:0.05000,0.03000,0.17000,1.00000"
         ]
       }
     }
@@ -23,83 +23,13 @@
     {
       "layers": [
         {
-          "glass": false,
-          "image-name": "CursorHighlight.svg",
-          "name": "CursorHighlight",
-          "position": {
-            "scale": 1,
-            "translation-in-points": [91.31636363636358, 98.07384615384626]
-          }
-        },
-        {
-          "glass": false,
-          "image-name": "CursorFacet.svg",
-          "name": "CursorFacet",
-          "position": {
-            "scale": 1,
-            "translation-in-points": [91.31636363636358, 98.07384615384626]
-          }
-        },
-        {
           "fill-specializations": [
             {
               "value": {
                 "linear-gradient": [
-                  "display-p3:0.70000,1.00000,0.98000,1.00000",
-                  "display-p3:0.22000,0.87000,0.87000,1.00000"
+                  "display-p3:1.00000,0.80000,0.28000,1.00000",
+                  "display-p3:1.00000,0.47000,0.10000,1.00000"
                 ]
-              }
-            },
-            {
-              "appearance": "dark",
-              "value": {
-                "linear-gradient": [
-                  "display-p3:0.59000,0.99000,1.00000,1.00000",
-                  "display-p3:0.14000,0.73000,0.79000,1.00000"
-                ]
-              }
-            },
-            {
-              "appearance": "tinted",
-              "value": {
-                "solid": "gray:0.90000,1.00000"
-              }
-            }
-          ],
-          "glass": true,
-          "image-name": "Cursor.svg",
-          "name": "Cursor",
-          "position": {
-            "scale": 1,
-            "translation-in-points": [91.31636363636358, 98.07384615384626]
-          }
-        }
-      ],
-      "lighting": "individual",
-      "name": "Cursor",
-      "shadow": {
-        "kind": "neutral",
-        "opacity": 0.15
-      },
-      "specular": true,
-      "translucency": {
-        "enabled": true,
-        "value": 0.3
-      }
-    },
-    {
-      "layers": [
-        {
-          "fill-specializations": [
-            {
-              "value": {
-                "solid": "display-p3:0.94000,1.00000,1.00000,1.00000"
-              }
-            },
-            {
-              "appearance": "dark",
-              "value": {
-                "solid": "display-p3:0.83000,1.00000,1.00000,1.00000"
               }
             },
             {
@@ -109,93 +39,21 @@
               }
             }
           ],
-          "glass": false,
-          "image-name": "SelectedLine.svg",
-          "name": "SelectedLine"
-        },
-        {
-          "fill-specializations": [
-            {
-              "value": {
-                "solid": "display-p3:0.54063,0.98211,1.00000,1.00000"
-              }
-            },
-            {
-              "appearance": "dark",
-              "value": {
-                "solid": "display-p3:0.83000,1.00000,1.00000,1.00000"
-              }
-            },
-            {
-              "appearance": "tinted",
-              "value": {
-                "solid": "gray:1.00000,1.00000"
-              }
-            }
-          ],
-          "glass": false,
-          "image-name": "Rows.svg",
-          "name": "Rows"
-        },
-        {
-          "fill-specializations": [
-            {
-              "value": {
-                "solid": "display-p3:0.01000,0.49000,0.57000,1.00000"
-              }
-            },
-            {
-              "appearance": "dark",
-              "value": {
-                "solid": "display-p3:0.01000,0.36000,0.43000,1.00000"
-              }
-            },
-            {
-              "appearance": "tinted",
-              "value": {
-                "solid": "gray:0.60000,1.00000"
-              }
-            }
-          ],
           "glass": true,
-          "image-name": "SelectedRow.svg",
-          "name": "SelectedRow"
-        },
-        {
-          "fill-specializations": [
-            {
-              "value": {
-                "solid": "display-p3:0.16000,0.79000,0.83000,1.00000"
-              }
-            },
-            {
-              "appearance": "dark",
-              "value": {
-                "solid": "display-p3:0.09000,0.59000,0.66000,1.00000"
-              }
-            },
-            {
-              "appearance": "tinted",
-              "value": {
-                "solid": "gray:0.60000,1.00000"
-              }
-            }
-          ],
-          "glass": true,
-          "image-name": "Menu.svg",
-          "name": "Menu"
+          "image-name": "RightButton.svg",
+          "name": "RightButton"
         }
       ],
       "lighting": "individual",
-      "name": "Menu",
+      "name": "Click",
       "shadow": {
-        "kind": "neutral",
-        "opacity": 0.18
+        "kind": "layer-color",
+        "opacity": 0.5
       },
       "specular": true,
       "translucency": {
-        "enabled": true,
-        "value": 0.55
+        "enabled": false,
+        "value": 0.5
       }
     },
     {
@@ -204,37 +62,85 @@
           "fill-specializations": [
             {
               "value": {
-                "solid": "display-p3:0.02000,0.67000,0.76000,1.00000"
+                "solid": "display-p3:0.20000,0.16000,0.55000,1.00000"
               }
             },
             {
               "appearance": "dark",
               "value": {
-                "solid": "display-p3:0.02500,0.45000,0.54000,1.00000"
+                "solid": "display-p3:0.12000,0.09000,0.34000,1.00000"
               }
             },
             {
               "appearance": "tinted",
               "value": {
-                "solid": "gray:0.60000,1.00000"
+                "solid": "gray:0.25000,1.00000"
+              }
+            }
+          ],
+          "glass": false,
+          "image-name": "Wheel.svg",
+          "name": "Wheel"
+        },
+        {
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "display-p3:0.20000,0.16000,0.55000,0.11000"
+              }
+            },
+            {
+              "appearance": "tinted",
+              "value": {
+                "solid": "gray:0.00000,0.18000"
+              }
+            }
+          ],
+          "glass": false,
+          "image-name": "LeftButton.svg",
+          "name": "LeftButton"
+        },
+        {
+          "fill-specializations": [
+            {
+              "value": {
+                "linear-gradient": [
+                  "display-p3:1.00000,1.00000,1.00000,1.00000",
+                  "display-p3:0.84000,0.85000,0.97000,1.00000"
+                ]
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "linear-gradient": [
+                  "display-p3:0.93000,0.93000,1.00000,1.00000",
+                  "display-p3:0.68000,0.69000,0.88000,1.00000"
+                ]
+              }
+            },
+            {
+              "appearance": "tinted",
+              "value": {
+                "solid": "gray:0.75000,1.00000"
               }
             }
           ],
           "glass": true,
-          "image-name": "MiddleSheet.svg",
-          "name": "MiddleSheet"
+          "image-name": "Body.svg",
+          "name": "Body"
         }
       ],
-      "lighting": "individual",
-      "name": "MiddleSheet",
+      "lighting": "combined",
+      "name": "Mouse",
       "shadow": {
         "kind": "neutral",
-        "opacity": 0.18
+        "opacity": 0.5
       },
       "specular": true,
       "translucency": {
         "enabled": true,
-        "value": 0.65
+        "value": 0.2
       }
     },
     {
@@ -243,13 +149,7 @@
           "fill-specializations": [
             {
               "value": {
-                "solid": "display-p3:0.02000,0.48000,0.57000,1.00000"
-              }
-            },
-            {
-              "appearance": "dark",
-              "value": {
-                "solid": "display-p3:0.02000,0.32000,0.40000,1.00000"
+                "solid": "display-p3:1.00000,0.72000,0.30000,1.00000"
               }
             },
             {
@@ -260,20 +160,65 @@
             }
           ],
           "glass": true,
-          "image-name": "BackSheet.svg",
-          "name": "BackSheet"
+          "image-name": "Spark.svg",
+          "name": "Spark"
         }
       ],
       "lighting": "individual",
-      "name": "BackSheet",
+      "name": "Spark",
+      "shadow": {
+        "kind": "layer-color",
+        "opacity": 0.5
+      },
+      "specular": true,
+      "translucency": {
+        "enabled": false,
+        "value": 0.5
+      }
+    },
+    {
+      "layers": [
+        {
+          "fill-specializations": [
+            {
+              "value": {
+                "linear-gradient": [
+                  "display-p3:0.66000,0.63000,1.00000,1.00000",
+                  "display-p3:0.33000,0.28000,0.82000,1.00000"
+                ]
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "linear-gradient": [
+                  "display-p3:0.46000,0.42000,0.90000,1.00000",
+                  "display-p3:0.20000,0.16000,0.56000,1.00000"
+                ]
+              }
+            },
+            {
+              "appearance": "tinted",
+              "value": {
+                "solid": "gray:0.45000,1.00000"
+              }
+            }
+          ],
+          "glass": true,
+          "image-name": "Base.svg",
+          "name": "Base"
+        }
+      ],
+      "lighting": "individual",
+      "name": "Base",
       "shadow": {
         "kind": "neutral",
-        "opacity": 0.18
+        "opacity": 0.5
       },
       "specular": true,
       "translucency": {
         "enabled": true,
-        "value": 0.65
+        "value": 0.4
       }
     }
   ],
